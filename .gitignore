@@ -1,0 +1,8 @@
+# Compiled source
+*.beam
+
+# Logs
+*.dump
+
+# Dependencies
+/deps
