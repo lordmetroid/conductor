@@ -2,7 +2,8 @@
 	{description, "Web application server"},
 	{vsn, "1"},
 	{modules, [
-		conductor
+		conductor,
+		conductor_application
 	]},
 	{registered, [
 	]},

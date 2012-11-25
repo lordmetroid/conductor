@@ -8,7 +8,7 @@
 
 %% ----------------------------------------------------------------------------
 % @spec start() -> ok | {error, Reason}
-% @doc Start the Conductor Web Application Platform
+% @doc Start the Conductor Web Application Server
 %% ----------------------------------------------------------------------------
 start() ->
 	%% Create a list of dependencies available in /deps
@@ -24,14 +24,14 @@ start() ->
 
 %% ----------------------------------------------------------------------------
 % @spec stop() -> ok | {error, Reason}
-% @doc Stop the Conductor Web Application Platform
+% @doc Stop the Conductor Web Application Server
 %% ----------------------------------------------------------------------------
 stop() ->
 	application:stop(?MODULE).
 
 %% ----------------------------------------------------------------------------
 % @spec restart() -> ok | {error, Reason}
-% @doc Restart the Conductor Web Application Platform
+% @doc Restart the Conductor Web Application Server
 %% ----------------------------------------------------------------------------
 restart() ->
 	case ?MODULE:stop() of
