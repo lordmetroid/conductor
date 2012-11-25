@@ -14,7 +14,7 @@ start() ->
 	%% Create a list of dependencies available in /deps
 	{file, ModulePath} = code:is_loaded(?MODULE),
 	Root = filename:dirname(filename:dirname(ModulePath)),
-	Dependencies = filelib:wildcard(filename:join([Root, "deps","*","ebin")),
+	Dependencies = filelib:wildcard(filename:join([Root, "deps","*","ebin"])),
 
 	%% Load all dependencies in deps/
 	code:add_paths(Dependencies),

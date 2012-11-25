@@ -13,5 +13,5 @@
 		mochiweb,
 		webmachine
 	]},
-	{mod, {conductor_application, []}},
+	{mod, {conductor_application, []}}
 ]}.
