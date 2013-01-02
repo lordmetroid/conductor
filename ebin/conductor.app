@@ -3,9 +3,15 @@
 	{vsn, "1"},
 	{modules, [
 		conductor,
-		conductor_application
+		conductor_application,
+		conductor_supervisor
 	]},
 	{registered, [
+		conductor_supervisor,
+		conductor_system_supervisor,
+		conductor_server_supervisor,
+		conductor_settings
+
 	]},
 	{applications, [
 		kernel,
