@@ -5,7 +5,10 @@
 		conductor,
 		conductor_application,
 		conductor_supervisor,
-		conductor_settings
+		conductor_settings,
+		conductor_response,
+		conductor_dispatcher,
+		conductor_router
 	]},
 	{registered, [
 		conductor_supervisor,
