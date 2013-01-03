@@ -4,7 +4,8 @@
 	{modules, [
 		conductor,
 		conductor_application,
-		conductor_supervisor
+		conductor_supervisor,
+		conductor_settings
 	]},
 	{registered, [
 		conductor_supervisor,
