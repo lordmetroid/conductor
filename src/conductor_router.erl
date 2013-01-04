@@ -1,5 +1,4 @@
 -module(conductor_router).
--author('Nicklas W Bjurman <nicklas.w.bjurman@monkeyfactory.org>').
 
 -export([
 	execute/2

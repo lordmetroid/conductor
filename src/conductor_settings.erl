@@ -1,5 +1,4 @@
 -module(conductor_settings).
--author('Nicklas W Bjurman <nicklas.w.bjurman@monkeyfactory.org').
 
 -behavior(gen_server).
 -export([

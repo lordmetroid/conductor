@@ -1,4 +1,4 @@
--module (conductor_supervisor).
+-module(conductor_supervisor).
 
 -behavior(supervisor).
 -export([
@@ -14,14 +14,14 @@
 
 %% ----------------------------------------------------------------------------
 % @spec init(Arguments) -> {ok, Arguments}
-% @doc Initialize a supervisor
+% @doc Initialize a supervisor with the child specifications arguments
 %% ----------------------------------------------------------------------------
 init(Arguments) ->
 	{ok, Arguments}.
 
 %% ----------------------------------------------------------------------------
 % @spec start_link() -> Result | {error, Reason}
-% @doc Start Conductor
+% @doc Start the conductor application
 %% ----------------------------------------------------------------------------
 start_link() ->
 	case whereis(?MODULE) of
@@ -33,7 +33,7 @@ start_link() ->
 
 %% ----------------------------------------------------------------------------
 % @spec start_supervisors() -> 
-% @doc Start applications under a main supervisor
+% @doc Start the application supervisors under a main supervisor
 %% ----------------------------------------------------------------------------
 start_supervisors() ->
 	supervisor:start_link({local, ?MODULE}, ?MODULE, {
@@ -52,42 +52,49 @@ start_supervisors() ->
 	}).
 
 %% ----------------------------------------------------------------------------
-% @spec start_conductor() -> 
-% @doc Start Conductor modules under separate supervisors
+% @SPEC START_CONDUCTOR() ->
+% @doc Start the supervisor for the Conductor application processes
 %% ----------------------------------------------------------------------------
 start_conductor() ->
+	%% TODO: Start the Conductor processes
 	supervisor:start_link({local, conductor_system_supervisor}, ?MODULE, {
 		{one_for_one, 10, 3600}, [
-			%% Settings manager
+			%% Conductor settings
 			{conductor_settings,
 				{conductor_settings, start_link, []},
 				permanent, brutal_kill, worker, [conductor_settings]
 			}
-			%% TODO Cache
+			%% Conductor cache
+%			{conductor_cache,
+%				{conductor_cache, start_link, []},
+%				permanent, brutal_kill, worker, [conductor_cache]
+%			}
 		]
 	}).
 
 %% ----------------------------------------------------------------------------
-% @spec start_server()-> 
-% @doc Start Webmachine server 
+% @spec start_server->
+% @doc Start the supervisor for Web-server
 %% ----------------------------------------------------------------------------
 start_server() ->
-	%% Initialize settings
-	Settings = [
+	%% Load the web-server settings
+	ServerSettings = [
+		%% Server settings
 		{ip, conductor_settings:get(ip)},
 		{port, conductor_settings:get(port)},
 		{log_dir, conductor_settings:get(log_dir)},
 
+		%% Resource dispatcher
 		{dispatch, [
 			{['*'], conductor_dispatcher, []}
 		]}
 	],
 
-	%% Start the server
+	%% Start the web-server 
 	supervisor:start_link({local, conductor_server_supervisor}, ?MODULE, {
 		{one_for_one, 10, 3600}, [
 			{webmachine_mochiweb,
-				{webmachine_mochiweb, start, [Settings]},
+				{webmachine_mochiweb, start, [ServerSettings]},
 				permanent, 5000, worker, dynamic
 			}
 		]

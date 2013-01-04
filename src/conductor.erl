@@ -8,15 +8,15 @@
 
 %% ----------------------------------------------------------------------------
 % @spec start() -> ok | {error, Reason}
-% @doc Start the Conductor Web Application Server
+% @doc Start the Conductor web application platform
 %% ----------------------------------------------------------------------------
 start() ->
-	%% Create a list of dependencies available in /deps
+	%% Compile a list of all dependencies
 	{file, ModulePath} = code:is_loaded(?MODULE),
 	Root = filename:dirname(filename:dirname(ModulePath)),
 	Dependencies = filelib:wildcard(filename:join([Root, "deps","*","ebin"])),
 
-	%% Load all dependencies in deps/
+	%% Load all dependencies
 	code:add_paths(Dependencies),
 
 	%% Start Conductor
@@ -24,14 +24,14 @@ start() ->
 
 %% ----------------------------------------------------------------------------
 % @spec stop() -> ok | {error, Reason}
-% @doc Stop the Conductor Web Application Server
+% @doc Stop the Conductor web application platform
 %% ----------------------------------------------------------------------------
 stop() ->
 	application:stop(?MODULE).
 
 %% ----------------------------------------------------------------------------
 % @spec restart() -> ok | {error, Reason}
-% @doc Restart the Conductor Web Application Server
+% @doc Restart the Conductor web application platform
 %% ----------------------------------------------------------------------------
 restart() ->
 	case ?MODULE:stop() of
@@ -42,3 +42,4 @@ restart() ->
 		{error, Reason} ->
 			{error, Reason}
 	end.
+

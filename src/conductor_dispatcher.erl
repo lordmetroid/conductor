@@ -1,5 +1,4 @@
 -module(conductor_dispatcher).
--author('Nicklas W Bjurman <nicklas.w.bjurman@monkeyfactory.org>').
 
 -export([
 	init/1,

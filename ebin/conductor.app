@@ -1,28 +1,21 @@
 {application, conductor, [
-	{description, "Web application server"},
-	{vsn, "1"},
+	{description, "Conductor web application platform"},
+	{vsn, "0.1"},
 	{modules, [
 		conductor,
 		conductor_application,
 		conductor_supervisor,
 		conductor_settings,
-		conductor_response,
 		conductor_dispatcher,
-		conductor_router
+		conductor_router,
+		conductor_response
 	]},
 	{registered, [
+		conductor_settings,
 		conductor_supervisor,
 		conductor_system_supervisor,
-		conductor_server_supervisor,
-		conductor_settings
-
-	]},
-	{applications, [
-		kernel,
-		stdlib,
-		sasl,
-		mochiweb,
-		webmachine
+		conductor_server_supervisor
 	]},
 	{mod, {conductor_application, []}}
 ]}.
+

@@ -1,5 +1,4 @@
 -module(conductor_response).
--author('Nicklas W Bjurman <nicklas.w.bjurman@monkeyfactory.org').
 
 -behavior(gen_fsm).
 -export([
