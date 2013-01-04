@@ -8,7 +8,7 @@ run a server. See the below example configuration and explanation:
 ```erlang
 %% Application listening host and port
 {ip, "127.0.0.1"}.
-{port, 80}.
+{port, 8000}.
 
 %% Application Logs
 {log_dir,               "/website/log/"}.
