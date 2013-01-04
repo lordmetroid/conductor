@@ -13,7 +13,7 @@ run a server. See the below example configuration and explanation:
 %% Application Logs
 {log_dir,               "/website/log/"}.
 
-%% Applicationn files
+%% Application files
 {file_dir,              "/website/files/"}.
 
 %% Application programs
