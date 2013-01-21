@@ -7,11 +7,13 @@
 -include_lib("webmachine/include/webmachine.hrl").
 
 execute(Request, Response) ->
-	%% Find a match response to the request
+	%% Find a matching response to the request
 	Path = wrq:path(Request),
 	case proplists:get_value(Path, conductor_settings:get(programs)) of
 		undefined ->
 			%% TODO: Check if request is a file
+
+
 			conductor_response:create(Response, file),
 
 
@@ -28,10 +30,10 @@ execute(Request, Response) ->
 				Path,
 				Variables = wrq:req_qs(Request),
 				Cookies = get_cookies(wrq:req_cookie(Request))
-			}
+			},
 
 			%% Execute the program
-%%			conductor_system:execute(Program, Parameters, Response)
+			Program:execute(Parameters, Response)
 	end.
 
 get_cookies(CookieHeader) ->

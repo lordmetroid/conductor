@@ -70,9 +70,9 @@ file(get_mime_type, _From, Filename) ->
 			{reply, MimeType, file, Filename}
 	end;
 
-file({add_content, NewFilename}, _From, _Filename) ->
-	%%TODO: Add Get binary from cache
-	{reply, ok, file, NewFilename};
+file({add_content, Filename}, _From, _Filename) ->
+	%%TODO: Add binary content 
+	{reply, ok, file, Filename};
 
 file(get_content, _From, Filename) ->
 	%% TODO: Return binary
