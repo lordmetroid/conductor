@@ -8,6 +8,7 @@
 		conductor_settings,
 		conductor_dispatcher,
 		conductor_router,
+		conductor_compiler,
 		conductor_response
 	]},
 	{registered, [
