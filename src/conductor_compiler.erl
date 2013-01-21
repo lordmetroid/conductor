@@ -12,6 +12,6 @@ compile() ->
 
 	erl_syntax:attribute(erl_syntax:atom(module), [
 		%% Module id
-		erl_syntax:atom()
+		erl_syntax:atom(uuid:uuid_to_string(uuid:get_v4(), nodash))
 	]).
 
