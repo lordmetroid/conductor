@@ -28,6 +28,8 @@ handle_call({get_model, Model}, _From, Cache) ->
 
 handle_call({get_view, View}, _From, Cache) ->
 
+handle_call({get_controller, Controller}, _From, Cache) ->
+
 handle_call(_Event, _From, State) ->
 	{stop, State}.
 
@@ -58,3 +60,6 @@ get_model(Model) ->
 	
 get_view(View) ->
 	get_server:call(?MODULE, {get_view, View}).
+
+get_controller(Controller) ->
+	get_controller:call(?MODULE, {get_controller, Controller}).
