@@ -23,15 +23,19 @@
 % @doc Compile and cache all application components available
 %% ----------------------------------------------------------------------------
 init(_Arguments) ->
-	%% Get current components paths
+	%% Get component paths
 	ProgramPath = conductor_settings:get(program_path),
 	ModelPath = conductor_settings:get(model_path),
 	ViewPath = conductor_settings:get(view_path),
 	ControllerPath = conductor_settings:get(controller_path),
 
-	%% TODO: Compile components
-	%{Programs, Models, Vies, Controllers}.
-	undefined.
+	%% Compile available components
+	{ok, {
+		conductor_compiler:make_programs(ProgramPath), 
+		conductor_compiler:make_models(ModelPath), 
+		conductor_compiler:make_views(ViewPath), 
+		conductor_compiler:make_controllers(ControllerPath)
+	}.
 	
 handle_call({get_program, Program}, _From, Cache) ->
 	{Programs,_,_,_} = Cache,
