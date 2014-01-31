@@ -52,11 +52,10 @@ start_supervisors() ->
 	}).
 
 %% ----------------------------------------------------------------------------
-% @SPEC START_CONDUCTOR() ->
+% @spec start_conductor() ->
 % @doc Start the supervisor for the Conductor application processes
 %% ----------------------------------------------------------------------------
 start_conductor() ->
-	%% TODO: Start the Conductor processes
 	supervisor:start_link({local, conductor_system_supervisor}, ?MODULE, {
 		{one_for_one, 10, 3600}, [
 			%% Conductor settings
@@ -65,10 +64,10 @@ start_conductor() ->
 				permanent, brutal_kill, worker, [conductor_settings]
 			}
 			%% Conductor cache
-%			{conductor_cache,
-%				{conductor_cache, start_link, []},
-%				permanent, brutal_kill, worker, [conductor_cache]
-%			}
+			{conductor_cache,
+				{conductor_cache, start_link, []},
+				permanent, brutal_kill, worker, [conductor_cache]
+			}
 		]
 	}).
 
@@ -99,4 +98,3 @@ start_server() ->
 			}
 		]
 	}).
-
