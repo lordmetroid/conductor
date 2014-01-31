@@ -20,10 +20,13 @@
 % @doc Compile and cache all programs and views
 %% ----------------------------------------------------------------------------
 init(_Arguments) ->
+	conductor_settings:get(
 
-handle_call({get_program, Parameter}, _From, Cache) ->
+handle_call({get_program, Program}, _From, Cache) ->
 
-handle_call({get_view, Parameter}, _From, Cache) ->
+handle_call({get_model, Model}, _From, Cache) ->
+
+handle_call({get_view, View}, _From, Cache) ->
 
 handle_call(_Event, _From, State) ->
 	{stop, State}.
@@ -50,5 +53,8 @@ start_link() ->
 get_program(Program) ->
 	gen_server:call(?MODULE, {get_program, Program}).
 
+get_model(Model) ->
+	get_server:call(?MODULE, {get_model, Model]).
+	
 get_view(View) ->
 	get_server:call(?MODULE, {get_view, View}).
