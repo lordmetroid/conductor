@@ -48,8 +48,8 @@ code_change(_OldVersion, StateName, State, _Extra) ->
 % Undefined response (Default)
 %% ----------------------------------------------------------------------------
 undefined({create, file}, _From, _State) ->
-	%% Create a file response
-	{reply, ok, file, []};
+	%% Create a file response, {Binary, Filename}
+	{reply, ok, file, {[], []}};
 
 undefined({create, program}, _From, _State) ->
 	%% Create a program response
@@ -61,7 +61,7 @@ undefined(_Event, _From, State) ->
 %% ----------------------------------------------------------------------------
 % File response
 %% ----------------------------------------------------------------------------
-file(get_mime_type, _From, Filename) ->
+file(get_mime_type, _From, {_Binary, Filename}) ->
 	%% Get file mime type
 	case mimetypes:filename(Filename) of
 		undefined ->
@@ -70,16 +70,15 @@ file(get_mime_type, _From, Filename) ->
 			{reply, MimeType, file, Filename}
 	end;
 
-file({add_content, Filename}, _From, _Filename) ->
-	%%TODO: Add binary content 
-	{reply, ok, file, Filename};
+file({add_content, Filename}, _From, {_Binary, _Filename}) ->
+	%% TODO: Add binary content
+	{reply, ok, file, {Binary, Filename}};
 
-file(get_content, _From, Filename) ->
-	%% TODO: Return binary
-	{reply, Filename, file, Filename};
+file(get_content, _From, {Binary, Filename}) ->
+	{reply, Binary, file, {Binary, Filename}};
 
-file(_Event, _From, Filename) ->
-	{reply, error, file, Filename}.
+file(_Event, _From, {Binary, Filename}) ->
+	{reply, error, file, {Binary, Filename}}.
 
 %% ----------------------------------------------------------------------------
 % Program response
