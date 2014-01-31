@@ -63,7 +63,7 @@ execution of a request. The program contains calls to various controllers.
 * A controller component is an erlang module that has a specific function, 
 for example, render a part of the page, add data to a database, etc. 
 The controller contains calls to various model, view and other controller 
-components any results returned from the calls are managed by the controller.
+components. Any results returned from the calls are managed by the controller.
 
 * A model component is an erlang module that communicates with sources of 
 volatile data such as for example a database. The model is responsible for 
