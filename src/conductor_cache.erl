@@ -38,3 +38,16 @@ terminate(_Reason, _State) ->
 
 code_change(_OldVersion, State, _Extra) ->
 	{ok, State}.
+
+%% ----------------------------------------------------------------------------
+% @spec start() ->
+% @doc Start the settings manager 
+% -----------------------------------------------------------------------------
+start_link() ->
+	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+
+get_program(Program) ->
+	gen_server:call(?MODULE, {get_program, Program}).
+
+get_view(View) ->
+	get_server:call(?MODULE, {get_view, View}).
