@@ -35,7 +35,7 @@ init(_Arguments) ->
 		conductor_compiler:make_models(ModelPath), 
 		conductor_compiler:make_views(ViewPath), 
 		conductor_compiler:make_controllers(ControllerPath)
-	}.
+	}}.
 	
 handle_call({get_program, Program}, _From, Cache) ->
 	{Programs,_,_,_} = Cache,
