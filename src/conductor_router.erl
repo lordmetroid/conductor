@@ -23,7 +23,7 @@ execute(Request, Response) ->
 					%% Create a file response
 					conductor_response:create(Response, file),
 			
-					%% Add file as content
+					%% Add file content to the response
 					conductor_response:add_content(Filename);
 			end;
 		Program ->
