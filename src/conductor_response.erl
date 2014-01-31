@@ -94,11 +94,11 @@ program(get_mime_type, _From, {Content, MimeType}) ->
 
 program({add_content, NewContent}, _From, {Content, MimeType}) ->
 	%% Add new content to program response
-	{reply, ok, program, {[NewContent | Content], MimeType}};
+	{reply, ok, program, {[NewContent, Content], MimeType}};
 
 program(get_content, _From, {Content, MimeType}) ->
-	%% Get content
-	{reply, lists:reverse(Content), program, {Content, MimeType}};
+	%% Get and reset content
+	{reply, lists:reverse(Content), program, {[], MimeType}};
 
 program(_Event, _From, {Content, MimeType}) ->
 	{reply, error, program, {Content, MimeType}}.
