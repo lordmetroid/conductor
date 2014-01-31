@@ -1,5 +1,6 @@
 -module(conductor_cache).
 
+-behavior(gen_server).
 -export([
 	init/1,
 	handle_call/3,
