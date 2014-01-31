@@ -9,8 +9,6 @@
 	make_view/1,
 	make_controllers/1,
 	make_controller/1
-	
-
 ]).
 
 %% ----------------------------------------------------------------------------
@@ -25,6 +23,7 @@ make_programs([Path | Rest], Programs) ->
 	make_programs(Rest, [make_program(Path) | Programs]).
 	
 make_program(Path)
+	%% Compile a program component
 
 %% ----------------------------------------------------------------------------
 % @spec make_models
@@ -38,6 +37,7 @@ make_models([Path | Rest], Models) ->
 	make_models(Rest, [make_model(Path) | Models]).
 
 make_model(Path) ->
+	%% Compile a model component
 	
 %% ----------------------------------------------------------------------------
 % @spec make_views
@@ -51,6 +51,7 @@ make_views([Path | Rest], Views) ->
 	make_views(Rest, [make_view(Path) | Views]).
 
 make_view(Path) ->
+	%% Compile a view component
 
 %% ----------------------------------------------------------------------------
 % @spec make_controllers
@@ -64,7 +65,11 @@ make_controllers([Path | Rest], Controllers) ->
 	make_controllers(Rest, [make_controller(Path) | Controllers]).
 
 make_controller(Path) ->
-	
+	%% Compile a controller component
+
+%% ----------------------------------------------------------------------------
+% Compilation functions
+%% ----------------------------------------------------------------------------
 	
 %% ----------------------------------------------------------------------------
 % @spec module_id() -> UUID::string()
