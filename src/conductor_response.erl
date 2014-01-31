@@ -75,7 +75,8 @@ file({add_content, Filename}, _From, {_Binary, _Filename}) ->
 	{reply, ok, file, {Binary, Filename}};
 
 file(get_content, _From, {Binary, Filename}) ->
-	{reply, Binary, file, {Binary, Filename}};
+	%% Get and resrt file binary
+	{reply, Binary, file, {[], Filename}};
 
 file(_Event, _From, {Binary, Filename}) ->
 	{reply, error, file, {Binary, Filename}}.

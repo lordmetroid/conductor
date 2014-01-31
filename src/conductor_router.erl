@@ -10,15 +10,22 @@ execute(Request, Response) ->
 	%% Find a matching response to the request
 	Path = wrq:path(Request),
 	case proplists:get_value(Path, conductor_settings:get(programs)) of
+		%% Request is not a program
 		undefined ->
-			%% TODO: Check if request is a file
-
-
-			conductor_response:create(Response, file),
-
-
-			%% TODO: Read file
-			undefined; 
+			%% Check if request is a regular file
+			Filename = filename:join(conductor_settings:get(file_path), Path),
+			case filelib:is_regular(Filename) of
+				false ->
+					%% Request not found
+					%% TODO: Create 404 response
+					undefined;
+				true ->
+					%% Create a file response
+					conductor_response:create(Response, file),
+			
+					%% Add file as content
+					conductor_response:add_content(Filename);
+			end;
 		Program ->
 			%% Create a program response
 			conductor_response:create(Response, program),
@@ -33,9 +40,14 @@ execute(Request, Response) ->
 			},
 
 			%% Execute the program
-			Program:execute(Parameters, Response)
+			ProgramModule = conductor_cache:get_program(Program),
+			ProgramModule:execute(Parameters, Response)
 	end.
 
+%% ----------------------------------------------------------------------------
+% @spec
+% @doc Get cookies from request
+%% ----------------------------------------------------------------------------
 get_cookies(CookieHeader) ->
 	get_cookies(string:tokens(CookieHeader, ";"), []).
 
