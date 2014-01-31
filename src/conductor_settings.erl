@@ -60,4 +60,3 @@ start_link() ->
 
 get(Parameter) ->
 	gen_server:call(?MODULE, {get, Parameter}).
-
