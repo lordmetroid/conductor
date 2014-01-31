@@ -53,3 +53,23 @@ available to a program are stored.
 
 ## Execution
 > erl -pa ebin/ -run conductor -conf website.conf
+
+Applications consist of four components. A Program and associated models, 
+views and controllers.
+
+* The program component is an erlang module that is responsible for the general 
+execution of a request. The program contains calls to various controllers.
+
+* A controller component is an erlang module that has a specific function, 
+for example, render a part of the page, add data to a database, etc. 
+The controller contains calls to various model and view components and 
+the results from the calls are managed by the controller.
+
+* A model component is an erlang module that communicates with sources of 
+volatile data such as for example a database. The model is responsible for 
+fetching, updating and adding data.
+
+* A view component is a scripted file in one of the supported languages
+specified by the installed view compilers. The view must only render received 
+data and never make decisions on what data to render. All decision making is 
+done by the controller.
