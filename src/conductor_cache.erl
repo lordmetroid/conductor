@@ -20,7 +20,11 @@
 % @doc Compile and cache all programs and views
 %% ----------------------------------------------------------------------------
 init(_Arguments) ->
-	conductor_settings:get(
+	%% Get current components paths
+	ProgramPath = conductor_settings:get(program_path),
+	ModelPath = conductor_settings:get(model_path),
+	ViewPath = conductor_settings:get(view_path),
+	ControllerPath = conductor_settings:get(controller_path),
 
 handle_call({get_program, Program}, _From, Cache) ->
 
