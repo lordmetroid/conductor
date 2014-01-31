@@ -19,7 +19,8 @@
 ]).
 
 %% ----------------------------------------------------------------------------
-% @doc Compile and cache all programs and views
+% @spec
+% @doc Compile and cache all application components available
 %% ----------------------------------------------------------------------------
 init(_Arguments) ->
 	%% Get current components paths
@@ -28,6 +29,10 @@ init(_Arguments) ->
 	ViewPath = conductor_settings:get(view_path),
 	ControllerPath = conductor_settings:get(controller_path),
 
+	%% TODO: Compile components
+	%{Programs, Models, Vies, Controllers}.
+	undefined.
+	
 handle_call({get_program, Program}, _From, Cache) ->
 	{Programs,_,_,_} = Cache,
 	%% TODO: Check if file is updated and update cache
