@@ -11,22 +11,22 @@ run a server. See the below example configuration and explanation:
 {port, 8000}.
 
 %% Application Logs
-{log_dir,               "/website/log/"}.
+{log_path,               "/website/log/"}.
 
 %% Application files
-{file_dir,              "/website/files/"}.
+{file_path,              "/website/files/"}.
 
 %% Application programs
-{program_dir,           "/website/programs/"}.
+{program_path,           "/website/programs/"}.
 {programs, [
 	{"/",               "index.erl"},
 	{"/index.html",     "index.erl"}
 ]}.
 
 %% Application program resources
-{model_dir,             "/website/programs/models/"}.
-{view_dir,              "/website/programs/views/"}.
-{controller_dir,        "/website/programs/controllers/"}.
+{model_path,             "/website/programs/models/"}.
+{view_path,              "/website/programs/views/"}.
+{controller_path,        "/website/programs/controllers/"}.
 
 ```
 The configuration file consist of a number of value-data pairs.
