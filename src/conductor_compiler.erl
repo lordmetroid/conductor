@@ -2,20 +2,70 @@
 
 -export([
 	make_programs/1,
+	make_program/1,
 	make_models/1
+	make_model/1,
 	make_views/1,
-	make_controllers/1
+	make_view/1,
+	make_controllers/1,
+	make_controller/1
+	
+
 ]).
 
-make_programs(Path) ->
+%% ----------------------------------------------------------------------------
+% @spec make_programs
+% @doc Compile programs from provided paths
+%% ----------------------------------------------------------------------------
+make_programs(Paths) ->
+	make_programs(Paths, []).
+make_programs([], Programs) ->
+	Programs;
+make_programs([Path | Rest], Programs) ->
+	make_programs(Rest, [make_program(Path) | Programs]).
 	
-make_models(Path) ->
-	
-make_views(Path) ->
-		
-make_controllers(Path) ->
-	
+make_program(Path)
 
+%% ----------------------------------------------------------------------------
+% @spec make_models
+% @doc Compile models from provided paths
+%% ----------------------------------------------------------------------------
+make_models(Paths) ->
+	make_models(Paths, []).
+make_models([], Models) ->
+	Models;
+make_models([Path | Rest], Models) ->
+	make_models(Rest, [make_model(Path) | Models]).
+
+make_model(Path) ->
+	
+%% ----------------------------------------------------------------------------
+% @spec make_views
+% @doc Compile views from provided paths
+%% ----------------------------------------------------------------------------
+make_views(Paths) ->
+	make_views(Paths, []).
+make_views([], Views) ->
+	Views;
+make_views([Path | Rest], Views) ->
+	make_views(Rest, [make_view(Path) | Views]).
+
+make_view(Path) ->
+
+%% ----------------------------------------------------------------------------
+% @spec make_controllers
+% @doc Compile controllers from provided paths
+%% ----------------------------------------------------------------------------		
+make_controllers(Paths) ->
+	make_controllers(Paths, []).
+make_controllers([], Controllers) ->
+	Controllers;
+make_controllers([Path | Rest], Controllers) ->
+	make_controllers(Rest, [make_controller(Path) | Controllers]).
+
+make_controller(Path) ->
+	
+	
 %% ----------------------------------------------------------------------------
 % @spec module_id() -> UUID::string()
 % @doc Compile half an erlang file into a random module
