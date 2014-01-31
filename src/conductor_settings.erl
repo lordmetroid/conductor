@@ -24,11 +24,12 @@ init(_Arguments) ->
 			%% Get settings provided by a configuration file
 			file:consult(Filename);
 		error ->
-			%%TODO: Use default settings
+			%% TODO: Use default settings
 			{ok, []}
 	end.
 
 handle_call({get, Parameter}, _From, Settings) ->
+	%% TODO: Check if file has been updated
 	case proplists:get_value(Parameter, Settings) of
 		undefined ->
 			{reply, undefined, Settings};
