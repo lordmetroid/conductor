@@ -61,4 +61,3 @@ get_cookies([Data | Rest], Cookies) ->
 		_ ->
 			get_cookies(Rest, Cookies)
 	end.
-
