@@ -69,7 +69,6 @@ terminate(_Reason, _State) ->
 code_change(_OldVersion, State, _Extra) ->
 	{ok, State}.
 
-
 %% ----------------------------------------------------------------------------
 % @spec start() ->
 % @doc Start the settings manager 

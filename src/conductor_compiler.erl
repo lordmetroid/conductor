@@ -24,6 +24,10 @@ make_programs([Path | Rest], Programs) ->
 	
 make_program(Path)
 	%% Compile a program component
+	
+	%% TODO: Add module ID
+	
+	%% TODO: Add execute function header
 
 %% ----------------------------------------------------------------------------
 % @spec make_models
@@ -39,6 +43,8 @@ make_models([Path | Rest], Models) ->
 make_model(Path) ->
 	%% Compile a model component
 	
+	%% TODO: Add module ID
+	
 %% ----------------------------------------------------------------------------
 % @spec make_views
 % @doc Compile views from provided paths
@@ -52,6 +58,10 @@ make_views([Path | Rest], Views) ->
 
 make_view(Path) ->
 	%% Compile a view component
+	
+	%% TODO: Add module ID
+	
+	%% TODO: Add view compiled from script
 
 %% ----------------------------------------------------------------------------
 % @spec make_controllers
@@ -66,6 +76,10 @@ make_controllers([Path | Rest], Controllers) ->
 
 make_controller(Path) ->
 	%% Compile a controller component
+	
+	%% TODO: Add module ID
+	
+	%% TODO: Add controller standard helper function
 
 %% ----------------------------------------------------------------------------
 % Compilation functions
