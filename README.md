@@ -19,8 +19,8 @@ run a server. See the below example configuration and explanation:
 %% Application programs
 {program_path,           "/website/programs/"}.
 {programs, [
-	{"/",               "index.erl"},
-	{"/index.html",     "index.erl"}
+    {"/",                "index.erl"},
+    {"/index.html",      "index.erl"}
 ]}.
 
 %% Application program resources
