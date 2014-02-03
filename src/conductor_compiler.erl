@@ -44,6 +44,7 @@ make_model(Path) ->
 	%% Compile a model component
 	
 	%% TODO: Add module ID
+	ModuleId = get_module_id(),
 	
 %% ----------------------------------------------------------------------------
 % @spec make_views
@@ -60,6 +61,7 @@ make_view(Path) ->
 	%% Compile a view component
 	
 	%% TODO: Add module ID
+	ModuleId = get_module_id(),
 	
 	%% TODO: Add view compiled from script
 
@@ -78,6 +80,7 @@ make_controller(Path) ->
 	%% Compile a controller component
 	
 	%% TODO: Add module ID
+	ModuleId = get_module_id(),
 	
 	%% TODO: Add controller standard helper function
 
@@ -89,9 +92,10 @@ make_controller(Path) ->
 % @spec module_id() -> UUID::string()
 % @doc Compile half an erlang file into a random module
 %% ----------------------------------------------------------------------------
-module_id() ->
+get_module_id() ->
 	uuid:uuid_to_string(uuid:get_v4()).
 
+add_module_id(ModuleId) ->
 	erl_syntax:attribute(erl_syntax:atom(module), [
-		erl_syntax:atom(module_id())
+		erl_syntax:atom(ModuleId)
 	]).
