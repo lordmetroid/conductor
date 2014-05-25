@@ -4,12 +4,13 @@
 	{modules, [
 		conductor,
 		conductor_application,
-		conductor_supervisor,
-		conductor_settings,
-		conductor_dispatcher,
-		conductor_router,
+		conductor_cache,
 		conductor_compiler,
-		conductor_response
+		conductor_dispatcher,
+		conductor_response,
+		conductor_router,
+		conductor_settings,
+		conductor_supervisor
 	]},
 	{registered, [
 		conductor_settings,
