@@ -3,7 +3,7 @@
 -export([
 	make_programs/1,
 	make_program/1,
-	make_models/1
+	make_models/1,
 	make_model/1,
 	make_views/1,
 	make_view/1,
@@ -17,12 +17,14 @@
 %% ----------------------------------------------------------------------------
 make_programs(Paths) ->
 	make_programs(Paths, []).
+
 make_programs([], Programs) ->
 	Programs;
 make_programs([Path | Rest], Programs) ->
 	make_programs(Rest, [make_program(Path) | Programs]).
 	
-make_program(Path)
+make_program(Path) ->
+ok.
 	%% Compile a program component
 	
 	%% TODO: Add module ID
@@ -35,6 +37,7 @@ make_program(Path)
 %% ----------------------------------------------------------------------------
 make_models(Paths) ->
 	make_models(Paths, []).
+
 make_models([], Models) ->
 	Models;
 make_models([Path | Rest], Models) ->
@@ -44,7 +47,7 @@ make_model(Path) ->
 	%% Compile a model component
 	
 	%% TODO: Add module ID
-	ModuleId = get_module_id(),
+	ModuleId = get_module_id().
 	
 %% ----------------------------------------------------------------------------
 % @spec make_views
@@ -52,6 +55,7 @@ make_model(Path) ->
 %% ----------------------------------------------------------------------------
 make_views(Paths) ->
 	make_views(Paths, []).
+
 make_views([], Views) ->
 	Views;
 make_views([Path | Rest], Views) ->
@@ -61,7 +65,7 @@ make_view(Path) ->
 	%% Compile a view component
 	
 	%% TODO: Add module ID
-	ModuleId = get_module_id(),
+	ModuleId = get_module_id().
 	
 	%% TODO: Add view compiled from script
 
@@ -71,6 +75,7 @@ make_view(Path) ->
 %% ----------------------------------------------------------------------------		
 make_controllers(Paths) ->
 	make_controllers(Paths, []).
+
 make_controllers([], Controllers) ->
 	Controllers;
 make_controllers([Path | Rest], Controllers) ->
@@ -80,7 +85,7 @@ make_controller(Path) ->
 	%% Compile a controller component
 	
 	%% TODO: Add module ID
-	ModuleId = get_module_id(),
+	ModuleId = get_module_id().
 	
 	%% TODO: Add controller standard helper function
 

@@ -62,7 +62,7 @@ start_conductor() ->
 			{conductor_settings,
 				{conductor_settings, start_link, []},
 				permanent, brutal_kill, worker, [conductor_settings]
-			}
+			},
 			%% Conductor cache
 			{conductor_cache,
 				{conductor_cache, start_link, []},

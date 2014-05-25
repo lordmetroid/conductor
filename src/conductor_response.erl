@@ -70,7 +70,7 @@ file(get_mime_type, _From, {_Binary, Filename}) ->
 			{reply, MimeType, file, Filename}
 	end;
 
-file({add_content, Filename}, _From, {_Binary, _Filename}) ->
+file({add_content, Filename}, _From, {Binary, _Filename}) ->
 	%% TODO: Add binary content
 	{reply, ok, file, {Binary, Filename}};
 

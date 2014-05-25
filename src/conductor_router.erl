@@ -24,7 +24,7 @@ execute(Request, Response) ->
 					conductor_response:create(Response, file),
 			
 					%% Add file content to the response
-					conductor_response:add_content(Filename);
+					conductor_response:add_content(Filename)
 			end;
 		Program ->
 			%% Create a program response
