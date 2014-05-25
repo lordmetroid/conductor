@@ -23,18 +23,30 @@
 % @doc Compile and cache all application components available
 %% ----------------------------------------------------------------------------
 init(_Arguments) ->
-	%% Get component paths
+	%% Get component root paths
 	ProgramPath = conductor_settings:get(program_path),
 	ModelPath = conductor_settings:get(model_path),
 	ViewPath = conductor_settings:get(view_path),
 	ControllerPath = conductor_settings:get(controller_path),
 
+	%% Get component file paths
+	ProgramPaths = filelib:wildcard(filename:join([ProgramPath, "*"])),
+	ModelPaths = filelib:wildcard(filename:join([ModelPath, "*"])),
+	ViewPaths = filelib:wildcard(filename:join([ViewPath, "*"])),
+	ControllerPaths = filelib:wildcard(filename:join([ControllerPath, "*"])),
+
 	%% Compile available components
+	Programs = conductor_compiler:make_programs(ProgramPaths),
+	Models = onductor_compiler:make_models(ModelPaths),
+	Views = conductor_compiler:make_views(ViewPaths),
+	Controllers = conductor_compiler:make_controllers(ControllerPaths),
+
+	%% Cache components
 	{ok, {
-		conductor_compiler:make_programs(ProgramPath), 
-		conductor_compiler:make_models(ModelPath), 
-		conductor_compiler:make_views(ViewPath), 
-		conductor_compiler:make_controllers(ControllerPath)
+		Programs,
+		Models,
+		Views,
+		Controllers
 	}}.
 
 handle_call({get_program, Program}, _From, Cache) ->
@@ -80,7 +92,7 @@ get_program(Program) ->
 	gen_server:call(?MODULE, {get_program, Program}).
 
 get_model(Model) ->
-	get_server:call(?MODULE, {get_model, Model]).
+	get_server:call(?MODULE, {get_model, Model}).
 	
 get_view(View) ->
 	get_server:call(?MODULE, {get_view, View}).
