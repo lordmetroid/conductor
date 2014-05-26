@@ -12,7 +12,7 @@
 ]).
 
 %% ----------------------------------------------------------------------------
-% @spec make_programs
+% @spec make_programs(Paths) -> Erlang module
 % @doc Compile programs from provided paths
 %% ----------------------------------------------------------------------------
 make_programs(Paths) ->
@@ -27,12 +27,12 @@ make_program(Path) ->
 	%% TODO: Add module ID
 	ModuleId = add_module_id().
 	
-	%% TODO: Check if called controllers and models exists
+	%% TODO: Check if called models, views or controllers exists
 	
 	%% TODO: Add execute function header
 
 %% ----------------------------------------------------------------------------
-% @spec make_models
+% @spec make_models(Paths) -> Erlang module
 % @doc Compile models from provided paths
 %% ----------------------------------------------------------------------------
 make_models(Paths) ->
@@ -48,7 +48,7 @@ make_model(Path) ->
 	ModuleId = add_module_id().
 	
 %% ----------------------------------------------------------------------------
-% @spec make_views
+% @spec make_views(Paths) -> Erlang module
 % @doc Compile views from provided paths
 %% ----------------------------------------------------------------------------
 make_views(Paths) ->
@@ -66,7 +66,7 @@ make_view(Path) ->
 	%% TODO: Add view compiled from script
 
 %% ----------------------------------------------------------------------------
-% @spec make_controllers
+% @spec make_controllers(Paths) -> Erlang module
 % @doc Compile controllers from provided paths
 %% ----------------------------------------------------------------------------		
 make_controllers(Paths) ->
@@ -84,9 +84,9 @@ make_controller(Path) ->
 	%% TODO: Add controller standard helper function
 
 %% ----------------------------------------------------------------------------
-% Compilation functions
+% Compilation helper functions
 %% ----------------------------------------------------------------------------
-	
+
 %% ----------------------------------------------------------------------------
 % @spec add_module_id() -> erl_syntax() HEADER
 % @doc Compile half an erlang file into a random module
