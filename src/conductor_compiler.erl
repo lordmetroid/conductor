@@ -104,3 +104,6 @@ add_module_id(ModuleId) ->
 	erl_syntax:attribute(erl_syntax:atom(module), [
 		erl_syntax:atom(ModuleId)
 	]).
+
+
+add_view() ->

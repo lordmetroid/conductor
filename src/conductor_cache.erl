@@ -43,6 +43,7 @@ init(_Arguments) ->
 
 	%% Cache components
 	{ok, {
+		%% TODO: Add timestamps
 		Programs,
 		Models,
 		Views,
@@ -56,14 +57,17 @@ handle_call({get_program, Program}, _From, Cache) ->
 
 handle_call({get_model, Model}, _From, Cache) ->
 	{_,Models,_,_} = Cache,
+	%% TODO: Check if file is updated and update cache
 	proplists:get_value(Model, Models);
 	
 handle_call({get_view, View}, _From, Cache) ->
 	{_,_,Views,_} = Cache,
+	%% TODO: Check if file is updated and update cache
 	proplists:get_value(View, Views);
 
 handle_call({get_controller, Controller}, _From, Cache) ->
 	{_,_,_,Controllers} = Cache,
+	%% TODO: Check if file is updated and update cache
 	proplists:get_value(Controller, Controllers);
 
 handle_call(_Event, _From, State) ->
