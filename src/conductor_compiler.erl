@@ -11,8 +11,11 @@
 	make_controller/1
 ]).
 
+%% TODO: Breakout the repeating steps from the different component compilations
+
+
 %% ----------------------------------------------------------------------------
-% @spec make_programs(Paths) -> Erlang module
+% @spec make_programs(Paths) -> {ModuleId, Erlang module)
 % @doc Compile programs from provided paths
 %% ----------------------------------------------------------------------------
 make_programs(Paths) ->
@@ -25,14 +28,15 @@ make_programs([Path | Rest], Programs) ->
 	
 make_program(Path) ->
 	%% TODO: Add module ID
-	ModuleId = add_module_id().
+	ModuleId = generate_module_id(),
+	add_module_id(ModuleId).
 	
 	%% TODO: Check if called models, views or controllers exists
 	
 	%% TODO: Add execute function header
 
 %% ----------------------------------------------------------------------------
-% @spec make_models(Paths) -> Erlang module
+% @spec make_models(Paths) -> {ModuleId, Erlang module)
 % @doc Compile models from provided paths
 %% ----------------------------------------------------------------------------
 make_models(Paths) ->
@@ -45,10 +49,11 @@ make_models([Path | Rest], Models) ->
 
 make_model(Path) ->
 	%% TODO: Add module ID
-	ModuleId = add_module_id().
+	ModuleId = generate_module_id(),
+	add_module_id(ModuleId).
 	
 %% ----------------------------------------------------------------------------
-% @spec make_views(Paths) -> Erlang module
+% @spec make_views(Paths) -> {ModuleId, Erlang module)
 % @doc Compile views from provided paths
 %% ----------------------------------------------------------------------------
 make_views(Paths) ->
@@ -61,12 +66,13 @@ make_views([Path | Rest], Views) ->
 
 make_view(Path) ->
 	%% TODO: Add module ID
-	ModuleId = add_module_id().
+	ModuleId = generate_module_id(),
+	add_module_id(ModuleId).
 	
 	%% TODO: Add view compiled from script
 
 %% ----------------------------------------------------------------------------
-% @spec make_controllers(Paths) -> Erlang module
+% @spec make_controllers(Paths) -> {ModuleId, Erlang module)
 % @doc Compile controllers from provided paths
 %% ----------------------------------------------------------------------------		
 make_controllers(Paths) ->
@@ -79,7 +85,8 @@ make_controllers([Path | Rest], Controllers) ->
 
 make_controller(Path) ->
 	%% TODO: Add module ID
-	ModuleId = add_module_id().
+	ModuleId = generate_module_id(),
+	add_module_id(ModuleId).
 	
 	%% TODO: Add controller standard helper function
 
@@ -88,12 +95,19 @@ make_controller(Path) ->
 %% ----------------------------------------------------------------------------
 
 %% ----------------------------------------------------------------------------
-% @spec add_module_id() -> erl_syntax() HEADER
-% @doc Compile half an erlang file into a random module
+% @spec generate_module_id() -> UUID::string()
+% @doc Generate a module id
 %% ----------------------------------------------------------------------------
-add_module_id() ->
+generate_module_id() ->
+	uuid:uuid_to_string(uuid:get_v4()).
+
+%% ----------------------------------------------------------------------------
+% @spec add_module_id() -> erl_syntax()
+% @doc Add module Erlang id header
+%% ----------------------------------------------------------------------------
+add_module_id(ModuleId) ->
 	erl_syntax:attribute(erl_syntax:atom(module), [
-		erl_syntax:atom(uuid:uuid_to_string(uuid:get_v4()))
+		erl_syntax:atom(ModuleId)
 	]).
 	
 add_model(Model, function, Arguments) ->
