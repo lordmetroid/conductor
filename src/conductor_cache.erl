@@ -36,14 +36,13 @@ init(_Arguments) ->
 	ControllerPaths = filelib:wildcard(filename:join([ControllerPath, "*"])),
 
 	%% Compile available components
-	Programs = conductor_compiler:make_programs(ProgramPaths),
-	Models = onductor_compiler:make_models(ModelPaths),
-	Views = conductor_compiler:make_views(ViewPaths),
-	Controllers = conductor_compiler:make_controllers(ControllerPaths),
+	Programs = conductor_compiler:make(ProgramPaths),
+	Models = onductor_compiler:make(ModelPaths),
+	Views = conductor_compiler:make(ViewPaths),
+	Controllers = conductor_compiler:make(ControllerPaths),
 
 	%% Cache components
 	{ok, {
-		%% TODO: Add timestamps
 		Programs,
 		Models,
 		Views,
