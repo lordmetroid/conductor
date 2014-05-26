@@ -95,4 +95,11 @@ add_module_id() ->
 	erl_syntax:attribute(erl_syntax:atom(module), [
 		erl_syntax:atom(uuid:uuid_to_string(uuid:get_v4()))
 	]).
+	
+add_model(Model, function, Arguments) ->
+	ok.
 
+add_view(View, Arguments) ->
+	ok.
+add_controller(Controller, function, Arguments) ->
+	ok.
