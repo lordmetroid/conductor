@@ -24,10 +24,10 @@ make_programs([Path | Rest], Programs) ->
 	make_programs(Rest, [make_program(Path) | Programs]).
 	
 make_program(Path) ->
-ok.
-	%% Compile a program component
-	
 	%% TODO: Add module ID
+	ModuleId = add_module_id().
+	
+	%% TODO: Check if called controllers and models exists
 	
 	%% TODO: Add execute function header
 
@@ -44,10 +44,8 @@ make_models([Path | Rest], Models) ->
 	make_models(Rest, [make_model(Path) | Models]).
 
 make_model(Path) ->
-	%% Compile a model component
-	
 	%% TODO: Add module ID
-	ModuleId = get_module_id().
+	ModuleId = add_module_id().
 	
 %% ----------------------------------------------------------------------------
 % @spec make_views
@@ -62,10 +60,8 @@ make_views([Path | Rest], Views) ->
 	make_views(Rest, [make_view(Path) | Views]).
 
 make_view(Path) ->
-	%% Compile a view component
-	
 	%% TODO: Add module ID
-	ModuleId = get_module_id().
+	ModuleId = add_module_id().
 	
 	%% TODO: Add view compiled from script
 
@@ -82,10 +78,8 @@ make_controllers([Path | Rest], Controllers) ->
 	make_controllers(Rest, [make_controller(Path) | Controllers]).
 
 make_controller(Path) ->
-	%% Compile a controller component
-	
 	%% TODO: Add module ID
-	ModuleId = get_module_id().
+	ModuleId = add_module_id().
 	
 	%% TODO: Add controller standard helper function
 
@@ -94,16 +88,11 @@ make_controller(Path) ->
 %% ----------------------------------------------------------------------------
 	
 %% ----------------------------------------------------------------------------
-% @spec module_id() -> UUID::string()
+% @spec add_module_id() -> erl_syntax() HEADER
 % @doc Compile half an erlang file into a random module
 %% ----------------------------------------------------------------------------
-get_module_id() ->
-	uuid:uuid_to_string(uuid:get_v4()).
-
-add_module_id(ModuleId) ->
+add_module_id() ->
 	erl_syntax:attribute(erl_syntax:atom(module), [
-		erl_syntax:atom(ModuleId)
+		erl_syntax:atom(uuid:uuid_to_string(uuid:get_v4()))
 	]).
 
-
-add_view() ->
