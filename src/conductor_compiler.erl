@@ -12,7 +12,7 @@ make(Paths) ->
 make([], Modules) ->
 	%% Return compiled modules
 	Modules;
-make([Path | Rest], Components) ->
+make([Path | Rest], Modules) ->
 	%% create a module from source file
 	make(Rest, [make_module(Path) | Modules]).
 
