@@ -30,6 +30,5 @@ content_types_provided(Request, Response) ->
 
 provide_content(Request, Response) ->
 	%%	Publish content to requesting client
-%	{conductor_response:get_content(Response), Request, Response}.
-{["WORKS: ", wrq:path(Request)], Request, Response}.
-
+	{conductor_response:get_content(Response), Request, Response}.
+%   {["WORKS: ", wrq:path(Request)], Request, Response}.
