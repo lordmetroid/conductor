@@ -35,18 +35,12 @@ init(_Arguments) ->
 	ViewPaths = filelib:wildcard(filename:join([ViewPath, "*"])),
 	ControllerPaths = filelib:wildcard(filename:join([ControllerPath, "*"])),
 
-	%% Compile available components
-	Programs = conductor_compiler:make(ProgramPaths),
-	Models = onductor_compiler:make(ModelPaths),
-	Views = conductor_compiler:make(ViewPaths),
-	Controllers = conductor_compiler:make(ControllerPaths),
-
-	%% Cache components
+	%% Compile and cache components
 	{ok, {
-		Programs,
-		Models,
-		Views,
-		Controllers
+		conductor_compiler:make(ProgramPaths),
+		conductor_compiler:make(ModelPaths),
+		conductor_compiler:make(ViewPaths),
+		conductor_compiler:make(ControllerPaths)
 	}}.
 
 handle_call({get_program, Program}, _From, Cache) ->
