@@ -23,24 +23,20 @@
 % @doc Compile and cache all application components available
 %% ----------------------------------------------------------------------------
 init(_Arguments) ->
-	%% Get component root paths
-	ProgramPath = conductor_settings:get(program_path),
-	ModelPath = conductor_settings:get(model_path),
-	ViewPath = conductor_settings:get(view_path),
-	ControllerPath = conductor_settings:get(controller_path),
-
-	%% Get component file paths
-	ProgramPaths = filelib:wildcard(filename:join([ProgramPath, "*"])),
-	ModelPaths = filelib:wildcard(filename:join([ModelPath, "*"])),
-	ViewPaths = filelib:wildcard(filename:join([ViewPath, "*"])),
-	ControllerPaths = filelib:wildcard(filename:join([ControllerPath, "*"])),
-
 	%% Compile and cache components
 	{ok, {
-		conductor_compiler:make(ProgramPaths),
-		conductor_compiler:make(ModelPaths),
-		conductor_compiler:make(ViewPaths),
-		conductor_compiler:make(ControllerPaths)
+		conductor_compiler:make(filelib:wildcard(filename:join([
+			conductor_settings:get(program_path), "*.erl"
+		]))),
+		conductor_compiler:make(filelib:wildcard(filename:join([
+			conductor_settings:get(model_path), "*.erl"
+		]))),
+		conductor_compiler:make(filelib:wildcard(filename:join([
+			conductor_settings:get(view_path), "*.*"
+		]))),
+		conductor_compiler:make(filelib:wildcard(filename:join([
+			conductor_settings:get(controller_path), "*.erl"
+		])))
 	}}.
 
 handle_call({get_program, Program}, _From, Cache) ->
