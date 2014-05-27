@@ -58,10 +58,12 @@ add_module_id(ModuleId) ->
 	erl_syntax:attribute(erl_syntax:atom(module), [
 		erl_syntax:atom(ModuleId)
 	]).
-	
-add_model_call(Model, function, Arguments) ->
+
+add_program_execute_function() ->
+	ok.	
+add_model_call_function() ->
 	ok.
-add_view_call(View, Arguments) ->
+add_view_call_function() ->
 	ok.
-add_controller_call(Controller, function, Arguments) ->
+add_controller_call_function() ->
 	ok.
