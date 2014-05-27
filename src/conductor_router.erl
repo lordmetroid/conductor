@@ -26,7 +26,7 @@ execute(Request, Response) ->
 					%% Add file content to the response
 					conductor_response:add_content(Filename)
 			end;
-		Program ->
+		ProgramName ->
 			%% Create a program response
 			conductor_response:create(Response, program),
 
@@ -40,7 +40,7 @@ execute(Request, Response) ->
 			},
 
 			%% Execute the program
-			ProgramModule = conductor_cache:get_program(Program),
+			ProgramModule = conductor_cache:get_program(ProgramName),
 			ProgramModule:execute(Parameters, Response)
 	end.
 
