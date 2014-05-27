@@ -11,22 +11,22 @@ run a server. See the below example configuration and explanation:
 {port, 8000}.
 
 %% Application Logs
-{log_path,               "/website/log"}.
+{log_path,               "/path_to_webapp/log"}.
 
 %% Application files
-{file_path,              "/website/files"}.
+{file_path,              "/path_to_webapp/files"}.
 
 %% Application programs
-{program_path,           "/website/programs"}.
+{program_path,           "/path_to_webapp/programs"}.
 {programs, [
     {"/",                "index.erl"},
     {"/index.html",      "index.erl"}
 ]}.
 
 %% Application program resources
-{model_path,             "/website/programs/models"}.
-{view_path,              "/website/programs/views"}.
-{controller_path,        "/website/programs/controllers"}.
+{model_path,             "/path_to_webapp/programs/models"}.
+{view_path,              "/path_to_webapp/programs/views"}.
+{controller_path,        "/path_to_webapp/programs/controllers"}.
 
 ```
 The configuration file consist of a number of value-data pairs.
@@ -44,15 +44,15 @@ javascripts, css files, etc. for the web application are stored.
 of the web application. The _program_dir_ value-data pair specifies the 
 directory where the programs are stored and the available programs are 
 specified by the _programs_ value-data pair. The _programs_ is a __list__ 
-of sets of two values. The absolute website search path and the corresponing 
-program to be executed on a request for that search path.
+of sets of two values. The absolute web application search path and the 
+corresponing program to be executed on a request for that search path.
 
 * Application program resources specifies the directories where resources 
 available to a program are stored.
 
 
 ## Execution
-> erl -pa ebin/ -run conductor -conf website.conf
+> erl -pa ebin/ -run conductor -conf webapp.conf
 
 Applications consist of four components. A Program and associated models, 
 views and controllers.
