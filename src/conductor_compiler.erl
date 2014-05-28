@@ -32,6 +32,9 @@ make_module(Path) ->
 	case ModuleLocation of
 		conductor_settings:get(program_path) ->
 			%% Compile a program module
+			add_module_attribute(ModuleId),
+			add_program_export_attribute(),
+			
 		conductor_settings:get(model_path) ->
 			%% Compile a model module
 		conductor_settings:get(view_path) ->
@@ -51,14 +54,21 @@ generate_module_id() ->
 	uuid:uuid_to_string(uuid:get_v4()).
 
 %% ----------------------------------------------------------------------------
-% @spec add_module_id() -> erl_syntax()
-% @doc Add module Erlang id header
+% @spec add_module_attribute() -> erl_syntax()
+% @doc Add an Erlang module attribute
 %% ----------------------------------------------------------------------------
-add_module_id(ModuleId) ->
+add_module_attribute(ModuleId) ->
 	erl_syntax:attribute(erl_syntax:atom(module), [
 		erl_syntax:atom(ModuleId)
 	]).
-add_module_export() ->
+
+%% PROGRAM --------------------------------------------------------------------
+	
+%% ----------------------------------------------------------------------------
+% @spec add_program_export_attribute() -> erl:syntax()
+% @doc Add an Erlang module export attribute for a program component
+%% ----------------------------------------------------------------------------
+add_program_export_attribute() ->
 	erl_syntax:attribute(erl_syntax:atom(export), [
 		erl_syntax:list([
 			erl_syntax:arity_qualifier(
@@ -68,11 +78,33 @@ add_module_export() ->
 		])
 	]).
 
-add_program_execute_function() ->
-	ok.	
+
+add_program_execute_function(Body) ->
+	erl_syntax:function(erl_syntax:atom(execute), [
+		erl_syntax:clause([
+			erl_syntax:variable("Parameters"), 
+			erl_syntax:variable("Response")
+			], [], Body
+		)
+	]).
+	
 add_model_call_function() ->
-	ok.
+	erl_syntax:function(erl_syntax:atom(model), [
+		erl_syntax:clause([
+			
+		])
+	]).
+	
 add_view_call_function() ->
-	ok.
+	erl_syntax:function(erl_syntax:atom(model), [
+		erl_syntax:clause([
+			
+		])
+	]).
+	
 add_controller_call_function() ->
-	ok.
+	erl_syntax:function(erl_syntax:atom(model), [
+		erl_syntax:clause([
+			
+		])
+	]).
