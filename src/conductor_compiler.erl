@@ -58,6 +58,15 @@ add_module_id(ModuleId) ->
 	erl_syntax:attribute(erl_syntax:atom(module), [
 		erl_syntax:atom(ModuleId)
 	]).
+add_module_export() ->
+	erl_syntax:attribute(erl_syntax:atom(export), [
+		erl_syntax:list([
+			erl_syntax:arity_qualifier(
+				erl_syntax:atom("execute"),
+				erl_syntax:integer(2)
+			)
+		])
+	]).
 
 add_program_execute_function() ->
 	ok.	
