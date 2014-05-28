@@ -26,21 +26,29 @@ make_module(Path) ->
 
 	%% Generate a dynamic module id
 	ModuleId = generate_module_id(),
-	add_module_id(ModuleId),
 
 	%% Identify module type based on location
 	case ModuleLocation of
 		conductor_settings:get(program_path) ->
-			%% Compile a program module
+			%% Compile a program
 			add_module_attribute(ModuleId),
 			add_program_export_attribute(),
+			add_controller_call_function(),
 			
 		conductor_settings:get(model_path) ->
-			%% Compile a model module
+			%% Compile a model
+			add_module_attribute(ModuleId),
+			
 		conductor_settings:get(view_path) ->
-			%% Compile a view module
+			%% Compile a view
+			add_module_attribute(ModuleId),
+			
 		conductor_settings:get(controller_path) ->
-			%% Compile a controller module
+			%% Compile a controller
+			add_module_attribute(ModuleId),
+			add_model_call_function(),
+			add_view_call_function(),
+			
 	end.
 %% ----------------------------------------------------------------------------
 % Compilation helper functions
@@ -91,20 +99,29 @@ add_program_execute_function(Body) ->
 add_model_call_function() ->
 	erl_syntax:function(erl_syntax:atom(model), [
 		erl_syntax:clause([
-			
+			erl_syntax:clause("ModelName"),
+			erl_syntax:clause("FunctionName"),
+			erl_syntax:clause("Parameters")
 		])
 	]).
 	
 add_view_call_function() ->
-	erl_syntax:function(erl_syntax:atom(model), [
+	erl_syntax:function(erl_syntax:atom(view), [
 		erl_syntax:clause([
-			
-		])
+			erl_syntax:variable("ViewName"),
+			erl_syntax:variable("Parameters"),
+			erl_syntax:variable("Response")
+		
+		], [], %% TODO: Call View
+		)
 	]).
 	
 add_controller_call_function() ->
-	erl_syntax:function(erl_syntax:atom(model), [
+	erl_syntax:function(erl_syntax:atom(controller), [
 		erl_syntax:clause([
-			
-		])
+			erl_syntax:variable("ControllerName"),
+			erl_syntax:variable("Parameters"),
+			erl_syntax:variable("Response")
+		], [], %% TODO: Call controller
+		)
 	]).
