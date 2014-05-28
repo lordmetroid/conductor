@@ -26,7 +26,7 @@ make_module(Path) ->
 
 	%% Generate a dynamic module id
 	ModuleId = generate_module_id(),
-	add_module_id(ModuleId).
+	add_module_id(ModuleId),
 
 	%% Identify module type based on location
 	case ModuleLocation of
