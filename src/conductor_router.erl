@@ -40,7 +40,7 @@ execute(Request, Response) ->
 			},
 
 			%% Execute the program
-			conductor_cache:program(ProgramName, Parameters, Response)
+			conductor_cache:execute_program(ProgramName, Parameters, Response)
 	end.
 
 %% ----------------------------------------------------------------------------
