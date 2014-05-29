@@ -12,10 +12,10 @@
 
 -export([
 	start_link/0,
-	get_program/1,
-	get_model/1,
-	get_view/1,
-	get_controller/1
+	execute_program/1,
+	execute_model/1,
+	execute_view/1,
+	execute_controller/1
 ]).
 
 %% ----------------------------------------------------------------------------
@@ -39,25 +39,25 @@ init(_Arguments) ->
 		])))
 	}}.
 
-handle_call({get_program, Program}, _From, Cache) ->
+handle_call({program, ProgramName}, _From, Cache) ->
 	{Programs,_,_,_} = Cache,
 	%% TODO: Check if file is updated and update cache
-	proplists:get_value(Program, Programs);
+	proplists:get_value(ProgramName, Programs);
 
-handle_call({get_model, Model}, _From, Cache) ->
+handle_call({model, ModelName}, _From, Cache) ->
 	{_,Models,_,_} = Cache,
 	%% TODO: Check if file is updated and update cache
-	proplists:get_value(Model, Models);
+	proplists:get_value(ModelName, Models);
 	
-handle_call({get_view, View}, _From, Cache) ->
+handle_call({view, ViewName}, _From, Cache) ->
 	{_,_,Views,_} = Cache,
 	%% TODO: Check if file is updated and update cache
 	proplists:get_value(View, Views);
 
-handle_call({get_controller, Controller}, _From, Cache) ->
+handle_call({controller, ControllerName}, _From, Cache) ->
 	{_,_,_,Controllers} = Cache,
 	%% TODO: Check if file is updated and update cache
-	proplists:get_value(Controller, Controllers);
+	proplists:get_value(ControllerName, Controllers);
 
 handle_call(_Event, _From, State) ->
 	{stop, State}.
@@ -81,14 +81,15 @@ code_change(_OldVersion, State, _Extra) ->
 start_link() ->
 	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
-get_program(Program) ->
-	gen_server:call(?MODULE, {get_program, Program}).
+program(ProgramName) ->
+	gen_server:call(?MODULE, {program, ProgramName}).
 
-get_model(Model) ->
-	get_server:call(?MODULE, {get_model, Model}).
+model(ModelName) ->
+	get_server:call(?MODULE, {model, ModelName}).
 	
-get_view(View) ->
-	get_server:call(?MODULE, {get_view, View}).
+view(ViewName) ->
+	get_server:call(?MODULE, {view, ViewName}).
 
-get_controller(Controller) ->
-	get_controller:call(?MODULE, {get_controller, Controller}).
+controller(ControllerName) ->
+	get_controller:call(?MODULE, {controller, ControllerName}).
+

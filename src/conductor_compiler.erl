@@ -100,9 +100,8 @@ add_model_call_function() ->
 	erl_syntax:function(erl_syntax:atom(model), [
 		erl_syntax:clause([
 			erl_syntax:clause("ModelName"),
-			erl_syntax:clause("FunctionName"),
 			erl_syntax:clause("Parameters")
-		])
+		],[], BODY)
 	]).
 	
 add_view_call_function() ->
@@ -111,8 +110,17 @@ add_view_call_function() ->
 			erl_syntax:variable("ViewName"),
 			erl_syntax:variable("Parameters"),
 			erl_syntax:variable("Response")
-		
-		], [], %% TODO: Call View
+		], 
+			[], 
+			erl_syntax:application(erl_syntax:module_qualifier(
+				erl_syntax:atom(conductor_cache),
+				erl_syntax:atom(view)
+				), [
+				erl_syntax:variable("ViewName"),
+				erl_syntax:varibale("Parameters"),
+				erl_syntax:variable("Response")
+			]
+			)
 		)
 	]).
 	
