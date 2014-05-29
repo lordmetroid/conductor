@@ -39,22 +39,22 @@ init(_Arguments) ->
 		])))
 	}}.
 
-handle_call({program, ProgramName}, _From, Cache) ->
+handle_call({execute_program, ProgramName}, _From, Cache) ->
 	{Programs,_,_,_} = Cache,
 	%% TODO: Check if file is updated and update cache
 	proplists:get_value(ProgramName, Programs);
 
-handle_call({model, ModelName}, _From, Cache) ->
+handle_call({execute_model, ModelName}, _From, Cache) ->
 	{_,Models,_,_} = Cache,
 	%% TODO: Check if file is updated and update cache
 	proplists:get_value(ModelName, Models);
 	
-handle_call({view, ViewName}, _From, Cache) ->
+handle_call({execute_view, ViewName}, _From, Cache) ->
 	{_,_,Views,_} = Cache,
 	%% TODO: Check if file is updated and update cache
 	proplists:get_value(View, Views);
 
-handle_call({controller, ControllerName}, _From, Cache) ->
+handle_call({execute_controller, ControllerName}, _From, Cache) ->
 	{_,_,_,Controllers} = Cache,
 	%% TODO: Check if file is updated and update cache
 	proplists:get_value(ControllerName, Controllers);
@@ -81,15 +81,15 @@ code_change(_OldVersion, State, _Extra) ->
 start_link() ->
 	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
-program(ProgramName) ->
-	gen_server:call(?MODULE, {program, ProgramName}).
+execute_program(ProgramName) ->
+	gen_server:call(?MODULE, {execute_program, ProgramName}).
 
-model(ModelName) ->
-	get_server:call(?MODULE, {model, ModelName}).
+execute_model(ModelName) ->
+	get_server:call(?MODULE, {execute_model, ModelName}).
 	
-view(ViewName) ->
-	get_server:call(?MODULE, {view, ViewName}).
+execute_view(ViewName) ->
+	get_server:call(?MODULE, {execute_view, ViewName}).
 
-controller(ControllerName) ->
-	get_controller:call(?MODULE, {controller, ControllerName}).
+execute_controller(ControllerName) ->
+	get_controller:call(?MODULE, {execute_controller, ControllerName}).
 
