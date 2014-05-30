@@ -50,10 +50,7 @@ corresponing program to be executed on a request for that search path.
 * Application program resources specifies the directories where resources 
 available to a program are stored.
 
-
-## Execution
-> erl -pa ebin/ -run conductor -conf webapp.conf
-
+## Writing a web application
 Applications consist of four components. A Program and associated models, 
 views and controllers.
 
@@ -119,3 +116,6 @@ run(Arguments, Response) ->
 	render(ViewFilename, Arguments, Response),
 	...
 ```
+
+## Execution
+> erl -pa ebin/ -run conductor -conf webapp.conf
