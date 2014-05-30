@@ -95,6 +95,9 @@ add_program_execute_function(Body) ->
 		)
 	]).
 
+add_model_execute_function() ->
+	
+
 %% ----------------------------------------------------------------------------
 % @spec add_model_function() -> erl_syntax()
 % @doc Add a model calling function to the compilation
@@ -106,7 +109,7 @@ add_model_function() ->
 			erl_syntax:variable("ModelName"),
 			erl_syntax:variable("Arguments")
 		], none, [
-			%% Model = conductor_cache:execute_model(ModelName)
+			%% Model = conductor_cache:get_model(ModelName)
 			erl_syntax:match_expr(
 				erl_syntax:variable("Model"),
 				erl_syntax:application(
@@ -129,12 +132,12 @@ add_model_function() ->
 	]).
 
 %% ----------------------------------------------------------------------------
-% @spec add_view_function() -> erl_syntax()
+% @spec add_render_function() -> erl_syntax()
 % @doc Add a view calling function to the compilation
 %% ----------------------------------------------------------------------------
-add_view_function() ->
-	%% view(ViewName, Arguments, Response) ->
-	erl_syntax:function(erl_syntax:atom(view), [
+add_render_function() ->
+	%% render(ViewName, Arguments, Response) ->
+	erl_syntax:function(erl_syntax:atom(render), [
 		erl_syntax:clause([
 			erl_syntax:variable("ViewName"),
 			erl_syntax:variable("Arguments"),
@@ -152,11 +155,11 @@ add_view_function() ->
 					]
 				)
 			),
-			%% View:execute(Arguments, Response)
+			%% View:render(Arguments, Response)
 			erl_syntax:application(
 				erl_syntax:module_qualifier(
 					erl_syntax:variable("View"),
-					erl_syntax:atom(execute)
+					erl_syntax:atom(render)
 				), [
 					erl_syntax:variable("Arguments"),
 					erl_syntax:variable("Response")
