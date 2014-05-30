@@ -75,6 +75,28 @@ execute(Parameters, Response) ->
 	...
 ```
 
+* A model is an erlang module that communicates with sources of volatile data 
+such as for example a database. The model is responsible for fetching, 
+updating and adding data. No calls except to the database shall be made.
+
+```Erlang
+-export([
+	function_1_name/1,
+	function_2_name/1,
+	function_3_name/1,
+	...
+]).
+
+function_1_name(Arguments) ->
+	%% Model code goes here
+	...
+```
+
+* A view is a scripted file in one of the supported languages specified 
+by the installed view compilers. The view must only render received data 
+and never make decisions on what data to render. All decision making is 
+done by the controller.
+
 * A controller is an erlang module that has a specific function, for example, 
 render a part of the page, add data to a database, etc. The controller contains 
 calls to various models, views and other controllers.
@@ -97,25 +119,3 @@ run(Arguments, Response) ->
 	render(ViewFilename, Arguments, Response),
 	...
 ```
-
-* A model is an erlang module that communicates with sources of volatile data 
-such as for example a database. The model is responsible for fetching, 
-updating and adding data. No calls except to the database shall be made.
-
-```Erlang
--export([
-	function_1_name/1,
-	function_2_name/1,
-	function_3_name/1,
-	...
-]).
-
-function_1_name(Arguments) ->
-	%% Model code goes here
-	...
-```
-
-* A view is a scripted file in one of the supported languages specified 
-by the installed view compilers. The view must only render received data 
-and never make decisions on what data to render. All decision making is 
-done by the controller.
