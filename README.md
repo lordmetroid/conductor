@@ -58,16 +58,62 @@ Applications consist of four components. A Program and associated models,
 views and controllers.
 
 * The program is an erlang module that is responsible for the general 
-execution of a request. The program contains calls to various controllers.
+execution of a request. The execute function receives a list of tuples 
+containing parameters which the client made and the response assembly. 
+The program contains calls to various controllers.
+
+```Erlang
+-export([
+	execute/2
+]).
+
+execute(Parameters, Response) ->
+	%% Program code goes here
+	
+	%% Call to a controller
+	run(ControllerFilename, Arguments, Response),
+	...
+```
 
 * A controller is an erlang module that has a specific function, for example, 
 render a part of the page, add data to a database, etc. The controller contains 
-calls to various model, view and other controller components. Any results 
-returned from the calls are managed by the controller.
+calls to various models, views and other controllers.
+
+```Erlang
+-export([
+	run/2
+]).
+
+run(Arguments, Response) ->
+	%% Controller code goes here
+	
+	%% Call to a controller
+	run(ControllerFilename, Arguments, Response),
+	
+	%% Call to a model
+	data(ModelFilename, FunctionName, Arguments),
+	
+	%% Call to a view
+	render(ViewFilename, Arguments, Response),
+	...
+```
 
 * A model is an erlang module that communicates with sources of volatile data 
 such as for example a database. The model is responsible for fetching, 
-updating and adding data.
+updating and adding data. No calls except to the database shall be made.
+
+```Erlange
+-export([
+	function_1_name/1,
+	function_2_name/1,
+	function_3_name/1,
+	...
+]).
+
+function_1_name(Arguments) ->
+	%% Model code goes here
+	...
+```
 
 * A view is a scripted file in one of the supported languages specified 
 by the installed view compilers. The view must only render received data 
