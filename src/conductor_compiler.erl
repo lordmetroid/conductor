@@ -72,7 +72,7 @@ add_module_attribute(ModuleId) ->
 % @doc Add a data calling function to the compilation
 %% ----------------------------------------------------------------------------
 add_data_function() ->
-	%% data(ModelName, Function, Arguments) ->
+	%% data(ModelFile, Function, Arguments) ->
 	erl_syntax:function(erl_syntax:atom(data), [
 		erl_syntax:clause([
 			erl_syntax:variable("ModelFile"),
@@ -106,7 +106,7 @@ add_data_function() ->
 % @doc Add a view render function to the compilation
 %% ----------------------------------------------------------------------------
 add_render_function() ->
-	%% render(ViewName, Arguments, Response) ->
+	%% render(ViewFile, Arguments, Response) ->
 	erl_syntax:function(erl_syntax:atom(render), [
 		erl_syntax:clause([
 			erl_syntax:variable("ViewFile"),
@@ -143,7 +143,7 @@ add_render_function() ->
 % @doc Add a run calling function to the compilation
 %% ----------------------------------------------------------------------------
 add_run_function() ->
-	%% run(ControllerName, Arguments, Response) ->
+	%% run(ControllerFile, Function, Arguments, Response) ->
 	erl_syntax:function(erl_syntax:atom(run), [
 		erl_syntax:clause([
 			erl_syntax:variable("ControllerFile"),
@@ -175,3 +175,4 @@ add_run_function() ->
 			)
 		])
 	]).
+
