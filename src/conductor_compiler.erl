@@ -147,6 +147,7 @@ add_run_function() ->
 	erl_syntax:function(erl_syntax:atom(run), [
 		erl_syntax:clause([
 			erl_syntax:variable("ControllerName"),
+			erl_syntax:variable("Function"),
 			erl_syntax:variable("Arguments"),
 			erl_syntax:variable("Response")
 		], none, [
@@ -166,7 +167,7 @@ add_run_function() ->
 			erl_syntax:application(
 				erl_syntax:module_qualifier(
 					erl_syntax:variable("Controller"),
-					erl_syntax:atom(run)
+					erl_syntax:variable("Function")
 				), [
 					erl_syntax:variable("Arguments"),
 					erl_syntax:variable("Response")

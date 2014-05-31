@@ -100,14 +100,17 @@ calls to various models, views and other controllers.
 
 ```Erlang
 -export([
-	run/2
+	function_1_name/2,
+	function_2_name/2,
+	function_3_name/2,
+	...
 ]).
 
-run(Arguments, Response) ->
+function_1_name(Arguments, Response) ->
 	%% Controller code goes here
 	
 	%% Call to a controller
-	run(ControllerFilename, Arguments, Response),
+	run(ControllerFilename, FunctionName, Arguments, Response),
 	
 	%% Call to a model
 	data(ModelFilename, FunctionName, Arguments),
