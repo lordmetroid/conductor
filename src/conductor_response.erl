@@ -61,25 +61,25 @@ undefined(_Event, _From, State) ->
 %% ----------------------------------------------------------------------------
 % File response
 %% ----------------------------------------------------------------------------
-file(get_mime_type, _From, {_Binary, Filename}) ->
+file(get_mime_type, _From, {_Binary, FilePath}) ->
 	%% Get file mime type
-	case mimetypes:filename(Filename) of
+	case mimetypes:filename(FilePath) of
 		undefined ->
 			{reply, "text/html", file, Filename};
 		MimeType ->
 			{reply, MimeType, file, Filename}
 	end;
 
-file({add_content, Filename}, _From, {Binary, _Filename}) ->
+file({add_content, FilePath}, _From, {Binary, _FilePath}) ->
 	%% TODO: Add binary content
-	{reply, ok, file, {Binary, Filename}};
+	{reply, ok, file, {Binary, FilePath}};
 
-file(get_content, _From, {Binary, Filename}) ->
+file(get_content, _From, {Binary, FilePath}) ->
 	%% Get and resrt file binary
-	{reply, Binary, file, {[], Filename}};
+	{reply, Binary, file, {[], FilePath}};
 
-file(_Event, _From, {Binary, Filename}) ->
-	{reply, error, file, {Binary, Filename}}.
+file(_Event, _From, {Binary, FilePath}) ->
+	{reply, error, file, {Binary, FilePath}}.
 
 %% ----------------------------------------------------------------------------
 % Program response

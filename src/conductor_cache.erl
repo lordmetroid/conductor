@@ -26,38 +26,47 @@ init(_Arguments) ->
 	%% Compile and cache components
 	{ok, {
 		conductor_compiler:make(filelib:wildcard(filename:join([
-			conductor_settings:get(program_path), "*.erl"
+			conductor_settings:get(program_root), "*.erl"
 		]))),
 		conductor_compiler:make(filelib:wildcard(filename:join([
-			conductor_settings:get(model_path), "*.erl"
+			conductor_settings:get(model_root), "*.erl"
 		]))),
 		conductor_compiler:make(filelib:wildcard(filename:join([
-			conductor_settings:get(view_path), "*.*"
+			conductor_settings:get(view_root), "*.*"
 		]))),
 		conductor_compiler:make(filelib:wildcard(filename:join([
-			conductor_settings:get(controller_path), "*.erl"
+			conductor_settings:get(controller_root), "*.erl"
 		])))
 	}}.
 
-handle_call({get_program, ProgramName}, _From, Cache) ->
+handle_call({get_program, ProgramFile}, _From, Cache) ->
 	{Programs,_,_,_} = Cache,
-	%% TODO: Check if file is updated and update cache
-	proplists:get_value(ProgramName, Programs);
+	case proplists:get_value(ProgramFile, Programs) of
+		undefined ->
+		{Program, Date} ->
+			%% Check if cached program is up to date
+			ProgramRoot = conductor_settings:get(program_root),
+			ProgramPath = filename:join([ProgramRoot, ProgramFile])
 
-handle_call({get_model, ModelName}, _From, Cache) ->
+	end
+
+
+
+
+handle_call({get_model, ModelFile}, _From, Cache) ->
 	{_,Models,_,_} = Cache,
 	%% TODO: Check if file is updated and update cache
-	proplists:get_value(ModelName, Models);
+	proplists:get_value(ModelFile, Models);
 	
-handle_call({get_view, ViewName}, _From, Cache) ->
+handle_call({get_view, ViewFile}, _From, Cache) ->
 	{_,_,Views,_} = Cache,
 	%% TODO: Check if file is updated and update cache
-	proplists:get_value(View, Views);
+	proplists:get_value(ViewFile, Views);
 
-handle_call({get_controller, ControllerName}, _From, Cache) ->
+handle_call({get_controller, ControllerFile}, _From, Cache) ->
 	{_,_,_,Controllers} = Cache,
 	%% TODO: Check if file is updated and update cache
-	proplists:get_value(ControllerName, Controllers);
+	proplists:get_value(ControllerFile, Controllers);
 
 handle_call(_Event, _From, State) ->
 	{stop, State}.
@@ -85,11 +94,11 @@ start_link() ->
 % @spec get_...() ->
 % @doc Get the cached web application file
 %% ----------------------------------------------------------------------------
-get_program(ProgramName) ->
-	gen_server:call(?MODULE, {get_program, ProgramName}).
-get_model(ModelName) ->
-	get_server:call(?MODULE, {get_model, ModelName}).
-get_view(ViewName) ->
-	get_server:call(?MODULE, {get_view, ViewName}).
-get_controller(ControllerName) ->
-	get_controller:call(?MODULE, {get_controller, ControllerName}).
+get_program(ProgramFile) ->
+	gen_server:call(?MODULE, {get_program, ProgramFile}).
+get_model(ModelFile) ->
+	get_server:call(?MODULE, {get_model, ModelFile}).
+get_view(ViewFile) ->
+	get_server:call(?MODULE, {get_view, ViewFile}).
+get_controller(ControllerFile) ->
+	get_controller:call(?MODULE, {get_controller, ControllerFile}).

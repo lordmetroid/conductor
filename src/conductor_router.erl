@@ -8,13 +8,13 @@
 
 execute(Request, Response) ->
 	%% Find a matching response to the request
-	RequestPath = wrq:path(Request),
-	case proplists:get_value(RequestPath, conductor_settings:get(programs)) of
+	Name = wrq:path(Request),
+	case proplists:get_value(Name, conductor_settings:get(programs)) of
 		%% Request is not a program
 		undefined ->
 			%% Check if request is a regular file
-			Filename = filename:join(conductor_settings:get(file_path), Path),
-			case filelib:is_regular(Filename) of
+			FilePath = filename:join(conductor_settings:get(file_root), Name),
+			case filelib:is_regular(FilePath) of
 				false ->
 					%% Request not found
 					%% TODO: Create 404 response
@@ -24,9 +24,9 @@ execute(Request, Response) ->
 					conductor_response:create(Response, file),
 			
 					%% Add file content to the response
-					conductor_response:add_content(Filename)
+					conductor_response:add_content(FilePath)
 			end;
-		ProgramName ->
+		ProgramFile ->
 			%% Create a program response
 			conductor_response:create(Response, program),
 
@@ -40,7 +40,7 @@ execute(Request, Response) ->
 			},
 
 			%% Execute the program
-			Program = conductor_cache:get_program(ProgramName),
+			Program = conductor_cache:get_program(ProgramFile),
 			Program:execute(Parameters, Response)
 	end.
 

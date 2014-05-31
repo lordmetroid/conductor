@@ -11,22 +11,22 @@ run a server. See the below example configuration and explanation:
 {port, 8000}.
 
 %% Application Logs
-{log_path,               "/path_to_webapp/log"}.
+{log_root,               "/path_to_webapp/log"}.
 
 %% Application files
-{file_path,              "/path_to_webapp/files"}.
+{file_root,              "/path_to_webapp/files"}.
 
 %% Application programs
-{program_path,           "/path_to_webapp/programs"}.
+{program_root,           "/path_to_webapp/programs"}.
 {programs, [
     {"/",                "index.erl"},
     {"/index.html",      "index.erl"}
 ]}.
 
 %% Application program resources
-{model_path,             "/path_to_webapp/programs/models"}.
-{view_path,              "/path_to_webapp/programs/views"}.
-{controller_path,        "/path_to_webapp/programs/controllers"}.
+{model_root,             "/path_to_webapp/programs/models"}.
+{view_root,              "/path_to_webapp/programs/views"}.
+{controller_root,        "/path_to_webapp/programs/controllers"}.
 
 ```
 The configuration file consist of a number of value-data pairs.
@@ -68,7 +68,7 @@ execute(Parameters, Response) ->
 	%% Program code goes here
 	
 	%% Call to a controller
-	run(ControllerFilename, Arguments, Response),
+	run(ControllerFile, Arguments, Response),
 	...
 ```
 
@@ -110,13 +110,13 @@ function_1_name(Arguments, Response) ->
 	%% Controller code goes here
 	
 	%% Call to a controller
-	run(ControllerFilename, FunctionName, Arguments, Response),
+	run(ControllerFile, FunctionName, Arguments, Response),
 	
 	%% Call to a model
-	data(ModelFilename, FunctionName, Arguments),
+	data(ModelFile, FunctionName, Arguments),
 	
 	%% Call to a view
-	render(ViewFilename, Arguments, Response),
+	render(ViewFile, Arguments, Response),
 	...
 ```
 

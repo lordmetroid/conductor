@@ -81,7 +81,7 @@ start_server() ->
 		%% Server settings
 		{ip, conductor_settings:get(ip)},
 		{port, conductor_settings:get(port)},
-		{log_dir, conductor_settings:get(log_dir)},
+		{log_root, conductor_settings:get(log_root)},
 
 		%% Resource dispatcher
 		{dispatch, [
