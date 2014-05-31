@@ -75,11 +75,11 @@ add_data_function() ->
 	%% data(ModelName, Function, Arguments) ->
 	erl_syntax:function(erl_syntax:atom(data), [
 		erl_syntax:clause([
-			erl_syntax:variable("ModelName"),
+			erl_syntax:variable("ModelFilename"),
 			erl_syntax:variable("Function"),
 			erl_syntax:variable("Arguments")
 		], none, [
-			%% Model = conductor_cache:get_model(ModelName)
+			%% Model = conductor_cache:get_model(ModelFilename)
 			erl_syntax:match_expr(
 				erl_syntax:variable("Model"),
 				erl_syntax:application(
@@ -87,7 +87,7 @@ add_data_function() ->
 						erl_syntax:atom(conductor_cache),
 						erl_syntax:atom(get_model)
 					), [
-						erl_syntax:variable("ModelName")
+						erl_syntax:variable("ModelFilename")
 					]
 				)
 			),
@@ -109,11 +109,11 @@ add_render_function() ->
 	%% render(ViewName, Arguments, Response) ->
 	erl_syntax:function(erl_syntax:atom(render), [
 		erl_syntax:clause([
-			erl_syntax:variable("ViewName"),
+			erl_syntax:variable("ViewFilename"),
 			erl_syntax:variable("Arguments"),
 			erl_syntax:variable("Response")
 		], none, [
-			%% View = conductor_cache:get_view(ViewName)
+			%% View = conductor_cache:get_view(ViewFilename)
 			erl_syntax:match_expr(
 				erl_syntax:variable("View"),
 				erl_syntax:application(
@@ -121,7 +121,7 @@ add_render_function() ->
 						erl_syntax:atom(conductor_cache),
 						erl_syntax:atom(get_view)
 					), [
-						erl_syntax:variable("ViewName")
+						erl_syntax:variable("ViewFilename")
 					]
 				)
 			),
@@ -146,12 +146,12 @@ add_run_function() ->
 	%% run(ControllerName, Arguments, Response) ->
 	erl_syntax:function(erl_syntax:atom(run), [
 		erl_syntax:clause([
-			erl_syntax:variable("ControllerName"),
+			erl_syntax:variable("ControllerFilename"),
 			erl_syntax:variable("Function"),
 			erl_syntax:variable("Arguments"),
 			erl_syntax:variable("Response")
 		], none, [
-			%% Controller = conductor_cache:get_controller(ControllerName)
+			%% Controller = conductor_cache:get_controller(ControllerFilename)
 			erl_syntax:match_expr(
 				erl_syntax:variable("Controller"),
 				erl_syntax:application(
@@ -159,11 +159,11 @@ add_run_function() ->
 						erl_syntax:atom(conductor_cache),
 						erl_syntax:atom(get_controller)
 					), [
-						erl_syntax:variable("ControllerName")
+						erl_syntax:variable("ControllerFilename")
 					]
 				)
 			),
-			%% Controller:run(Arguments, Response)
+			%% Controller:Function(Arguments, Response)
 			erl_syntax:application(
 				erl_syntax:module_qualifier(
 					erl_syntax:variable("Controller"),
