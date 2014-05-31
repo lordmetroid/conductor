@@ -8,8 +8,8 @@
 
 execute(Request, Response) ->
 	%% Find a matching response to the request
-	Path = wrq:path(Request),
-	case proplists:get_value(Path, conductor_settings:get(programs)) of
+	RequestPath = wrq:path(Request),
+	case proplists:get_value(RequestPath, conductor_settings:get(programs)) of
 		%% Request is not a program
 		undefined ->
 			%% Check if request is a regular file
