@@ -9,7 +9,7 @@
 execute(Request, Response) ->
 	%% Find a matching response to the request
 	Path = wrq:path(Request),
-	case lists:keyfind(Name, 1, conductor_settings:get(programs)) of
+	case lists:keyfind(Path, 1, conductor_settings:get(programs)) of
 		%% Request is not a program
 		false ->
 			%% Check if request is a regular file
@@ -26,7 +26,7 @@ execute(Request, Response) ->
 					%% Add file content to the response
 					conductor_response:add_content(FilePath)
 			end;
-		{_, ProgramFile} ->
+		{Path, ProgramFile} ->
 			%% Create a program response
 			conductor_response:create(Response, program),
 
@@ -40,8 +40,14 @@ execute(Request, Response) ->
 			},
 
 			%% Execute the program
-			Program = conductor_cache:get_program(ProgramFile),
-			Program:execute(Parameters, Response)
+			case conductor_cache:get_program(ProgramFile) of
+				false ->
+					%% Resource is gone!
+					%% TODO: Create 410 response
+
+				Program ->
+					Program:execute(Parameters, Response)
+			end
 	end.
 
 %% ----------------------------------------------------------------------------
