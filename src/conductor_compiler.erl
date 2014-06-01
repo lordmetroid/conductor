@@ -66,7 +66,9 @@ add_module_attribute(ModuleId) ->
 	erl_syntax:attribute(erl_syntax:atom(module), [
 		erl_syntax:atom(ModuleId)
 	]).
-	
+
+%% TODO: What if Model, View or Controller and function does not exist???
+
 %% ----------------------------------------------------------------------------
 % @spec add_data_function() -> erl_syntax()
 % @doc Add a data calling function to the compilation
