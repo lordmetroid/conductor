@@ -40,7 +40,7 @@ init(_Arguments) ->
 	}}.
 
 handle_call({get_program, ProgramFile}, _From, Cache) ->
-	{Programs,_,_,_} = Cache,
+	{Programs,Models,Views,Controllers} = Cache,
 	%% Check if cached program is up to date
 	ProgramRoot = conductor_settings:get(program_root),
 	ProgramPath = filename:join([ProgramRoot, ProgramFile])
@@ -49,22 +49,43 @@ handle_call({get_program, ProgramFile}, _From, Cache) ->
 		false ->
 			%% Program does not exist in cache
 			{Program, Date} = conductor_compiler:make(ProgramPath),
+			NewProgram = {ProgramFile, {Program, Date}},
+			NewCache = {[NewProgram, Programs],Models,Views,Controllers},
+			{reply, NewProgram, NewCache};
 
-			{reply, Program, 
-		{_, {Program, Date}} ->
+		{ProgramFile, {Program, Date}} ->
 			case filelib:last_modified(ProgramPath) of
 				0 ->
-					%% Program file does not exist
+					%% Remove deleted program files from cache
+					NewCache = lists:keydelete(ProgramFile, 1, Programs),
+					{reply, false, NewCache}
 				Date ->
 					%% Program is up to date
-					Program
-				Update ->
-					%% Program is outdated
-					conductor_compiler:make(ProgramPath),
+					{repy, Program, {Cache};
+				Updated ->
+					%% Update cache with new programfile
+					{NewProgram, Date} = conductor_compiler:make(ProgramPath),
+					replace(program, ProgramFile, {NewProgram, Date}, Cache),
 
+					{reply, NewProgram, NewCache}
 			end
 	end.
 
+replace(Type, Key, NewValue, {Programs,Models,Views,Controllers}) ->
+	case Type of
+		program ->
+			NewPrograms = lists:keyreplace(Key, 1, Programs, NewValue),
+			{NewPrograms,Models,Views,Controllers};
+		model ->
+			NewModels = lists:keyreplace(Key, 1, Models, NewValue),
+			{Programs,NewModels,Views,Controllers};
+		view ->
+			NewViews = lists:keyreplace(Key, 1, Views, NewValue),
+			{Programs,Models,NewViews,Controllers};
+		controller ->
+			NewControllers = lists:keyreplace(Key, 1, Controllers, NewValue),
+			{Programs,Models,Views,NewControllers}
+	end.	
 
 handle_call({get_model, ModelFile}, _From, Cache) ->
 	{_,Models,_,_} = Cache,
@@ -92,6 +113,8 @@ terminate(_Reason, _State) ->
 
 code_change(_OldVersion, State, _Extra) ->
 	{ok, State}.
+
+
 
 %% ----------------------------------------------------------------------------
 % @spec start() ->
