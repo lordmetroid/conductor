@@ -47,27 +47,57 @@ handle_call({get_program, ProgramFile}, _From, Caches) ->
 
 	case update_cache(ProgramFile, ProgramPath, Programs) of
 		false ->
-			%% ProgramPath does not exist
+			%% Program does not exist
 			{reply, false, Caches};
 		{Program, NewPrograms} ->
 			%% Program found and cache has been updated
 			{reply, Program, {NewPrograms, M,V,C}}
 	end;
+
 handle_call({get_model, ModelFile}, _From, Caches) ->
-	
+	{P,Models,V,C} = Caches,
 
+	ModelRoot = conductor_settings:get(model_root),
+	ModelPath = filename:join([ModelRoot, ModelFile]),
 
-handle_call({get_model, ModelFile}, _From, Cache) ->
-	{_,Models,_,_} = Cache,
-	%% TODO: Check if file is updated and update cache
-	
-handle_call({get_view, ViewFile}, _From, Cache) ->
-	{_,_,Views,_} = Cache,
-	%% TODO: Check if file is updated and update cache
+	case update_cache(ModelFile, ModelPath, Models) of
+		false ->
+			%% Model does not exist
+			{reply, false, Caches};
+		{Model, NewModels} ->
+			%% Model found and cache has been updated
+			{reply, Model, {P,NewModels,V,C}
+	end;
 
-handle_call({get_controller, ControllerFile}, _From, Cache) ->
-	{_,_,_,Controllers} = Cache,
-	%% TODO: Check if file is updated and update cache
+handle_call({get_view, ViewFile}, _From, Caches) ->
+	{P,M,Views,C} = Cache,
+
+	ViewRoot = conductor_settings:get(view_root),
+	ViewPath = filename:join([ViewRoot, ViewFile]),
+
+	case update_cache(ViewFile, ViewPath, Views) of
+		false ->
+			%% View does not exist
+			{reply, false, Caches};
+		{View, NewViews} ->
+			%% View found and cache has been updated
+			{reply, View, {P,M,NewViews,C}
+	end;
+
+handle_call({get_controller, ControllerFile}, _From, Caches) ->
+	{P,M,V,Controllers} = Cache,
+
+	ControllerRoot = conductor_settings:get(controller_root),
+	ControllerPath = filename:join([ControllerRoot, ControllerFile]),
+
+	case update_cache(ControllerFile, ControllerPath, Controllers) of
+		false ->
+			%% Controller does not exist
+			{reply, false, Caches};
+		{Controller, NewControllers}
+			%% Controller found and cache has been updated
+			{reply, Controller, {P,M,V,NewControllers}
+	end;
 
 handle_call(_Event, _From, State) ->
 	{stop, State}.
