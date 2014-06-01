@@ -20,10 +20,10 @@
 
 %% ----------------------------------------------------------------------------
 % @spec
-% @doc Compile and cache all application components available
+% @doc Compile and cache all web application files available
 %% ----------------------------------------------------------------------------
 init(_Arguments) ->
-	%% Compile and cache components
+	%% Compile and cache modules
 	{ok, {
 		conductor_compiler:make(filelib:wildcard(filename:join([
 			conductor_settings:get(program_root), "*.erl"
@@ -39,53 +39,23 @@ init(_Arguments) ->
 		])))
 	}}.
 
-handle_call({get_program, ProgramFile}, _From, Cache) ->
-	{Programs,Models,Views,Controllers} = Cache,
-	%% Check if cached program is up to date
+handle_call({get_program, ProgramFile}, _From, Caches) ->
+	{Programs, M,V,C} = Caches,
+	
 	ProgramRoot = conductor_settings:get(program_root),
-	ProgramPath = filename:join([ProgramRoot, ProgramFile])
-			
-	case lists:keyfind(ProgramFile, 1, Programs) of
+	ProgramPath = filename:join([ProgramRoot, ProgramFile]),
+
+	case update_cache(ProgramFile, ProgramPath, Programs) of
 		false ->
-			%% Program does not exist in cache
-			{Program, Date} = conductor_compiler:make(ProgramPath),
-			NewProgram = {ProgramFile, {Program, Date}},
-			NewCache = {[NewProgram, Programs],Models,Views,Controllers},
-			{reply, NewProgram, NewCache};
+			%% ProgramPath does not exist
+			{reply, false, Caches};
+		{Program, NewPrograms} ->
+			%% Program found and cache has been updated
+			{reply, Program, {NewPrograms, M,V,C}}
+	end;
+handle_call({get_model, ModelFile}, _From, Caches) ->
+	
 
-		{ProgramFile, {Program, Date}} ->
-			case filelib:last_modified(ProgramPath) of
-				0 ->
-					%% Remove deleted program files from cache
-					NewCache = lists:keydelete(ProgramFile, 1, Programs),
-					{reply, false, NewCache}
-				Date ->
-					%% Program is up to date
-					{repy, Program, {Cache};
-				Updated ->
-					%% Update cache with new programfile
-					{NewProgram, Date} = conductor_compiler:make(ProgramPath),
-					replace(program, ProgramFile, {NewProgram, Date}, Cache),
-
-					{reply, NewProgram, NewCache}
-			end
-	end.
-
-replace(Type, Key, NewValue, {Programs,Models,Views,Controllers}) ->
-	case Type of
-		program ->
-			NewPrograms = lists:keyreplace(Key, 1, Programs, NewValue),
-			{NewPrograms,Models,Views,Controllers};
-		model ->
-			NewModels = lists:keyreplace(Key, 1, Models, NewValue),
-			{Programs,NewModels,Views,Controllers};
-		view ->
-			NewViews = lists:keyreplace(Key, 1, Views, NewValue),
-			{Programs,Models,NewViews,Controllers};
-		controller ->
-			NewControllers = lists:keyreplace(Key, 1, Controllers, NewValue),
-			{Programs,Models,Views,NewControllers}
-	end.	
 
 handle_call({get_model, ModelFile}, _From, Cache) ->
 	{_,Models,_,_} = Cache,
@@ -101,6 +71,36 @@ handle_call({get_controller, ControllerFile}, _From, Cache) ->
 
 handle_call(_Event, _From, State) ->
 	{stop, State}.
+
+update_cache(File, FilePath, Cache)
+	case lists:keyfind(File,1, Cache) of
+		false ->
+			case filelib:last_modified(FilePath) of
+				0 ->
+					%% File does exists in cache nor in filesystem
+					false;
+				Date ->
+					%% Cache new file from filesystem
+					NewModule = conductor_compiler:make(ProgramPath),
+					{NewModule, [NewModule, Cache]}
+			end;
+		{File, {Module, Date}} ->
+			case filelib:last_modified(FilePath) of
+				0 ->
+					%% Remove deleted file from cache
+					NewCache = lists:keydelete(File, 1, Cache),
+					false;
+				Date ->
+					%% Cache is up to date
+					{Module, Cache};
+				NewDate ->
+					%% Update cache with new file
+					NewModule = conductor_compiler:make(FilePath),
+					NewEntry = {NewModule, NewDate},
+					{NewModule, lists:keyreplace(File, 1, NewEntry)}
+			end
+	end.
+
 
 handle_cast(_Event, State) ->
 	{stop, State}.
