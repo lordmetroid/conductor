@@ -30,10 +30,10 @@ init(_Arguments) ->
 
 handle_call({get, Parameter}, _From, Settings) ->
 	%% TODO: Check if file has been updated
-	case proplists:get_value(Parameter, Settings) of
-		undefined ->
+	case lists:keyfind(Parameter, 1, Settings) of
+		false ->
 			{reply, undefined, Settings};
-		Value ->
+		{_, Value} ->
 			{reply, Value, Settings}
 	end;
 

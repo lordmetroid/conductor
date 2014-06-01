@@ -41,32 +41,42 @@ init(_Arguments) ->
 
 handle_call({get_program, ProgramFile}, _From, Cache) ->
 	{Programs,_,_,_} = Cache,
-	case proplists:get_value(ProgramFile, Programs) of
-		undefined ->
-		{Program, Date} ->
-			%% Check if cached program is up to date
-			ProgramRoot = conductor_settings:get(program_root),
-			ProgramPath = filename:join([ProgramRoot, ProgramFile])
+	%% Check if cached program is up to date
+	ProgramRoot = conductor_settings:get(program_root),
+	ProgramPath = filename:join([ProgramRoot, ProgramFile])
+			
+	case lists:keyfind(ProgramFile, 1, Programs) of
+		false ->
+			%% Program does not exist in cache
+			{Program, Date} = conductor_compiler:make(ProgramPath),
 
-	end
+			{reply, Program, 
+		{_, {Program, Date}} ->
+			case filelib:last_modified(ProgramPath) of
+				0 ->
+					%% Program file does not exist
+				Date ->
+					%% Program is up to date
+					Program
+				Update ->
+					%% Program is outdated
+					conductor_compiler:make(ProgramPath),
 
-
+			end
+	end.
 
 
 handle_call({get_model, ModelFile}, _From, Cache) ->
 	{_,Models,_,_} = Cache,
 	%% TODO: Check if file is updated and update cache
-	proplists:get_value(ModelFile, Models);
 	
 handle_call({get_view, ViewFile}, _From, Cache) ->
 	{_,_,Views,_} = Cache,
 	%% TODO: Check if file is updated and update cache
-	proplists:get_value(ViewFile, Views);
 
 handle_call({get_controller, ControllerFile}, _From, Cache) ->
 	{_,_,_,Controllers} = Cache,
 	%% TODO: Check if file is updated and update cache
-	proplists:get_value(ControllerFile, Controllers);
 
 handle_call(_Event, _From, State) ->
 	{stop, State}.

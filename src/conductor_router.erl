@@ -8,12 +8,12 @@
 
 execute(Request, Response) ->
 	%% Find a matching response to the request
-	Name = wrq:path(Request),
-	case proplists:get_value(Name, conductor_settings:get(programs)) of
+	Path = wrq:path(Request),
+	case lists:keyfind(Name, 1, conductor_settings:get(programs)) of
 		%% Request is not a program
-		undefined ->
+		false ->
 			%% Check if request is a regular file
-			FilePath = filename:join(conductor_settings:get(file_root), Name),
+			FilePath = filename:join(conductor_settings:get(file_root), Path),
 			case filelib:is_regular(FilePath) of
 				false ->
 					%% Request not found
@@ -26,7 +26,7 @@ execute(Request, Response) ->
 					%% Add file content to the response
 					conductor_response:add_content(FilePath)
 			end;
-		ProgramFile ->
+		{_, ProgramFile} ->
 			%% Create a program response
 			conductor_response:create(Response, program),
 
