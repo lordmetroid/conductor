@@ -52,9 +52,10 @@ execute_program(Request, Response) ->
 					case erlang:function_exported(Program, execute, 2) of
 						false ->
 							%% Program file is incorrect
-							%% TODO:Create "500 Internal Server Error" response
+							%% TODO: Create "500 Internal Server Error" response
 							%% TODO: Write to log file
 						true ->
+							%% Execute program
 							Program:execute(Parameters, Response)
 					end
 			end
@@ -63,19 +64,55 @@ execute_program(Request, Response) ->
 execute_model(ModelFile, Function, Arguments) ->
 	case conductor_cache:get_model(ModelFile) of
 		false ->
-		
+			%% Model file does not exist
+			%% TODO: Create "410 Gone" response
+			%% TODO: Write to log file
 		Model ->
+			case erlang:function_exported(Model, Function, 1) of
+				false ->
+					%% Model file is incorrect
+					%% TODO: Create "500 Internal Server Error" response
+					%% TODO: Write to log file
+				true ->
+					%% Execute model
+					Model:Function(Arguments)
+			end
 	end.
-execute_view(ViewFile, Arguments) ->
+
+execute_view(ViewFile, Arguments, Response) ->
 	case conductor_cache:get_view(ViewFile) of
 		false ->
-		
+			%% View file does not exist
+			%% TODO: Create "410 Gone" response
+			%% TODO: Write to log file
 		View ->
+			case erlang:function_exported(View, render, 2) of
+				false ->
+					%% View file is incorrect
+					%% TODO: Create "500 Internal Server Error" response
+					%% TODO: Write to log file
+				true ->
+					%% Execute view
+					View:render(Arguments, Response)
+			end
 	end.
-execute_controller(ControllerFile, Function, Arguments) ->
+
+execute_controller(ControllerFile, Function, Arguments, Response) ->
 	case conductor_cache:get_controller(ControllerFile) of
 		false ->
+			%% Controller file does not exist
+			%% TODO: Create "410 Gone" response
+			%% TODO: Write to log file
 		Controller ->
+			case erlang:function_exported(Controller, Function, 2) of
+				false ->
+					%% Controller file is incorrect
+					%% TODO: Create "500 Internal Server Error" response
+					%% TODO: Write to log file
+				true ->
+					%% Execute controller
+					Controller:Function(Arguments, Response)
+			end
 	end.
 	
 %% ----------------------------------------------------------------------------
