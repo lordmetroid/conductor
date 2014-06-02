@@ -16,7 +16,7 @@ init(_Configurations) ->
 
 service_available(Request, Response) ->
 	%% Compile response by exceuting request
-	conductor_router:execute(Request, Response),
+	conductor_router:execute_program(Request, Response),
 	{true, Request, Response}.
 
 options(Request, Response) ->

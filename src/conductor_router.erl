@@ -1,12 +1,15 @@
 -module(conductor_router).
 
 -export([
-	execute/2
+	execute_program/2,
+	execute_model/3,
+	execute_view/2,
+	execute_controller/3
 ]).
 
 -include_lib("webmachine/include/webmachine.hrl").
 
-execute(Request, Response) ->
+execute_program(Request, Response) ->
 	%% Find a matching response to the request
 	Path = wrq:path(Request),
 	case lists:keyfind(Path, 1, conductor_settings:get(programs)) of
@@ -57,6 +60,24 @@ execute(Request, Response) ->
 			end
 	end.
 
+execute_model(ModelFile, Function, Arguments) ->
+	case conductor_cache:get_model(ModelFile) of
+		false ->
+		
+		Model ->
+	end.
+execute_view(ViewFile, Arguments) ->
+	case conductor_cache:get_view(ViewFile) of
+		false ->
+		
+		View ->
+	end.
+execute_controller(ControllerFile, Function, Arguments) ->
+	case conductor_cache:get_controller(ControllerFile) of
+		false ->
+		Controller ->
+	end.
+	
 %% ----------------------------------------------------------------------------
 % @spec
 % @doc Get cookies from request

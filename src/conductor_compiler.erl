@@ -80,65 +80,16 @@ add_data_function() ->
 			erl_syntax:variable("Function"),
 			erl_syntax:variable("Arguments")
 		], none, [
-			%% case conductor_cache:get_model(ModelFile) of
-			erl_syntax:case_expr(
-				erl_syntax:application(
-					erl_syntax:module_qualifier(
-						erl_syntax:atom(conductor_cache),
-						erl_syntax:atom(get_model)
-					), [
-						erl_syntax:variable("ModelFile")
-					]
+			%% conductor_router:execute_model(ModelFile, Function, Arguments)
+			erl_syntax:application(
+				erl_syntax:module_qualifier(
+					erl_syntax:atom(conductor_router),
+					erl_syntax:atom(execute_model),
 				), [
-					%% false ->
-					erl_syntax:clause([
-						erl_syntax:atom(false)
-					], none, [
-						%% Model does not exists
-						%% TODO: Write in log file
-					]),
-					%% Model ->
-					erl_syntax:clause([
-						erl_syntax:variable("Model")
-					], none, [
-						%% case erlang:function_exported(Model, Function, 1) of
-						erl_syntax:case_expr(
-							erl_syntax:application(
-								erl_syntax:module_qualifier(
-									erl_syntax:atom(erlang),
-									erl_syntax:atom(function_exported)
-								), [
-									erl_syntax:variable("Model"),
-									erl_syntax:variable("Function"),
-									erl_syntax:integer(1)
-								]
-							), [
-								%% false ->
-								erl_syntax:clause([
-									erl_syntax:atom(false)
-								], none, [
-									%% Model file not formatted correctly
-									%% TODO: Write to log file
-								]),
-								%% true ->
-								erl_syntax:clause([
-									erl_syntax:atom(true)
-								], none, [
-									%% Model:Function(Arguments)
-									erl_syntax:application(
-										erl_syntax:module_qualifier(
-											erl_syntax:variable("Model"),
-											erl_syntax:variable("Function"), 
-										), [
-											erl_syntax:variable("Arguments")
-										]
-									)
-								])
-							]
-						)
-					])
-				]
-			)
+				erl_syntax:variable("ModelFile"),
+				erl_syntax:variable("Function"),
+				erl_syntax:variable("Arguments")
+			])
 		])
 	]).
 
@@ -154,28 +105,16 @@ add_render_function() ->
 			erl_syntax:variable("Arguments"),
 			erl_syntax:variable("Response")
 		], none, [
-			%% View = conductor_cache:get_view(ViewFile)
-			erl_syntax:match_expr(
-				erl_syntax:variable("View"),
-				erl_syntax:application(
-					erl_syntax:module_qualifier(
-						erl_syntax:atom(conductor_cache),
-						erl_syntax:atom(get_view)
-					), [
-						erl_syntax:variable("ViewFile")
-					]
-				)
-			),
-			%% View:render(Arguments, Response)
+			%% conductor_router:execute_view(ViewFile, Arguments, Response)
 			erl_syntax:application(
 				erl_syntax:module_qualifier(
-					erl_syntax:variable("View"),
-					erl_syntax:atom(render)
+					erl_syntax:atom(conductor_router),
+					erl_syntax:atom(execute_view),
 				), [
-					erl_syntax:variable("Arguments"),
-					erl_syntax:variable("Response")
-				]
-			)
+				erl_syntax:variable("ViewFile"),
+				erl_syntax:variable("Arguments"),
+				erl_syntax:variable("Response")
+			])
 		])
 	]).
 
@@ -192,28 +131,18 @@ add_run_function() ->
 			erl_syntax:variable("Arguments"),
 			erl_syntax:variable("Response")
 		], none, [
-			%% Controller = conductor_cache:get_controller(ControllerFile)
-			erl_syntax:match_expr(
-				erl_syntax:variable("Controller"),
-				erl_syntax:application(
-					erl_syntax:module_qualifier(
-						erl_syntax:atom(conductor_cache),
-						erl_syntax:atom(get_controller)
-					), [
-						erl_syntax:variable("ControllerFile")
-					]
-				)
-			),
-			%% Controller:Function(Arguments, Response)
+			%% conductor_router:execute_controller(
+			%% 		ControllerFile, Function, Arguments, Response
+			%% )
 			erl_syntax:application(
 				erl_syntax:module_qualifier(
-					erl_syntax:variable("Controller"),
-					erl_syntax:variable("Function")
+					erl_syntax:atom(conductor_router),
+					erl_syntax:atom(execute_controller),
 				), [
-					erl_syntax:variable("Arguments"),
-					erl_syntax:variable("Response")
-				]
-			)
+				erl_syntax:variable("ControllerFile"),
+				erl_syntax:variable("Function"),
+				erl_syntax:variable("Arguments"),
+				erl_syntax:variable("Response")
+			])
 		])
 	]).
-
