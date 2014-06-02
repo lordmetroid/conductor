@@ -102,6 +102,18 @@ handle_call({get_controller, ControllerFile}, _From, Caches) ->
 handle_call(_Event, _From, State) ->
 	{stop, State}.
 
+handle_cast(_Event, State) ->
+	{stop, State}.
+
+handle_info(_Information, State) ->
+	{stop, State}.
+
+terminate(_Reason, _State) ->
+	ok.
+
+code_change(_OldVersion, State, _Extra) ->
+	{ok, State}.
+
 update_cache(File, FilePath, Cache)
 	case lists:keyfind(File,1, Cache) of
 		false ->
@@ -130,18 +142,6 @@ update_cache(File, FilePath, Cache)
 					{NewModule, lists:keyreplace(File, 1, NewEntry)}
 			end
 	end.
-
-handle_cast(_Event, State) ->
-	{stop, State}.
-
-handle_info(_Information, State) ->
-	{stop, State}.
-
-terminate(_Reason, _State) ->
-	ok.
-
-code_change(_OldVersion, State, _Extra) ->
-	{ok, State}.
 
 %% ----------------------------------------------------------------------------
 % @spec start() ->
