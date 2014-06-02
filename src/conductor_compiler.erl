@@ -33,7 +33,6 @@ make_module(Path) ->
 			%% Compile a program
 			[
 				add_module_attribute(ModuleId),
-				%% TODO: File content goes here
 				add_run_function(),
 			]
 			
@@ -81,9 +80,8 @@ add_data_function() ->
 			erl_syntax:variable("Function"),
 			erl_syntax:variable("Arguments")
 		], none, [
-			%% Model = conductor_cache:get_model(ModelFile)
-			erl_syntax:match_expr(
-				erl_syntax:variable("Model"),
+			%% case conductor_cache:get_model(ModelFile) of
+			erl_syntax:case_expr(
 				erl_syntax:application(
 					erl_syntax:module_qualifier(
 						erl_syntax:atom(conductor_cache),
@@ -91,13 +89,54 @@ add_data_function() ->
 					), [
 						erl_syntax:variable("ModelFile")
 					]
-				)
-			),
-			%% Model:Function(Arguments)
-			erl_syntax:application(erl_syntax:module_qualifier(
-				erl_syntax:variable("Model"),
-				erl_syntax:variable("Function"), [
-					erl_syntax:variable("Arguments")
+				), [
+					%% false ->
+					erl_syntax:clause([
+						erl_syntax:atom(false)
+					], none, [
+						%% Model does not exists
+						%% TODO: Write in log file
+					]),
+					%% Model ->
+					erl_syntax:clause([
+						erl_syntax:variable("Model")
+					], none, [
+						%% case erlang:function_exported(Model, Function, 1) of
+						erl_syntax:case_expr(
+							erl_syntax:application(
+								erl_syntax:module_qualifier(
+									erl_syntax:atom(erlang),
+									erl_syntax:atom(function_exported)
+								), [
+									erl_syntax:variable("Model"),
+									erl_syntax:variable("Function"),
+									erl_syntax:integer(1)
+								]
+							), [
+								%% false ->
+								erl_syntax:clause([
+									erl_syntax:atom(false)
+								], none, [
+									%% Model file not formatted correctly
+									%% TODO: Write to log file
+								]),
+								%% true ->
+								erl_syntax:clause([
+									erl_syntax:atom(true)
+								], none, [
+									%% Model:Function(Arguments)
+									erl_syntax:application(
+										erl_syntax:module_qualifier(
+											erl_syntax:variable("Model"),
+											erl_syntax:variable("Function"), 
+										), [
+											erl_syntax:variable("Arguments")
+										]
+									)
+								])
+							]
+						)
+					])
 				]
 			)
 		])
