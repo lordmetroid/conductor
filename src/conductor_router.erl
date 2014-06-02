@@ -17,7 +17,7 @@ execute(Request, Response) ->
 			case filelib:is_regular(FilePath) of
 				false ->
 					%% Request not found
-					%% TODO: Create 404 response
+					%% TODO: Create "404 Not Found" response
 					undefined;
 				true ->
 					%% Create a file response
@@ -42,11 +42,16 @@ execute(Request, Response) ->
 			%% Execute the program
 			case conductor_cache:get_program(ProgramFile) of
 				false ->
-					%% Resource is gone!
-					%% TODO: Create 410 response
-
+					%% Program file does not exist
+					%% TODO: Create "410 Gone" response
 				Program ->
-					Program:execute(Parameters, Response)
+					case erlang:function_exported(Program, execute, 2) of
+						false ->
+							%% Program file is incorrect
+							%% TODO:Create "500 Internal Server Error" response
+						true ->
+							Program:execute(Parameters, Response)
+					end
 			end
 	end.
 
