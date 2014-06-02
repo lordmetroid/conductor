@@ -62,9 +62,9 @@ make_module(Path) ->
 %% ----------------------------------------------------------------------------
 add_module_attribute(ModuleId) ->
 	%% -module(ModuleId)
-	erl_syntax:attribute(erl_syntax:atom(module), [
-		erl_syntax:atom(ModuleId)
-	]).
+	erl_syntax:revert(erl_syntax:attribute(erl_syntax:atom(module), [
+			erl_syntax:atom(ModuleId)
+	])).
 
 %% TODO: What if Model, View or Controller and function does not exist???
 
@@ -74,7 +74,7 @@ add_module_attribute(ModuleId) ->
 %% ----------------------------------------------------------------------------
 add_data_function() ->
 	%% data(ModelFile, Function, Arguments) ->
-	erl_syntax:function(erl_syntax:atom(data), [
+	erl_syntax:revert(erl_syntax:function(erl_syntax:atom(data), [
 		erl_syntax:clause([
 			erl_syntax:variable("ModelFile"),
 			erl_syntax:variable("Function"),
@@ -91,7 +91,7 @@ add_data_function() ->
 				erl_syntax:variable("Arguments")
 			])
 		])
-	]).
+	])).
 
 %% ----------------------------------------------------------------------------
 % @spec add_render_function() -> erl_syntax()
@@ -99,7 +99,7 @@ add_data_function() ->
 %% ----------------------------------------------------------------------------
 add_render_function() ->
 	%% render(ViewFile, Arguments, Response) ->
-	erl_syntax:function(erl_syntax:atom(render), [
+	erl_syntax:revert(erl_syntax:function(erl_syntax:atom(render), [
 		erl_syntax:clause([
 			erl_syntax:variable("ViewFile"),
 			erl_syntax:variable("Arguments"),
@@ -116,7 +116,7 @@ add_render_function() ->
 				erl_syntax:variable("Response")
 			])
 		])
-	]).
+	])).
 
 %% ----------------------------------------------------------------------------
 % @spec add_run_function() -> erl_syntax()
@@ -124,7 +124,7 @@ add_render_function() ->
 %% ----------------------------------------------------------------------------
 add_run_function() ->
 	%% run(ControllerFile, Function, Arguments, Response) ->
-	erl_syntax:function(erl_syntax:atom(run), [
+	erl_syntax:revert(erl_syntax:function(erl_syntax:atom(run), [
 		erl_syntax:clause([
 			erl_syntax:variable("ControllerFile"),
 			erl_syntax:variable("Function"),
@@ -145,4 +145,4 @@ add_run_function() ->
 				erl_syntax:variable("Response")
 			])
 		])
-	]).
+	])).
