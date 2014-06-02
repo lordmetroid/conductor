@@ -44,11 +44,13 @@ execute(Request, Response) ->
 				false ->
 					%% Program file does not exist
 					%% TODO: Create "410 Gone" response
+					%% TODO: Write to log file
 				Program ->
 					case erlang:function_exported(Program, execute, 2) of
 						false ->
 							%% Program file is incorrect
 							%% TODO:Create "500 Internal Server Error" response
+							%% TODO: Write to log file
 						true ->
 							Program:execute(Parameters, Response)
 					end
