@@ -131,7 +131,6 @@ update_cache(File, FilePath, Cache)
 			end
 	end.
 
-
 handle_cast(_Event, State) ->
 	{stop, State}.
 
@@ -143,8 +142,6 @@ terminate(_Reason, _State) ->
 
 code_change(_OldVersion, State, _Extra) ->
 	{ok, State}.
-
-
 
 %% ----------------------------------------------------------------------------
 % @spec start() ->

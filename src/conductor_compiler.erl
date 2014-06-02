@@ -31,29 +31,28 @@ make_module(Path) ->
 	case ModuleLocation of
 		conductor_settings:get(program_root) ->
 			%% Compile a program
-			[
+			compile:forms([
 				add_module_attribute(ModuleId),
 				add_run_function(),
-			]
-			
+			])
 		conductor_settings:get(model_root) ->
 			%% Compile a model
-			add_module_attribute(ModuleId),
-			%% TODO: File content goes here
-			
+			compile:forms([
+				add_module_attribute(ModuleId),
+			])
 		conductor_settings:get(view_root) ->
 			%% Compile a view
-			add_module_attribute(ModuleId),
-			%% TODO: File content goes here
-			
+			compile:forms([
+				add_module_attribute(ModuleId),
+			])
 		conductor_settings:get(controller_root) ->
 			%% Compile a controller
-			add_module_attribute(ModuleId),
-			%% TODO: File content goes here
-			add_run_function(),
-			add_data_function(),
-			add_render_function(),
-			
+			compile:forms([
+				add_module_attribute(ModuleId),
+				add_run_function(),
+				add_data_function(),
+				add_render_function()
+			])
 	end.
 
 %% ----------------------------------------------------------------------------
