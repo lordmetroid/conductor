@@ -42,37 +42,75 @@ make_module(ModulePath) ->
 	case ModuleLocation of
 		conductor_settings:get(program_root) ->
 			%% Compile a program
-			{compile_module([
+			ProgramForm = [
 				add_module_attribute(ModuleId),
 				add_run_function(),
-			]), ModuleDate};
+			],
+			
+			case compile_module(ProgramForm) of
+				error ->
+					%% Module could not be compiled
+					error
+				Module ->
+					%% Return compiled module
+					{Module, ModuleDate}
+			end;
 		conductor_settings:get(model_root) ->
 			%% Compile a model
-			{compile_module([
+			ModelForm = [
 				add_module_attribute(ModuleId),
-			]), ModuleDate};
+			],
+			
+			case compile_module(ModelForm) of
+				error ->
+					%% Module could not be compiled
+					error
+				Module ->
+					%% Return compiled module
+					{Module, ModuleDate}
+			end;
 		conductor_settings:get(view_root) ->
 			%% Compile a view
-			{compile_module([
+			ViewForm = [
 				add_module_attribute(ModuleId),
-			]), ModuleDate};
+			],
+			
+			case compile_module(ViewForm) of
+				error ->
+					%% Module could not be compiled
+					error
+				Module ->
+					%% Return compiled module
+					{Module, ModuleDate}
+			end;
 		conductor_settings:get(controller_root) ->
 			%% Compile a controller
-			{compile_module([
+			ControllerForm = [
 				add_module_attribute(ModuleId),
 				add_run_function(),
 				add_data_function(),
 				add_render_function()
-			]), ModuleDate}
+			],
+			
+			case compile_module(ControllerForm) of
+				error ->
+					%% Module could not be compiled
+					error
+				Module ->
+					%% Return compiled module
+					{Module, ModuleDate}
+			end;
 	end.
 
 compile_module(Forms) ->
 	case compile:forms(Forms) of
 		error ->
 			%% TODO: Write compilation failure to log
+			error;
 		{error, Errors, Warnings} ->
 			%% TODO: Write errors to log
 			%% TODO: Write warnings to log
+			error;
 		{ok, Module, ModuleBinary} ->
 			load_module(Module, ModuleBinary);
 		{ok, Module, ModuleBinary, Warnings} ->
@@ -84,6 +122,7 @@ load_module(Module, ModuleBinary) ->
 	case code:load_binary(Module, [], ModuleBinary) of
 		{error, Error} ->
 			%% TODO: Write errors to log
+			error;
 		{module, Module} ->
 			%% Return module
 			Module
