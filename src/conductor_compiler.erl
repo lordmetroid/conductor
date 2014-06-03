@@ -9,6 +9,7 @@
 % @doc Compile a modules from specified file paths
 %% ----------------------------------------------------------------------------
 make(ModulePaths) ->
+	%% Compile a collection of modules
 	make(ModulePaths, []).
 
 make([], Modules) ->
@@ -16,7 +17,14 @@ make([], Modules) ->
 	Modules;
 make([ModulePath | Rest], Modules) ->
 	%% Compile a module from source file
-	make(Rest, [make_module(ModulePath) | Modules]).
+	case make_module(ModulePath) of
+		error ->
+			%% Do not include uncompiled modules
+			make(Rest, Modules)
+		{Module, ModuleDate} ->
+			%% Add compiled module to the collection
+			make(Rest, [{Module, ModuleDate},  Modules])
+	end.
 
 make_module(ModulePath) ->
 	%% Get module location, filename and timestamp
