@@ -24,6 +24,9 @@ make_module(Path) ->
 	ModuleFile = filename:basename(Path),
 	ModuleDate = filelib:last_modified(Path),
 
+	%% Read file
+	file:
+	
 	%% Generate a dynamic module id
 	ModuleId = uuid:uuid_to_string(uuid:get_v4()),
 
@@ -31,28 +34,55 @@ make_module(Path) ->
 	case ModuleLocation of
 		conductor_settings:get(program_root) ->
 			%% Compile a program
-			compile:forms([
+			{ok, Module, ModuleBinary} = compile:forms([
 				add_module_attribute(ModuleId),
 				add_run_function(),
-			])
+			]),
+			code:load_binary(Module, [], ModuleBinary);
 		conductor_settings:get(model_root) ->
 			%% Compile a model
-			compile:forms([
+			{ok, Module, Binary} = compile:forms([
 				add_module_attribute(ModuleId),
-			])
+			]),
+			code:load_binary(Module, [], ModuleBinary);
 		conductor_settings:get(view_root) ->
 			%% Compile a view
-			compile:forms([
+			{ok, Module, Binary} = compile:forms([
 				add_module_attribute(ModuleId),
-			])
+			]),
+			code:load_binary(Module, [], ModuleBinary);
 		conductor_settings:get(controller_root) ->
 			%% Compile a controller
-			compile:forms([
+			{ok, Module, Binary} = compile:forms([
 				add_module_attribute(ModuleId),
 				add_run_function(),
 				add_data_function(),
 				add_render_function()
-			])
+			]),
+			code:load_binary(Module, [], ModuleBinary);
+	end.
+
+compile_module(Forms) ->
+	case compile:forms(Forms) of
+		error ->
+			%% TODO: Write compilation failure to log
+		{error, Errors, Warnings} ->
+			%% TODO: Write errors to log
+			%% TODO: Write warnings to log
+		{ok, Module, ModuleBinary} ->
+			load_module(Module, ModuleBinary);
+		{ok, Module, ModuleBinary, Warnings} ->
+			%% TODO: Write warnings to log
+			load_module(Module, ModuleBinary)
+	end.
+		
+load_module(Module, ModuleBinary) ->
+	case code:load_binary(Module, [], ModuleBinary) of
+		{error, Error} ->
+			%% TODO: Write errors to log
+		{module, Module} ->
+			%% Return module
+			Module
 	end.
 
 %% ----------------------------------------------------------------------------
