@@ -34,28 +34,28 @@ make_module(ModulePath) ->
 	case ModuleLocation of
 		conductor_settings:get(program_root) ->
 			%% Compile a program
-			compile_module([
+			{compile_module([
 				add_module_attribute(ModuleId),
 				add_run_function(),
-			]);
+			]), ModuleDate};
 		conductor_settings:get(model_root) ->
 			%% Compile a model
-			compile_module([
+			{compile_module([
 				add_module_attribute(ModuleId),
-			]);
+			]), ModuleDate};
 		conductor_settings:get(view_root) ->
 			%% Compile a view
-			compile_module([
+			{compile_module([
 				add_module_attribute(ModuleId),
-			]);
+			]), ModuleDate};
 		conductor_settings:get(controller_root) ->
 			%% Compile a controller
-			compile_module([
+			{compile_module([
 				add_module_attribute(ModuleId),
 				add_run_function(),
 				add_data_function(),
 				add_render_function()
-			])
+			]), ModuleDate}
 	end.
 
 compile_module(Forms) ->
