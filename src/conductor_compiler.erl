@@ -8,21 +8,21 @@
 % @spec make(Paths) -> [{Filename, calendar:datetime(), ModuleId}, ...]
 % @doc Compile a modules from specified file paths
 %% ----------------------------------------------------------------------------
-make(Paths) ->
-	make(Paths, []).
+make(ModulePaths) ->
+	make(ModulePaths, []).
 
 make([], Modules) ->
 	%% Return compiled modules
 	Modules;
-make([Path | Rest], Modules) ->
+make([ModulePath | Rest], Modules) ->
 	%% Compile a module from source file
-	make(Rest, [make_module(Path) | Modules]).
+	make(Rest, [make_module(ModulePath) | Modules]).
 
-make_module(Path) ->
+make_module(ModulePath) ->
 	%% Get module location, filename and timestamp
-	ModuleRoot = filename:dirname(Path),
-	ModuleFile = filename:basename(Path),
-	ModuleDate = filelib:last_modified(Path),
+	ModuleRoot = filename:dirname(ModulePath),
+	ModuleFile = filename:basename(ModulePath),
+	ModuleDate = filelib:last_modified(ModulePath),
 
 	%% Read file
 	file:
