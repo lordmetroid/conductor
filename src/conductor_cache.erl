@@ -129,6 +129,7 @@ update_cache(File, FilePath, Cache)
 		{File, {Module, Date}} ->
 			case filelib:last_modified(FilePath) of
 				0 ->
+					%% TODO: Unload old module
 					%% Remove deleted file from cache
 					NewCache = lists:keydelete(File, 1, Cache),
 					false;
