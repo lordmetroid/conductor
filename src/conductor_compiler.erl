@@ -34,32 +34,28 @@ make_module(Path) ->
 	case ModuleLocation of
 		conductor_settings:get(program_root) ->
 			%% Compile a program
-			{ok, Module, ModuleBinary} = compile:forms([
+			compile_module([
 				add_module_attribute(ModuleId),
 				add_run_function(),
-			]),
-			code:load_binary(Module, [], ModuleBinary);
+			]);
 		conductor_settings:get(model_root) ->
 			%% Compile a model
-			{ok, Module, Binary} = compile:forms([
+			compile_module([
 				add_module_attribute(ModuleId),
-			]),
-			code:load_binary(Module, [], ModuleBinary);
+			]);
 		conductor_settings:get(view_root) ->
 			%% Compile a view
-			{ok, Module, Binary} = compile:forms([
+			compile_module([
 				add_module_attribute(ModuleId),
-			]),
-			code:load_binary(Module, [], ModuleBinary);
+			]);
 		conductor_settings:get(controller_root) ->
 			%% Compile a controller
-			{ok, Module, Binary} = compile:forms([
+			compile_module([
 				add_module_attribute(ModuleId),
 				add_run_function(),
 				add_data_function(),
 				add_render_function()
-			]),
-			code:load_binary(Module, [], ModuleBinary);
+			])
 	end.
 
 compile_module(Forms) ->
