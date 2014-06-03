@@ -45,7 +45,7 @@ handle_call({get_program, ProgramFile}, _From, Caches) ->
 	ProgramRoot = conductor_settings:get(program_root),
 	ProgramPath = filename:join([ProgramRoot, ProgramFile]),
 
-	case update_cache(ProgramFile, ProgramPath, Programs) of
+	case get_module(ProgramFile, ProgramPath, Programs) of
 		false ->
 			%% Program does not exist
 			{reply, false, Caches};
@@ -60,7 +60,7 @@ handle_call({get_model, ModelFile}, _From, Caches) ->
 	ModelRoot = conductor_settings:get(model_root),
 	ModelPath = filename:join([ModelRoot, ModelFile]),
 
-	case update_cache(ModelFile, ModelPath, Models) of
+	case get_module(ModelFile, ModelPath, Models) of
 		false ->
 			%% Model does not exist
 			{reply, false, Caches};
@@ -75,7 +75,7 @@ handle_call({get_view, ViewFile}, _From, Caches) ->
 	ViewRoot = conductor_settings:get(view_root),
 	ViewPath = filename:join([ViewRoot, ViewFile]),
 
-	case update_cache(ViewFile, ViewPath, Views) of
+	case get_module(ViewFile, ViewPath, Views) of
 		false ->
 			%% View does not exist
 			{reply, false, Caches};
@@ -90,7 +90,7 @@ handle_call({get_controller, ControllerFile}, _From, Caches) ->
 	ControllerRoot = conductor_settings:get(controller_root),
 	ControllerPath = filename:join([ControllerRoot, ControllerFile]),
 
-	case update_cache(ControllerFile, ControllerPath, Controllers) of
+	case get_module(ControllerFile, ControllerPath, Controllers) of
 		false ->
 			%% Controller does not exist
 			{reply, false, Caches};
@@ -113,8 +113,12 @@ terminate(_Reason, _State) ->
 
 code_change(_OldVersion, State, _Extra) ->
 	{ok, State}.
-
-update_cache(File, FilePath, Cache)
+	
+%% ----------------------------------------------------------------------------
+% @spec get_module() -> {Module, UpdatedCache}
+% @doc Update cache and get current up to date module
+%% ----------------------------------------------------------------------------
+get_module(File, FilePath, Cache)
 	case lists:keyfind(File,1, Cache) of
 		false ->
 			case filelib:last_modified(FilePath) of
