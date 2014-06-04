@@ -86,7 +86,7 @@ compile_module(Forms, ModuleDate) ->
 			%% TODO: Write warnings to log
 			load_module(Module, ModuleBinary)
 	end.
-		
+	
 load_module(Module, ModuleBinary, ModuleDate) ->
 	case code:load_binary(Module, [], ModuleBinary) of
 		{error, Error} ->
@@ -107,10 +107,24 @@ add_module_attribute(ModuleId) ->
 			erl_syntax:atom(ModuleId)
 	])).
 
+%% ----------------------------------------------------------------------------
+% @spec add_file() -> erl_syntax()
+% @doc Add an Erlang module attribute to the compilation
+%% ----------------------------------------------------------------------------
 add_file(ModulePath) ->
 	case file:read_file(ModulePath) of
 		{error, Reason} ->
+			%% TODO: Write to error to log
+			[];
 		{ok, Binary} ->
+			FileString = unicode:characters_to_list(Binary, utf8),
+			case erl_scan:string(FileString) of
+				{error, ErrorInfo, ErrorLocation} ->
+					%% TODO: Write errors to log
+					[];
+				{ok, FileAST, _EndLocation} ->
+					erl_syntax:revert(FileAST)
+			end			
 	end.
 
 add_view(ModulePath) ->
