@@ -128,7 +128,7 @@ get_module(File, FilePath, Cache)
 				Date ->
 					%% Cache new file from filesystem
 					NewModule = conductor_compiler:make(ProgramPath),
-					{NewModule, [NewModule | Cache]}
+					{NewModule, NewModule ++ Cache}
 			end;
 		{File, {Module, Date}} ->
 			case filelib:last_modified(FilePath) of
