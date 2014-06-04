@@ -31,9 +31,6 @@ make_module(ModulePath) ->
 	ModuleRoot = filename:dirname(ModulePath),
 	ModuleFile = filename:basename(ModulePath),
 	ModuleDate = filelib:last_modified(ModulePath),
-
-	%% Read file
-	file:
 	
 	%% Generate a dynamic module id
 	ModuleId = uuid:uuid_to_string(uuid:get_v4()),
@@ -44,25 +41,29 @@ make_module(ModulePath) ->
 			%% Compile a program
 			ProgramForm = [
 				add_module_attribute(ModuleId),
-				add_run_function(),
+				add_file(ModulePath),
+				add_run_function()
 			],
 			compile_module(ProgramForm, ModuleDate);
 		conductor_settings:get(model_root) ->
 			%% Compile a model
 			ModelForm = [
 				add_module_attribute(ModuleId),
+				add_file(ModulePath)
 			],
 			compile_module(ModelForm, ModuleDate);
 		conductor_settings:get(view_root) ->
 			%% Compile a view
 			ViewForm = [
 				add_module_attribute(ModuleId),
+				add_view(ModulePath)
 			],
 			compile_module(ViewForm);
 		conductor_settings:get(controller_root) ->
 			%% Compile a controller
 			ControllerForm = [
 				add_module_attribute(ModuleId),
+				add_file(ModulePath),
 				add_run_function(),
 				add_data_function(),
 				add_render_function()
@@ -106,7 +107,14 @@ add_module_attribute(ModuleId) ->
 			erl_syntax:atom(ModuleId)
 	])).
 
-%% TODO: What if Model, View or Controller and function does not exist???
+add_file(ModulePath) ->
+	case file:read_file(ModulePath) of
+		{error, Reason} ->
+		{ok, Binary} ->
+	end.
+
+add_view(ModulePath) ->
+	%% TODO: Add render function compiled from view compiler
 
 %% ----------------------------------------------------------------------------
 % @spec add_data_function() -> erl_syntax()
