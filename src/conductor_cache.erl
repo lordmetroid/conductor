@@ -127,8 +127,8 @@ get_module(File, FilePath, Cache)
 					false;
 				Date ->
 					%% Cache new file from filesystem
-					NewModule = conductor_compiler:make(ProgramPath),
-					{NewModule, NewModule ++ Cache}
+					[NewModule] = conductor_compiler:make(ProgramPath),
+					{NewModule, [NewModule | Cache]}
 			end;
 		{File, {Module, Date}} ->
 			case filelib:last_modified(FilePath) of
@@ -142,9 +142,9 @@ get_module(File, FilePath, Cache)
 					{Module, Cache};
 				NewDate ->
 					%% Update cache with new file
-					NewModule = conductor_compiler:make(FilePath),
-					NewEntry = {NewModule, NewDate},
-					{NewModule, lists:keyreplace(File, 1, NewEntry)}
+					[NewModule] = conductor_compiler:make(FilePath),
+					UpdatedModule = {NewModule, NewDate},
+					{NewModule, lists:keyreplace(File, 1, UpdatedModule)}
 			end
 	end.
 

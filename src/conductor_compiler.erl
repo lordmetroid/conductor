@@ -23,7 +23,7 @@ make([ModulePath | Rest], Modules) ->
 			make(Rest, Modules)
 		{Module, ModuleDate} ->
 			%% Add compiled module to the collection
-			make(Rest, [{Module, ModuleDate}, Modules])
+			make(Rest, [{Module, ModuleDate} | Modules])
 	end.
 
 make_module(ModulePath) ->
