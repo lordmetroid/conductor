@@ -98,7 +98,7 @@ load_module(Module, ModuleBinary, ModuleDate) ->
 	end.
 
 %% ----------------------------------------------------------------------------
-% @spec add_module_attribute() -> erl_syntax()
+% @spec add_module_attribute() -> syntaxTree()
 % @doc Add an Erlang module attribute to the compilation
 %% ----------------------------------------------------------------------------
 add_module_attribute(ModuleId) ->
@@ -108,19 +108,23 @@ add_module_attribute(ModuleId) ->
 	])).
 
 %% ----------------------------------------------------------------------------
-% @spec add_file() -> erl_syntax()
-% @doc Add an Erlang module attribute to the compilation
+% @spec add_file() -> syntaxTree()
+% @doc Add an Erlang File to the compilation
 %% ----------------------------------------------------------------------------
 add_file(ModulePath) ->
 	case file:read_file(ModulePath) of
 		{error, Reason} ->
 			%% TODO: Write to error to log
+
+			%% Nothing to return
 			[];
 		{ok, Binary} ->
 			FileString = unicode:characters_to_list(Binary, utf8),
 			case erl_scan:string(FileString) of
 				{error, ErrorInfo, ErrorLocation} ->
 					%% TODO: Write errors to log
+
+					%% Nothing to return
 					[];
 				{ok, FileAST, _EndLocation} ->
 					erl_syntax:revert(FileAST)
@@ -131,7 +135,7 @@ add_view(ModulePath) ->
 	%% TODO: Add render function compiled from view compiler
 
 %% ----------------------------------------------------------------------------
-% @spec add_data_function() -> erl_syntax()
+% @spec add_data_function() -> syntaxTree()
 % @doc Add a data calling function to the compilation
 %% ----------------------------------------------------------------------------
 add_data_function() ->
@@ -156,7 +160,7 @@ add_data_function() ->
 	])).
 
 %% ----------------------------------------------------------------------------
-% @spec add_render_function() -> erl_syntax()
+% @spec add_render_function() -> syntaxTree()
 % @doc Add a view render function to the compilation
 %% ----------------------------------------------------------------------------
 add_render_function() ->
@@ -181,7 +185,7 @@ add_render_function() ->
 	])).
 
 %% ----------------------------------------------------------------------------
-% @spec add_run_function() -> erl_syntax()
+% @spec add_run_function() -> syntaxTree()
 % @doc Add a run calling function to the compilation
 %% ----------------------------------------------------------------------------
 add_run_function() ->
