@@ -123,7 +123,7 @@ get_module(File, FilePath, Cache)
 		false ->
 			case filelib:last_modified(FilePath) of
 				0 ->
-					%% File does exists in cache nor in filesystem
+					%% File does not exists in cache nor in filesystem
 					false;
 				Date ->
 					%% Cache new file from filesystem

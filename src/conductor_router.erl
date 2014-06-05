@@ -21,12 +21,11 @@ execute_program(Request, Response) ->
 				false ->
 					%% Request not found
 					%% TODO: "404 Not Found" response
-					undefined;
+					conductor_response:create(Response, program),
+					
 				true ->
 					%% Create a file response
 					conductor_response:create(Response, file),
-			
-					%% Add file content to the response
 					conductor_response:add_content(FilePath)
 			end;
 		{Path, ProgramFile} ->
@@ -46,14 +45,14 @@ execute_program(Request, Response) ->
 			case conductor_cache:get_program(ProgramFile) of
 				false ->
 					%% Program file does not exist
-					%% TODO: Create "410 Gone" response
 					%% TODO: Write to log file
+					%% TODO: Create "410 Gone" response
 				Program ->
 					case erlang:function_exported(Program, execute, 2) of
 						false ->
 							%% Program file is incorrect
-							%% TODO: "500 Internal Server Error"
 							%% TODO: Write to log file
+							%% TODO: "500 Internal Server Error"
 						true ->
 							%% Execute program
 							Program:execute(Parameters, Response)
@@ -65,14 +64,14 @@ execute_model(ModelFile, Function, Arguments) ->
 	case conductor_cache:get_model(ModelFile) of
 		false ->
 			%% Model file does not exist
-			%% TODO: "410 Gone" response
 			%% TODO: Write to log file
+			%% TODO: "410 Gone" response
 		Model ->
 			case erlang:function_exported(Model, Function, 1) of
 				false ->
 					%% Model file is incorrect
-					%% TODO: "500 Internal Server Error" response
 					%% TODO: Write to log file
+					%% TODO: "500 Internal Server Error" response
 				true ->
 					%% Execute model
 					Model:Function(Arguments)
@@ -83,14 +82,14 @@ execute_view(ViewFile, Arguments, Response) ->
 	case conductor_cache:get_view(ViewFile) of
 		false ->
 			%% View file does not exist
-			%% TODO: "410 Gone" response
 			%% TODO: Write to log file
+			%% TODO: "410 Gone" response
 		View ->
 			case erlang:function_exported(View, render, 2) of
 				false ->
 					%% View file is incorrect
-					%% TODO: "500 Internal Server Error" response
 					%% TODO: Write to log file
+					%% TODO: "500 Internal Server Error" response
 				true ->
 					%% Execute view
 					View:render(Arguments, Response)
@@ -101,14 +100,14 @@ execute_controller(ControllerFile, Function, Arguments, Response) ->
 	case conductor_cache:get_controller(ControllerFile) of
 		false ->
 			%% Controller file does not exist
-			%% TODO: "410 Gone" response
 			%% TODO: Write to log file
+			%% TODO: "410 Gone" response
 		Controller ->
 			case erlang:function_exported(Controller, Function, 2) of
 				false ->
 					%% Controller file is incorrect
-					%% TODO: "500 Internal Server Error" response
 					%% TODO: Write to log file
+					%% TODO: "500 Internal Server Error" response
 				true ->
 					%% Execute controller
 					Controller:Function(Arguments, Response)

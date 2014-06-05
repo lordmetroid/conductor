@@ -20,7 +20,8 @@ run a server. See the below example configuration and explanation:
 {program_root,           "/path_to_webapp/programs"}.
 {programs, [
     {"/",                "index.erl"},
-    {"/index.html",      "index.erl"}
+    {"/index.html",      "index.erl"},
+	{404,              "error.erl"},
 ]}.
 
 %% Application program resources
