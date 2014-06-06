@@ -1,7 +1,7 @@
 -module(conductor_router).
 
 -export([
-	execute_program/2,
+	execute/2,
 	execute_model/3,
 	execute_view/2,
 	execute_controller/3
@@ -9,61 +9,71 @@
 
 -include_lib("webmachine/include/webmachine.hrl").
 
-execute_program(Request, Response) ->
+execute(Request, Response) ->
 	%% Find a matching response to the request
-	Path = wrq:path(Request),
-	case lists:keyfind(Path, 1, conductor_settings:get(programs)) of
-		%% Request is not a program
+	ProgramName = wrq:path(Request),
+	case lists:keyfind(ProgramName, 1, conductor_settings:get(programs)) of
 		false ->
+			%% Program not found
+			FileRoot = conductor_settings:get(file_root),
+			FilePath = filename:join([FileRoot, ProgramName]),
+
 			%% Check if request is a regular file
-			FilePath = filename:join(conductor_settings:get(file_root), Path),
 			case filelib:is_regular(FilePath) of
 				false ->
-					%% Request not found
-					%% TODO: "404 Not Found" response
-					conductor_response:create(Response, program),
-					
+					%% File not found
+					execute_program(404, Request, Response);
 				true ->
 					%% Create a file response
 					conductor_response:create(Response, file),
 					conductor_response:add_content(FilePath)
 			end;
-		{Path, ProgramFile} ->
-			%% Create a program response
-			conductor_response:create(Response, program),
+		{ProgramName, ProgramFile} ->
+			%% Execute program 
+			execute_program(ProgramFile, Request, Response)
 
-			%% Get the program parameters
-			Parameters = {
-				Peer = wrq:peer(Request),
-				Method = wrq:method(Request),
-				Path,
-				Variables = wrq:req_qs(Request),
-				Cookies = get_cookies(wrq:req_cookie(Request))
-			},
+	end.
 
-			%% Execute the program
-			case conductor_cache:get_program(ProgramFile) of
+%% ----------------------------------------------------------------------------
+% @spec execute_program(ProgramFile, Request, Response) -> ok
+% @doc Execute a program 
+%% ----------------------------------------------------------------------------
+execute_program(ProgramFile, Request, Response) ->
+	%% Create a program response
+	conductor_response:create(Response, program),
+
+	%% Get the program parameters
+	Parameters = {
+		Peer = wrq:peer(Request),
+		Method = wrq:method(Request),
+		Path,
+		Variables = wrq:req_qs(Request),
+		Cookies = get_cookies(wrq:req_cookie(Request))
+	},
+
+	%% Get the program module from cache
+	case conductor_cache:get_program(ProgramFile) of
+		false ->
+			%% Program file does not exist
+			%% TODO: Write to log file
+			%% TODO: Create "410 Gone" response
+		Program ->
+			%% Check if the program is correct
+			case erlang:function_exported(Program, execute, 2) of
 				false ->
-					%% Program file does not exist
+					%% Program is incorrect
 					%% TODO: Write to log file
-					%% TODO: Create "410 Gone" response
-				Program ->
-					case erlang:function_exported(Program, execute, 2) of
-						false ->
-							%% Program file is incorrect
-							%% TODO: Write to log file
-							%% TODO: "500 Internal Server Error"
-						true ->
-							%% Execute program
-							Program:execute(Parameters, Response)
-					end
+					%% TODO: "500 Internal Server Error"
+				true ->
+					%% Execute program
+					Program:execute(Parameters, Response)
 			end
 	end.
 
-execute_model(ModelFile, Function,Arguments, Request) ->
+execute_model(ModelFile, Function, Arguments, Request) ->
 	case conductor_cache:get_model(ModelFile) of
 		false ->
-			%% Model file does not exist
+			%% Model module does not exist
 			%% TODO: Write to log file
 			%% TODO: "410 Gone" response
 		Model ->
