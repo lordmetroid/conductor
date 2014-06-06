@@ -60,21 +60,21 @@ execute_program(Request, Response) ->
 			end
 	end.
 
-execute_model(ModelFile, Function, Arguments) ->
+execute_model(ModelFile, Function,Arguments, Request) ->
 	case conductor_cache:get_model(ModelFile) of
 		false ->
 			%% Model file does not exist
 			%% TODO: Write to log file
 			%% TODO: "410 Gone" response
 		Model ->
-			case erlang:function_exported(Model, Function, 1) of
+			case erlang:function_exported(Model, Function, 2) of
 				false ->
 					%% Model file is incorrect
 					%% TODO: Write to log file
 					%% TODO: "500 Internal Server Error" response
 				true ->
 					%% Execute model
-					Model:Function(Arguments)
+					Model:Function(Arguments, Request)
 			end
 	end.
 
@@ -96,21 +96,21 @@ execute_view(ViewFile, Arguments, Response) ->
 			end
 	end.
 
-execute_controller(ControllerFile, Function, Arguments, Response) ->
+execute_controller(ControllerFile, Function, Arguments, Request, Response) ->
 	case conductor_cache:get_controller(ControllerFile) of
 		false ->
 			%% Controller file does not exist
 			%% TODO: Write to log file
 			%% TODO: "410 Gone" response
 		Controller ->
-			case erlang:function_exported(Controller, Function, 2) of
+			case erlang:function_exported(Controller, Function, 3) of
 				false ->
 					%% Controller file is incorrect
 					%% TODO: Write to log file
 					%% TODO: "500 Internal Server Error" response
 				true ->
 					%% Execute controller
-					Controller:Function(Arguments, Response)
+					Controller:Function(Arguments, Request, Response)
 			end
 	end.
 	
