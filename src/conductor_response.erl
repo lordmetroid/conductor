@@ -108,6 +108,10 @@ program({add_content, NewContent}, _From, {Status,Content,MimeType}) ->
 	%% Add new content to program response
 	{reply, ok, program, {Status,[NewContent, Content],MimeType}};
 
+program({replace_content, NewContent}, _From, {Status,_Content,MimeType}) ->
+	%% Replace content
+	{reply, ok, program, {Status,NewContent,MimeType}};
+
 program(get_content, _From, {Status,Content,MimeType}) ->
 	%% Get and reset content
 	{reply, lists:reverse(Content), program, {Status,[],MimeType}};
@@ -139,6 +143,9 @@ get_mime_type(Response) ->
 
 add_content(Response, NewContent) ->
 	gen_fsm:sync_send_event(Response, {add_content, NewContent}).
+
+replace_content(Response, NewContet) ->
+	gen_fsm:sync_send_event(Response, {replace_content, NewContent}).
 
 get_content(Response) ->
 	gen_fsm:sync_send_event(Response, get_content).
