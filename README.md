@@ -21,7 +21,7 @@ run a server. See the below example configuration and explanation:
 {programs, [
     {"/",                "index.erl"},
     {"/index.html",      "index.erl"},
-	{404,                "error.erl"}
+	{error,              "error.erl"}
 ]}.
 
 %% Application program resources

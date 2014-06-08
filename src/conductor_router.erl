@@ -34,6 +34,11 @@ execute(Request, Response) ->
 
 	end.
 
+execute_error(ProgramName, Request, Response) ->
+	case lists:keyfind(ProgramName, 1, conductor_settings:get(programs)) of
+		false ->
+		{ProgramName, ProgramFile} ->
+
 %% ----------------------------------------------------------------------------
 % @spec execute_program(ProgramFile, Request, Response) -> ok
 % @doc Execute a program 
@@ -68,6 +73,24 @@ execute_program(ProgramFile, Request, Response) ->
 					%% Execute program
 					Program:execute(Parameters, Response)
 			end
+	end.
+
+%% ----------------------------------------------------------------------------
+% @spec get_cookies(CookieHeader::string) -> Cookies::Tuplelist()
+% @doc Get cookies from request
+%% ----------------------------------------------------------------------------
+get_cookies(CookieHeader) ->
+	get_cookies(string:tokens(CookieHeader, ";"), []).
+
+get_cookies([], Cookies) ->
+	Cookies;
+get_cookies([Data | Rest], Cookies) ->
+	case string:tokens(Data, "=") of 
+		[Name, Value] ->
+			NewCookie = {string:strip(Name), string:strip(Value)},
+			get_cookies(Rest, [NewCookie | Cookies]);
+		_ ->
+			get_cookies(Rest, Cookies)
 	end.
 
 execute_model(ModelFile, Function, Arguments, Parameters) ->
@@ -123,24 +146,5 @@ execute_controller(ControllerFile, Function, Arguments,Parameters, Response) ->
 					Controller:Function(Arguments, Parameters, Response)
 			end
 	end.
+			
 
-execute_error(ProgramName, Request, Response) ->
-	
-
-%% ----------------------------------------------------------------------------
-% @spec
-% @doc Get cookies from request
-%% ----------------------------------------------------------------------------
-get_cookies(CookieHeader) ->
-	get_cookies(string:tokens(CookieHeader, ";"), []).
-
-get_cookies([], Cookies) ->
-	Cookies;
-get_cookies([Data | Rest], Cookies) ->
-	case string:tokens(Data, "=") of 
-		[Name, Value] ->
-			NewCookie = {string:strip(Name), string:strip(Value)},
-			get_cookies(Rest, [NewCookie | Cookies]);
-		_ ->
-			get_cookies(Rest, Cookies)
-	end.
