@@ -78,8 +78,6 @@ file({add_content, FilePath}, _From, {Binary,FilePath}) ->
 	%% TODO: Add binary content
 	{reply, ok, file, {Binary,FilePath}};
 
-file({replace_content
-
 file(get_content, _From, {Binary,FilePath}) ->
 	%% Get and resrt file binary
 	{reply, Binary, file, {[], FilePath}};
