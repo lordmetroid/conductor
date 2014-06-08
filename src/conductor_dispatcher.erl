@@ -17,7 +17,15 @@ init(_Configurations) ->
 service_available(Request, Response) ->
 	%% Compile response by exceuting request
 	conductor_router:execute(Request, Response),
-	{true, Request, Response}.
+
+	case conductor_response:get_http_status(Response) of
+		500 ->
+			{{error, }Request, Response};
+		503 ->
+			{false, Request, Response};
+		_ ->
+			{true, Request, Response}
+	end.
 
 options(Request, Response) ->
 	%% Set custom response headers
@@ -35,4 +43,3 @@ content_types_provided(Request, Response) ->
 provide_content(Request, Response) ->
 	%%	Publish content to requesting client
 	{conductor_response:get_content(Response), Request, Response}.
-%   {["WORKS: ", wrq:path(Request)], Request, Response}.

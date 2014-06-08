@@ -55,9 +55,12 @@ execute_program(ProgramFile, Request, Response) ->
 	%% Get the program parameters
 	Parameters = [
 		{peer, wrq:peer(Request)},
+		{path, wrq:path(Request)},
 		{method, wrq:method(Request)},
 		{variables, wrq:req_qs(Request)},
-		{cookies, get_cookies(wrq:req_cookie(Request))}
+		{body, wrq:req_body(Request)},
+		{cookies, get_cookies(wrq:req_cookie(Request))},
+		{queries, wrq:req_qs(Request)}
 	],
 
 	%% Get the program module from cache
