@@ -48,12 +48,12 @@ code_change(_OldVersion, StateName, State, _Extra) ->
 % Undefined response (Default)
 %% ----------------------------------------------------------------------------
 undefined({create, file}, _From, _State) ->
-	%% Create a file response, {Binary, Filename}
-	{reply, ok, file, {[], []}};
+	%% Create a file response, {Binary,Filename}
+	{reply, ok, file, {[],[]}};
 
 undefined({create, program}, _From, _State) ->
-	%% Create a program response
-	{reply, ok, program, {[], "text/html"}};
+	%% Create a program response {Status,Content,MimeType}
+	{reply, ok, program, {200,[],"text/html"}};
 
 undefined(_Event, _From, State) ->
 	{reply, error, undefined, State}.
