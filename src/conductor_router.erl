@@ -59,13 +59,20 @@ execute_program(ProgramFile, Request, Response) ->
 			case lists:keyfind(error, 1, conductor_settings:get(programs)) of
 				false ->
 					%% Error program does not exists
-					%% Create a "500 Internal Server Error" response
-
+					conductor_log:add(
+						"\'error\' is unspecified in programs configuration"
+					),
+					%% Create "500 Internal Server Error" response
+					conductor_response:set_status(Response, 500);
 				{error, ProgramFile} ->
 					case conductor_cache:get_program(ProgramFile) of
 						false ->
-							%% Error program does not exists
-							%% Create a "500 Internal Server Error" response
+							%% Error program file does not exist
+							conductor_log:add(
+								ProgramFile ++ " does not exist"
+							),
+							%% Create "500 Internal Server Error" response
+							conductor_response:set_status(Reponse, 500);
 						Program ->
 							Program:execute(Parameters, Response)
 					end
