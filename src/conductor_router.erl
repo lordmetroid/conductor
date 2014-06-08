@@ -21,27 +21,20 @@ execute(Request, Response) ->
 			%% Check if request is a regular file
 			case filelib:is_regular(FilePath) of
 				false ->
-					%% 404 File not found
-					execute_error(404, Request, Response);
+					%% Create a "404 File not found" response
+					conductor_response:create(Response, program),
+					conductor_response:set_status_code(Response, 404),
+					execute_program(error, Request, Response);
 				true ->
 					%% Create a file response
 					conductor_response:create(Response, file),
 					conductor_response:add_content(FilePath)
 			end;
 		{ProgramName, ProgramFile} ->
-			%% Execute program 
+			%% Create a program response
+			conductor_response:create(Response, program),
 			execute_program(ProgramFile, Request, Response)
 
-	end.
-
-execute_error(StatusCode, Request, Response) ->
-	case lists:keyfind(error, 1, conductor_settings:get(programs)) of
-		false ->
-			%% Error program could not be found
-			%% TODO: 500 Internal Server Error
-		{ProgramName, ProgramFile} ->
-			
-			execute_program(ProgramFile, Request, Response)
 	end.
 
 %% ----------------------------------------------------------------------------
@@ -49,13 +42,11 @@ execute_error(StatusCode, Request, Response) ->
 % @doc Execute a program 
 %% ----------------------------------------------------------------------------
 execute_program(ProgramFile, Request, Response) ->
-	%% Create a program response
-	conductor_response:create(Response, program),
-
 	%% Get the program parameters
 	Parameters = [
 		{peer, wrq:peer(Request)},
 		{path, wrq:path(Request)},
+		{status, conductor_response:get_status_code(Response)},
 		{method, wrq:method(Request)},
 		{variables, wrq:req_qs(Request)},
 		{body, wrq:req_body(Request)},
