@@ -54,24 +54,43 @@ execute_program(ProgramFile, Request, Response) ->
 		{queries, wrq:req_qs(Request)}
 	],
 
-	%% Get the program module from cache
-	case conductor_cache:get_program(ProgramFile) of
-		false ->
-			%% Program file does not exist
-			%% TODO: Write to log file
-			%% TODO: Create "410 Gone" response
-		Program ->
-			%% Check if the program is correct
-			case erlang:function_exported(Program, execute, 2) of
+	case ProgramFile of
+		error ->
+			case lists:keyfind(error, 1, conductor_settings:get(programs)) of
 				false ->
-					%% Program is incorrect
+					%% Error program does not exists
+					%% Create a "500 Internal Server Error" response
+
+				{error, ProgramFile} ->
+					case conductor_cache:get_program(ProgramFile) of
+						false ->
+							%% Error program does not exists
+							%% Create a "500 Internal Server Error" response
+						Program ->
+							Program:execute(Parameters, Response)
+					end
+			end;
+		ProgramFile ->
+			%% Get the program module from cache
+			case conductor_cache:get_program(ProgramFile) of
+				false ->
+					%% Program file does not exist
 					%% TODO: Write to log file
-					%% TODO: "500 Internal Server Error"
-				true ->
-					%% Execute program
-					Program:execute(Parameters, Response)
-			end
-	end.
+					%% Create a "410 Gone" response
+					conductor_response:set_status_code(Response, 410),
+					execute_program(error, Request, Response);
+				Program ->
+					%% Check if the program is correct
+					case erlang:function_exported(Program, execute, 2) of
+						false ->
+							%% Program is incorrect
+							%% TODO: Write to log file
+							%% TODO: "500 Internal Server Error" response
+						true ->
+							%% Execute program
+							Program:execute(Parameters, Response)
+					end
+			end.
 
 %% ----------------------------------------------------------------------------
 % @spec get_cookies(CookieHeader::string) -> Cookies::Tuplelist()
