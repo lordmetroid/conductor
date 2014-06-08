@@ -22,7 +22,7 @@ execute(Request, Response) ->
 			case filelib:is_regular(FilePath) of
 				false ->
 					%% File not found
-					execute_program(404, Request, Response);
+					execute_error(404, Request, Response);
 				true ->
 					%% Create a file response
 					conductor_response:create(Response, file),
@@ -70,7 +70,7 @@ execute_program(ProgramFile, Request, Response) ->
 			end
 	end.
 
-execute_model(ModelFile, Function, Arguments, Request) ->
+execute_model(ModelFile, Function, Arguments, Parameters) ->
 	case conductor_cache:get_model(ModelFile) of
 		false ->
 			%% Model module does not exist
@@ -84,7 +84,7 @@ execute_model(ModelFile, Function, Arguments, Request) ->
 					%% TODO: "500 Internal Server Error" response
 				true ->
 					%% Execute model
-					Model:Function(Arguments, Request)
+					Model:Function(Arguments, Parameters)
 			end
 	end.
 
@@ -106,7 +106,7 @@ execute_view(ViewFile, Arguments, Response) ->
 			end
 	end.
 
-execute_controller(ControllerFile, Function, Arguments, Request, Response) ->
+execute_controller(ControllerFile, Function, Arguments,Parameters, Response) ->
 	case conductor_cache:get_controller(ControllerFile) of
 		false ->
 			%% Controller file does not exist
@@ -120,10 +120,13 @@ execute_controller(ControllerFile, Function, Arguments, Request, Response) ->
 					%% TODO: "500 Internal Server Error" response
 				true ->
 					%% Execute controller
-					Controller:Function(Arguments, Request, Response)
+					Controller:Function(Arguments, Parameters, Response)
 			end
 	end.
+
+execute_error(ProgramName, Request, Response) ->
 	
+
 %% ----------------------------------------------------------------------------
 % @spec
 % @doc Get cookies from request
