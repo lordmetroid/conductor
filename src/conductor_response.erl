@@ -88,11 +88,11 @@ file(_Event, _From, {Binary,FilePath}) ->
 %% ----------------------------------------------------------------------------
 % Program response
 %% ----------------------------------------------------------------------------
-program({set_status_code, NewStatus}, _From, {_Status,Content,MimeType}) ->
+program({set_status, NewStatus}, _From, {_Status,Content,MimeType}) ->
 	%% Set HTTP Status Code
 	{reply, ok, program, {NewStatus,Content,Mimetype}};
 
-program({get_status_code, _From, {Status,Content,MimeType}) ->
+program({get_status, _From, {Status,Content,MimeType}) ->
 	%% Get HTTP Status Code
 	{reply, Status, program, {Status,Content,MimeType};
 
@@ -125,11 +125,11 @@ start() ->
 create(Response, Type) ->
 	gen_fsm:sync_send_event(Response, {create, Type}).
 
-set_status_code(Response, StatusCode) ->
-	gen_fsm:sync_send_event(Response, {set_status_code, StatusCode}).
+set_status(Response, Status) ->
+	gen_fsm:sync_send_event(Response, {set_status, Status}).
 
-get_status_code(Response, StatusCode) ->
-	gen_fsm:sync_send_event(Response, {get_status_code, StatusCode}).
+get_status(Response) ->
+	gen_fsm:sync_send_event(Response, {get_status, Status}).
 
 set_mime_type(Response, NewMimeType) ->
 	gen_fsm:sync_send_event(Response, {set_mime_type, NewMimeType}).

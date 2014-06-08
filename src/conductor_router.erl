@@ -46,7 +46,7 @@ execute_program(ProgramFile, Request, Response) ->
 	Parameters = [
 		{peer, wrq:peer(Request)},
 		{path, wrq:path(Request)},
-		{status, conductor_response:get_status_code(Response)},
+		{status, conductor_response:get_status(Response)},
 		{method, wrq:method(Request)},
 		{variables, wrq:req_qs(Request)},
 		{body, wrq:req_body(Request)},
