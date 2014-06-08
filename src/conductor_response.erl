@@ -61,7 +61,7 @@ undefined(_Event, _From, State) ->
 %% ----------------------------------------------------------------------------
 % File response
 %% ----------------------------------------------------------------------------
-file(get_status_code, _From, {Binary,FilePath}) ->
+file(get_status, _From, {Binary,FilePath}) ->
 	%% Get HTTP Status Code
 	{reply, 200, file, {Binary,FilePath}};
 
@@ -78,6 +78,8 @@ file({add_content, FilePath}, _From, {Binary,FilePath}) ->
 	%% TODO: Add binary content
 	{reply, ok, file, {Binary,FilePath}};
 
+file({replace_content
+
 file(get_content, _From, {Binary,FilePath}) ->
 	%% Get and resrt file binary
 	{reply, Binary, file, {[], FilePath}};
@@ -92,7 +94,7 @@ program({set_status, NewStatus}, _From, {_Status,Content,MimeType}) ->
 	%% Set HTTP Status Code
 	{reply, ok, program, {NewStatus,Content,Mimetype}};
 
-program({get_status, _From, {Status,Content,MimeType}) ->
+program(get_status, _From, {Status,Content,MimeType}) ->
 	%% Get HTTP Status Code
 	{reply, Status, program, {Status,Content,MimeType};
 
@@ -133,7 +135,7 @@ set_status(Response, Status) ->
 	gen_fsm:sync_send_event(Response, {set_status, Status}).
 
 get_status(Response) ->
-	gen_fsm:sync_send_event(Response, {get_status, Status}).
+	gen_fsm:sync_send_event(Response, get_status).
 
 set_mime_type(Response, NewMimeType) ->
 	gen_fsm:sync_send_event(Response, {set_mime_type, NewMimeType}).
