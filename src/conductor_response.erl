@@ -61,47 +61,59 @@ undefined(_Event, _From, State) ->
 %% ----------------------------------------------------------------------------
 % File response
 %% ----------------------------------------------------------------------------
-file(get_mime_type, _From, {_Binary, FilePath}) ->
+file(get_status_code, _From, {Binary,FilePath}) ->
+	%% Get HTTP Status Code
+	{reply, 200, file, {Binary,FilePath}};
+
+file(get_mime_type, _From, {Binary,FilePath}) ->
 	%% Get file mime type
 	case mimetypes:filename(FilePath) of
 		undefined ->
-			{reply, "text/html", file, Filename};
+			{reply, "text/html", file, {Binary,FilePath}};
 		MimeType ->
-			{reply, MimeType, file, Filename}
+			{reply, MimeType, file,{Binary,FilePath}}
 	end;
 
-file({add_content, FilePath}, _From, {Binary, _FilePath}) ->
+file({add_content, FilePath}, _From, {Binary,FilePath}) ->
 	%% TODO: Add binary content
-	{reply, ok, file, {Binary, FilePath}};
+	{reply, ok, file, {Binary,FilePath}};
 
-file(get_content, _From, {Binary, FilePath}) ->
+file(get_content, _From, {Binary,FilePath}) ->
 	%% Get and resrt file binary
 	{reply, Binary, file, {[], FilePath}};
 
-file(_Event, _From, {Binary, FilePath}) ->
-	{reply, error, file, {Binary, FilePath}}.
+file(_Event, _From, {Binary,FilePath}) ->
+	{reply, error, file, {Binary,FilePath}}.
 
 %% ----------------------------------------------------------------------------
 % Program response
 %% ----------------------------------------------------------------------------
-program({set_mime_type, NewMimeType}, _From, {Content, _MimeType}) ->
+program({set_status_code, NewStatus}, _From, {_Status,Content,MimeType}) ->
+	%% Set HTTP Status Code
+	{reply, ok, program, {NewStatus,Content,Mimetype}};
+
+program({get_status_code, _From, {Status,Content,MimeType}) ->
+	%% Get HTTP Status Code
+	{reply, Status, program, {Status,Content,MimeType};
+
+program({set_mime_type, NewMimeType}, _From, {Status,Content,_MimeType}) ->
 	%% Set content mime type
-	{reply, ok, program, {Content, NewMimeType}};
+	{reply, ok, program, {Status,Content,NewMimeType}};
 
-program(get_mime_type, _From, {Content, MimeType}) ->
+program(get_mime_type, _From, {Status,Content,MimeType}) ->
 	%% Get content mime type
-	{reply, MimeType, program, {Content, MimeType}};
+	{reply, MimeType, program, {Status,Content,MimeType}};
 
-program({add_content, NewContent}, _From, {Content, MimeType}) ->
+program({add_content, NewContent}, _From, {Status,Content,MimeType}) ->
 	%% Add new content to program response
-	{reply, ok, program, {[NewContent, Content], MimeType}};
+	{reply, ok, program, {Status,[NewContent, Content],MimeType}};
 
-program(get_content, _From, {Content, MimeType}) ->
+program(get_content, _From, {Status,Content,MimeType}) ->
 	%% Get and reset content
-	{reply, lists:reverse(Content), program, {[], MimeType}};
+	{reply, lists:reverse(Content), program, {Status,[],MimeType}};
 
-program(_Event, _From, {Content, MimeType}) ->
-	{reply, error, program, {Content, MimeType}}.
+program(_Event, _From, {Status,Content,MimeType}) ->
+	{reply, error, program, {StatusCode,Content,MimeType}}.
 
 
 %% ----------------------------------------------------------------------------
@@ -112,6 +124,12 @@ start() ->
 
 create(Response, Type) ->
 	gen_fsm:sync_send_event(Response, {create, Type}).
+
+set_status_code(Response, StatusCode) ->
+	gen_fsm:sync_send_event(Response, {set_status_code, StatusCode}).
+
+get_status_code(Response, StatusCode) ->
+	gen_fsm:sync_send_event(Response, {get_status_code, StatusCode}).
 
 set_mime_type(Response, NewMimeType) ->
 	gen_fsm:sync_send_event(Response, {set_mime_type, NewMimeType}).
