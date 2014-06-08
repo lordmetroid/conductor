@@ -28,6 +28,10 @@ content_types_provided(Request, Response) ->
 	MimeType = conductor_response:get_mime_type(Response),
 	{[{MimeType, provide_content}], Request, Response}.
 
+%% ----------------------------------------------------------------------------
+% @spec provide_content(Request, Response) -> Body::iolist()
+% @doc Provides the body of the response
+%% ----------------------------------------------------------------------------
 provide_content(Request, Response) ->
 	%%	Publish content to requesting client
 	{conductor_response:get_content(Response), Request, Response}.

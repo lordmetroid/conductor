@@ -21,7 +21,7 @@ execute(Request, Response) ->
 			%% Check if request is a regular file
 			case filelib:is_regular(FilePath) of
 				false ->
-					%% File not found
+					%% 404 File not found
 					execute_error(404, Request, Response);
 				true ->
 					%% Create a file response
@@ -34,10 +34,15 @@ execute(Request, Response) ->
 
 	end.
 
-execute_error(ProgramName, Request, Response) ->
-	case lists:keyfind(ProgramName, 1, conductor_settings:get(programs)) of
+execute_error(StatusCode, Request, Response) ->
+	case lists:keyfind(error, 1, conductor_settings:get(programs)) of
 		false ->
+			%% Error program could not be found
+			%% TODO: 500 Internal Server Error
 		{ProgramName, ProgramFile} ->
+			
+			execute_program(ProgramFile, Request, Response)
+	end.
 
 %% ----------------------------------------------------------------------------
 % @spec execute_program(ProgramFile, Request, Response) -> ok
@@ -48,13 +53,12 @@ execute_program(ProgramFile, Request, Response) ->
 	conductor_response:create(Response, program),
 
 	%% Get the program parameters
-	Parameters = {
-		Peer = wrq:peer(Request),
-		Method = wrq:method(Request),
-		Path,
-		Variables = wrq:req_qs(Request),
-		Cookies = get_cookies(wrq:req_cookie(Request))
-	},
+	Parameters = [
+		{peer, wrq:peer(Request)},
+		{method, wrq:method(Request)},
+		{variables, wrq:req_qs(Request)},
+		{cookies, get_cookies(wrq:req_cookie(Request))}
+	],
 
 	%% Get the program module from cache
 	case conductor_cache:get_program(ProgramFile) of
