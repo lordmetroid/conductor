@@ -21,9 +21,7 @@ execute(Request, Response, Log) ->
 			%% Check if request is a regular file
 			case filelib:is_regular(FilePath) of
 				false ->
-					%% Create a "404 File not found" response
-					conductor
-					
+					%% Create a "404 File not found" response					
 					conductor_response:create(Response, program),
 					conductor_response:set_status_code(Response, 404),
 					execute_program(error, Request, Response);
@@ -120,7 +118,7 @@ get_cookies([Data | Rest], Cookies) ->
 	end.
 
 %% ----------------------------------------------------------------------------
-% @spec execute_model
+% @spec execute_model(ModelFile, Function, Arguments, Parameters, Log)
 % @doc Get cookies from request
 %% ----------------------------------------------------------------------------
 execute_model(ModelFile, Function, Arguments, Parameters) ->

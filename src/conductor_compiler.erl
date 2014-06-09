@@ -139,16 +139,17 @@ add_view(ModulePath) ->
 % @doc Add a data calling function to the compilation
 %% ----------------------------------------------------------------------------
 add_data_function() ->
-	%% data(ModelFile, Function, Arguments, Request) ->
+	%% data(ModelFile, Function, Arguments, Request, Log) ->
 	erl_syntax:revert(erl_syntax:function(erl_syntax:atom(data), [
 		erl_syntax:clause([
 			erl_syntax:variable("ModelFile"),
 			erl_syntax:variable("Function"),
 			erl_syntax:variable("Arguments"),
-			erl_syntax:variable("Parameters")
+			erl_syntax:variable("Parameters"),
+			erl_syntax:variable("Log")
 		], none, [
 			%% conductor_router:execute_model(
-			%%		ModelFile, Function, Arguments, Parameters
+			%%		ModelFile, Function, Arguments, Parameters, Log
 			%% )
 			erl_syntax:application(
 				erl_syntax:module_qualifier(
@@ -158,7 +159,8 @@ add_data_function() ->
 				erl_syntax:variable("ModelFile"),
 				erl_syntax:variable("Function"),
 				erl_syntax:variable("Arguments"),
-				erl_syntax:variable("Parameters")
+				erl_syntax:variable("Parameters"),
+				erl_syntax:variable("Log")
 			])
 		])
 	])).
@@ -173,9 +175,12 @@ add_render_function() ->
 		erl_syntax:clause([
 			erl_syntax:variable("ViewFile"),
 			erl_syntax:variable("Arguments"),
-			erl_syntax:variable("Response")
+			erl_syntax:variable("Response"),
+			erl_syntax:variable("Log")
 		], none, [
-			%% conductor_router:execute_view(ViewFile, Arguments, Response)
+			%% conductor_router:execute_view(
+			%% 		ViewFile, Arguments, Response, Log
+			)
 			erl_syntax:application(
 				erl_syntax:module_qualifier(
 					erl_syntax:atom(conductor_router),
@@ -183,7 +188,8 @@ add_render_function() ->
 				), [
 				erl_syntax:variable("ViewFile"),
 				erl_syntax:variable("Arguments"),
-				erl_syntax:variable("Response")
+				erl_syntax:variable("Response"),
+				erl_syntax:variable("Log")
 			])
 		])
 	])).
@@ -200,7 +206,8 @@ add_run_function() ->
 			erl_syntax:variable("Function"),
 			erl_syntax:variable("Arguments"),
 			erl_syntax:variable("Parameters"),
-			erl_syntax:variable("Response")
+			erl_syntax:variable("Response"),
+			erl_syntax:variable("Log")
 		], none, [
 			%% conductor_router:execute_controller(
 			%% 		ControllerFile, Function, Arguments, Parameters, Response
@@ -214,7 +221,8 @@ add_run_function() ->
 				erl_syntax:variable("Function"),
 				erl_syntax:variable("Arguments"),
 				erl_syntax:variable("Parameters"),
-				erl_syntax:variable("Response")
+				erl_syntax:variable("Response"),
+				erl_syntax:variable("Log")
 			])
 		])
 	])).

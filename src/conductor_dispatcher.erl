@@ -14,7 +14,11 @@
 init(_Configurations) ->
 	%% Initialize a response
 	Response = conductor_response:start(),
-	Log = conductor_log:start(),
+	
+	%% Create a session log
+	Log = conductor_log:create(),
+	
+	%% Pass Response and Log as session context
 	{Response, Log}.
 
 service_available(Request, {Response, Log}) ->
