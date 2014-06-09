@@ -183,7 +183,7 @@ execute_controller(ControllerFile, Function, Arguments, Parameters)  ->
 					conductor_response:set_status_code(500);
 				true ->
 					%% Execute controller
-					Controller:Function(Arguments, Parameters, Response)
+					Controller:Function(Arguments, Parameters)
 			end
 	end.
 			
