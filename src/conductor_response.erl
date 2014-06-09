@@ -1,156 +1,77 @@
 -module(conductor_response).
 
--behavior(gen_fsm).
+-behavior(gen_server).
 -export([
 	init/1,
-	handle_event/3,
-	handle_sync_event/4,
-	handle_info/3,
-	terminate/3,
-	code_change/4,
-
-	undefined/3,
-	file/3,
-	program/3
+	handle_call/3,
+	handle_cast/2,
+	handle_info/2,
+	terminate/2,
+	code_change/3
 ]).
 
 -export([
-	start/0,
-	create_program/2,
-	create_file/2,
-	set_mime_type/2,
-	get_mime_type/1,
-	add_content/2,
-	get_content/1
+	start_link/0,
 ]).
-
-%% ----------------------------------------------------------------------------
-% @doc Start a new response with the default undefined response type
-%% ----------------------------------------------------------------------------
 init(_Arguments) ->
-	{ok, undefined, []}.
+	%% Initalize the session manager
+	{ok, []}.
 
-handle_event(_Event, StateName, State) ->
-	{next_state, StateName, State}.
+handle_call(create_file, From, Sessions) ->
 
-handle_sync_event(_Event, _From, StateName, State) ->
-	{reply, error, StateName, State}.
+handle_call(create_program, From, Sessions) ->
 
-handle_info(_Information, StateName, State) ->
-	{reply, error, StateName, State}.
+handle_call({set_status_code, Status}, From, Sessions) ->
 
-terminate(_Reason, _StateName, _State) ->
+handle_call(get_status_code, From, Sessions) ->
+
+handle_call({add_content, Content}, From, Sessions) ->
+
+handle_call(_Event, _From, State) ->
+	{stop, State}.
+
+handle_cast(_Event, State) ->
+	{stop, State}.
+
+handle_info(_Information, State) ->
+	{stop, State}.
+
+terminate(_Reason, _State) ->
 	ok.
 
-code_change(_OldVersion, StateName, State, _Extra) ->
-	{ok, StateName, State}.
+code_change(_OldVersion, State, _Extra) ->
+	{ok, State}.
 
 %% ----------------------------------------------------------------------------
-% Undefined response (Default)
-%% ----------------------------------------------------------------------------
-undefined(create_file, _From, _State) ->
-	%% Create a file response, {Binary,Filename}
-	{reply, ok, file, {[],[]}};
+% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
+% @doc Start the session manager 
+% -----------------------------------------------------------------------------
+start_link() ->
+	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
-undefined(create_program, _From, _State) ->
-	%% Create a program response {Status,Content,MimeType}
-	{reply, ok, program, {200,[],"text/html"}};
+create_file_response() ->
+	gen_server:call(?MODULE, create_file).
 
-undefined(_Event, _From, State) ->
-	{reply, error, undefined, State}.
+create_program_response() ->
+	gen_server:call(?MODULE, create_program).
 
-%% ----------------------------------------------------------------------------
-% File response
-%% ----------------------------------------------------------------------------
-file(get_status, _From, {Binary,FilePath}) ->
-	%% Get HTTP Status Code
-	{reply, 200, file, {Binary,FilePath}};
+set_status_code(Status) ->
+	gen_server:call(?MODULE, {set_status_code, Status}).
 
-file(get_mime_type, _From, {Binary,FilePath}) ->
-	%% Get file mime type
-	case mimetypes:filename(FilePath) of
-		undefined ->
-			{reply, "text/html", file, {Binary,FilePath}};
-		MimeType ->
-			{reply, MimeType, file,{Binary,FilePath}}
-	end;
+get_status_code() ->
+	gen_server:call(?MODULE, get_status_code).
 
-file({add_content, FilePath}, _From, {Binary,FilePath}) ->
-	%% TODO: Add binary content
-	{reply, ok, file, {Binary,FilePath}};
+add_content(Content) ->
+	gen_server:call(?MODULE, {add_content, Content}).
 
-file(get_content, _From, {Binary,FilePath}) ->
-	%% Get and resrt file binary
-	{reply, Binary, file, {[], FilePath}};
+get_content() ->
+	gen_server:call(?MODULE, get_content).
 
-file(_Event, _From, {Binary,FilePath}) ->
-	{reply, error, file, {Binary,FilePath}}.
+add_mime_type(MimeType) ->
+	gen_server:call(?MODULE, {add_mime_type, MimeType}).
 
-%% ----------------------------------------------------------------------------
-% Program response
-%% ----------------------------------------------------------------------------
-program({set_status, NewStatus}, _From, {_Status,Content,MimeType}) ->
-	%% Set HTTP Status Code
-	{reply, ok, program, {NewStatus,Content,Mimetype}};
+get_mime_type() ->
+	gen_server:call(?MODULE, get_mime_tyoe).
 
-program(get_status, _From, {Status,Content,MimeType}) ->
-	%% Get HTTP Status Code
-	{reply, Status, program, {Status,Content,MimeType};
-
-program({set_mime_type, NewMimeType}, _From, {Status,Content,_MimeType}) ->
-	%% Set content mime type
-	{reply, ok, program, {Status,Content,NewMimeType}};
-
-program(get_mime_type, _From, {Status,Content,MimeType}) ->
-	%% Get content mime type
-	{reply, MimeType, program, {Status,Content,MimeType}};
-
-program({add_content, NewContent}, _From, {Status,Content,MimeType}) ->
-	%% Add new content to program response
-	{reply, ok, program, {Status,[NewContent, Content],MimeType}};
-
-program({replace_content, NewContent}, _From, {Status,_Content,MimeType}) ->
-	%% Replace content
-	{reply, ok, program, {Status,NewContent,MimeType}};
-
-program(get_content, _From, {Status,Content,MimeType}) ->
-	%% Get and reset content
-	{reply, lists:reverse(Content), program, {Status,[],MimeType}};
-
-program(_Event, _From, {Status,Content,MimeType}) ->
-	{reply, error, program, {StatusCode,Content,MimeType}}.
-
-
-%% ----------------------------------------------------------------------------
-%
-%% ----------------------------------------------------------------------------
-start() ->
-	gen_fsm:start(?MODULE, [], []).
-
-create_program(Response) ->
-	gen_fsm:sync_send_event(Response, create_program).
-
-create_file(Response ->
-	gen_fsm:sync_send_event(Response, create_file).
-
-set_status(Response, Status) ->
-	gen_fsm:sync_send_event(Response, {set_status, Status}).
-
-get_status(Response) ->
-	gen_fsm:sync_send_event(Response, get_status).
-
-set_mime_type(Response, NewMimeType) ->
-	gen_fsm:sync_send_event(Response, {set_mime_type, NewMimeType}).
-
-get_mime_type(Response) ->
-	gen_fsm:sync_send_event(Response, get_mime_type).
-
-add_content(Response, NewContent) ->
-	gen_fsm:sync_send_event(Response, {add_content, NewContent}).
-
-replace_content(Response, NewContet) ->
-	gen_fsm:sync_send_event(Response, {replace_content, NewContent}).
-
-get_content(Response) ->
-	gen_fsm:sync_send_event(Response, get_content).
-
+destroy_response() ->
+	gen_server:call(?MODULE, destroy_response).
