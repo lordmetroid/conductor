@@ -9,7 +9,7 @@
 
 -include_lib("webmachine/include/webmachine.hrl").
 
-execute(Request, Response) ->
+execute(Request, Response, Log) ->
 	%% Find a matching response to the request
 	ProgramName = wrq:path(Request),
 	case lists:keyfind(ProgramName, 1, conductor_settings:get(programs)) of
@@ -22,6 +22,8 @@ execute(Request, Response) ->
 			case filelib:is_regular(FilePath) of
 				false ->
 					%% Create a "404 File not found" response
+					conductor
+					
 					conductor_response:create(Response, program),
 					conductor_response:set_status_code(Response, 404),
 					execute_program(error, Request, Response);
@@ -41,7 +43,7 @@ execute(Request, Response) ->
 % @spec execute_program(ProgramFile, Request, Response) -> ok
 % @doc Execute a program 
 %% ----------------------------------------------------------------------------
-execute_program(ProgramFile, Request, Response) ->
+execute_program(ProgramFile, Request, Response, Log) ->
 	%% Get the program parameters
 	Parameters = [
 		{peer, wrq:peer(Request)},
@@ -59,7 +61,7 @@ execute_program(ProgramFile, Request, Response) ->
 			case lists:keyfind(error, 1, conductor_settings:get(programs)) of
 				false ->
 					%% Error program does not exists
-					conductor_log:add(
+					conductor_log:write(Log, 
 						"\'error\' is unspecified in programs configuration"
 					),
 					%% Create "500 Internal Server Error" response
@@ -68,8 +70,8 @@ execute_program(ProgramFile, Request, Response) ->
 					case conductor_cache:get_program(ProgramFile) of
 						false ->
 							%% Error program file does not exist
-							conductor_log:add(
-								ProgramFile ++ " does not exist"
+							conductor_log:write(Log,
+								ProgramFile ++ " - Does not exist"
 							),
 							%% Create "500 Internal Server Error" response
 							conductor_response:set_status(Reponse, 500);
@@ -82,8 +84,7 @@ execute_program(ProgramFile, Request, Response) ->
 			case conductor_cache:get_program(ProgramFile) of
 				false ->
 					%% Program file does not exist
-					%% TODO: Write to log file
-					%% Create a "410 Gone" response
+					%% Create "410 Gone" response
 					conductor_response:set_status_code(Response, 410),
 					execute_program(error, Request, Response);
 				Program ->
@@ -91,7 +92,8 @@ execute_program(ProgramFile, Request, Response) ->
 					case erlang:function_exported(Program, execute, 2) of
 						false ->
 							%% Program is incorrect
-							%% TODO: Write to log file
+							conductor_log:write(
+								
 							%% TODO: "500 Internal Server Error" response
 						true ->
 							%% Execute program
@@ -117,6 +119,10 @@ get_cookies([Data | Rest], Cookies) ->
 			get_cookies(Rest, Cookies)
 	end.
 
+%% ----------------------------------------------------------------------------
+% @spec execute_model
+% @doc Get cookies from request
+%% ----------------------------------------------------------------------------
 execute_model(ModelFile, Function, Arguments, Parameters) ->
 	case conductor_cache:get_model(ModelFile) of
 		false ->
@@ -135,6 +141,10 @@ execute_model(ModelFile, Function, Arguments, Parameters) ->
 			end
 	end.
 
+%% ----------------------------------------------------------------------------
+% @spec get_cookies(CookieHeader::string) -> Cookies::Tuplelist()
+% @doc Get cookies from request
+%% ----------------------------------------------------------------------------
 execute_view(ViewFile, Arguments, Response) ->
 	case conductor_cache:get_view(ViewFile) of
 		false ->
@@ -153,6 +163,10 @@ execute_view(ViewFile, Arguments, Response) ->
 			end
 	end.
 
+%% ----------------------------------------------------------------------------
+% @spec get_cookies(CookieHeader::string) -> Cookies::Tuplelist()
+% @doc Get cookies from request
+%% ----------------------------------------------------------------------------
 execute_controller(ControllerFile, Function, Arguments,Parameters, Response) ->
 	case conductor_cache:get_controller(ControllerFile) of
 		false ->

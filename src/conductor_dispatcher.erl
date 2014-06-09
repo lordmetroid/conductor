@@ -13,11 +13,13 @@
 
 init(_Configurations) ->
 	%% Initialize a response
-	conductor_response:start().
+	Response = conductor_response:start(),
+	Log = conductor_log:start(),
+	{Response, Log}.
 
-service_available(Request, Response) ->
+service_available(Request, {Response, Log}) ->
 	%% Exceute request
-	conductor_router:execute(Request, Response),
+	conductor_router:execute(Request, Response, Log),
 
 	%% Check HTTP Status Code
 	case conductor_response:get_status(Response) of
@@ -31,7 +33,7 @@ service_available(Request, Response) ->
 			{true, Request, Response}
 	end.
 
-resource_exists(Request, Response) ->
+resource_exists(Request, {Response, Log}) ->
 	case conductor_response:get_status(Response) of
 		404 ->
 			%% Requested resource does not exists
@@ -41,11 +43,11 @@ resource_exists(Request, Response) ->
 			{true, Request, response}
 	end.
 
-options(Request, Response) ->
+options(Request, {Response, Log}) ->
 	%% Set custom response headers
 	{[], Request, Response}.
 
-content_types_provided(Request, Response) ->
+content_types_provided(Request, {Response, Log}) ->
 	%% Set response mimetype
 	MimeType = conductor_response:get_mime_type(Response),
 	{[{MimeType, provide_content}], Request, Response}.
@@ -54,6 +56,6 @@ content_types_provided(Request, Response) ->
 % @spec provide_content(Request, Response) -> Body::iolist()
 % @doc Provides the body of the response
 %% ----------------------------------------------------------------------------
-provide_content(Request, Response) ->
+provide_content(Request, {Response, Log}) ->
 	%%	Publish content to requesting client
 	{conductor_response:get_content(Response), Request, Response}.
