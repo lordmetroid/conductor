@@ -9,18 +9,7 @@
 
 -include_lib("webmachine/include/webmachine.hrl").
 
-execute(Request, Session) ->
-	%% Extract request parameters
-	Parameters = [
-		{peer, wrq:peer(Request)},
-		{path, wrq:path(Request)},
-		{status, conductor_response:get_status_code()},
-		{method, wrq:method(Request)},
-		{variables, wrq:req_qs(Request)},
-		{body, wrq:req_body(Request)},
-		{cookies, get_cookies(wrq:req_cookie(Request))}
-	],
-
+execute(Request,Response) ->
 	%% Find a matching response to the request
 	ProgramName = wrq:path(Request),
 	case lists:keyfind(ProgramName, 1, conductor_settings:get(programs)) of
@@ -35,7 +24,7 @@ execute(Request, Session) ->
 					%% Create "404 File not found" response
 					conductor_response:create_program(),
 					conductor_response:set_status_code(404),
-					execute_error(Parameters);
+					execute_error(Request,Response);
 				true ->
 					%% Create file response
 					conductor_response:create_file(),
@@ -44,7 +33,7 @@ execute(Request, Session) ->
 		{ProgramName, ProgramFile} ->
 			%% Create program response
 			conductor_response:create_program(),
-			execute_program(ProgramFile, Parameters)
+			execute_program(ProgramFile, Request,Response)
 
 	end.
 
@@ -68,18 +57,18 @@ get_cookies([Data | Rest], Cookies) ->
 
 %% ----------------------------------------------------------------------------
 % @spec execute_program(ProgramFile, Parameters) -> ok
-% @doc Execute a program 
+% @doc Execute a program
 %% ----------------------------------------------------------------------------
-execute_program(ProgramFile, Parameters) ->
+execute_program(ProgramFile, Request,Response) ->
 	%% Get the program module from cache
 	case conductor_cache:get_program(ProgramFile) of
 		false ->
 			%% Program file does not exist
 			%% Create "410 Gone" response
 			conductor_response:set_status_code(410),
-			execute_error(Parameters);
+			execute_error(Request,Response);
 		Program ->
-			case erlang:function_exported(Program, execute, 1) of
+			case erlang:function_exported(Program, execute, 2) of
 				false ->
 					%% Program file is missing the called function 
 					%% Create "500 Internal Server Error" response
@@ -87,26 +76,26 @@ execute_program(ProgramFile, Parameters) ->
 					%% TODO: Create response body
 				true ->
 					%% Execute program
-					Program:execute(Parameters)
+					Program:execute(Request,Response)
 			end
 	end.
 
-execute_error(Parameters) ->
+execute_error(Request,Response) ->
 	case lists:keyfind(error, 1, conductor_settings:get(programs)) of
 		false ->
-			%% Program is not specified in configuration 
+			%% 'error' is not specified in configuration 
 			%% Create "500 Internal Server Error" response
 			conductor_response:set_status_code(500);
 			%% TODO: Create response body
 		{error, ProgramFile} ->
-			execute_program(ProgramFile, Parameters)
+			execute_program(ProgramFile, Request,Response)
 	end;
 
 %% ----------------------------------------------------------------------------
 % @spec execute_model(ModelFile, Function, Arguments, Parameters, Log)
 % @doc Get cookies from request
 %% ----------------------------------------------------------------------------
-execute_model(ModelFile, Function, Arguments, Parameters) ->
+execute_model(ModelFile,Function,Arguments, Request,Response) ->
 	case conductor_cache:get_model(ModelFile) of
 		false ->
 			%% Model file does not exist
@@ -115,7 +104,7 @@ execute_model(ModelFile, Function, Arguments, Parameters) ->
 			conductor_response:set_status_code(500);
 			%% TODO: Create response body
 		Model ->
-			case erlang:function_exported(Model, Function, 2) of
+			case erlang:function_exported(Model, Function, 3) of
 				false ->
 					%% Model file 
 					%% TODO: Write to log file
@@ -124,7 +113,7 @@ execute_model(ModelFile, Function, Arguments, Parameters) ->
 					%% TODO: Create response body
 				true ->
 					%% Execute model
-					Model:Function(Arguments, Parameters)
+					Model:Function(Arguments, Request,Response)
 			end
 	end.
 
@@ -141,7 +130,7 @@ execute_view(ViewFile, Arguments) ->
 			conductor_response:set_status_code(500);
 			%% TODO: Create response body
 		View ->
-			case erlang:function_exported(View, render, 2) of
+			case erlang:function_exported(View, render, 1) of
 				false ->
 					%% View file code contains errors
 					%% TODO: Write to log file
@@ -158,7 +147,7 @@ execute_view(ViewFile, Arguments) ->
 % @spec get_cookies(CookieHeader::string) -> Cookies::Tuplelist()
 % @doc Get cookies from request
 %% ----------------------------------------------------------------------------
-execute_controller(ControllerFile, Function, Arguments, Parameters)  ->
+execute_controller(ControllerFile,Function,Arguments, Request,Response)  ->
 	case conductor_cache:get_controller(ControllerFile) of
 		false ->
 			%% Controller file does not exist
@@ -176,7 +165,7 @@ execute_controller(ControllerFile, Function, Arguments, Parameters)  ->
 					%% TODO: Create response body
 				true ->
 					%% Execute controller
-					Controller:Function(Arguments, Parameters)
+					Controller:Function(Arguments, Request,Response)
 			end
 	end.
 
