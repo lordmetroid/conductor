@@ -53,7 +53,7 @@ code_change(_OldVersion, State, _Extra) ->
 	{ok, State}.
 
 %% ----------------------------------------------------------------------------
-% @spec start() ->
+% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
 % @doc Start the settings manager 
 % -----------------------------------------------------------------------------
 start_link() ->

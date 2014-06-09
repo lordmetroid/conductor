@@ -12,7 +12,11 @@
 -include_lib("webmachine/include/webmachine.hrl").
 
 init(_Configurations) ->
-	%% Initialize a response
+	%% Initialize a session
+	conductor_session:create(),
+
+
+
 	Response = conductor_response:start(),
 	
 	%% Create a session log

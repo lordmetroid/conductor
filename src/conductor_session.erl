@@ -29,4 +29,10 @@ terminate(_Reason, _State) ->
 code_change(_OldVersion, State, _Extra) ->
 	{ok, State}.
 
+%% ----------------------------------------------------------------------------
+% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
+% @doc Start the session manager 
+% -----------------------------------------------------------------------------
+start_link() ->
+	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
