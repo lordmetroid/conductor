@@ -41,6 +41,7 @@ make_module(ModulePath) ->
 			%% Compile a program
 			ProgramForm = [
 				add_module_attribute(ModuleId),
+				add_webmachine_lib_attribute(),
 				add_file(ModulePath),
 				add_run_function()
 			],
@@ -49,6 +50,7 @@ make_module(ModulePath) ->
 			%% Compile a model
 			ModelForm = [
 				add_module_attribute(ModuleId),
+				add_webmachine_lib_attribute(),
 				add_file(ModulePath)
 			],
 			compile_module(ModelForm, ModuleDate);
@@ -56,6 +58,7 @@ make_module(ModulePath) ->
 			%% Compile a view
 			ViewForm = [
 				add_module_attribute(ModuleId),
+				add_webmachine_lib_attribute(),
 				add_view(ModulePath)
 			],
 			compile_module(ViewForm);
@@ -63,6 +66,7 @@ make_module(ModulePath) ->
 			%% Compile a controller
 			ControllerForm = [
 				add_module_attribute(ModuleId),
+				add_webmachine_lib_attribute(),
 				add_file(ModulePath),
 				add_run_function(),
 				add_data_function(),
@@ -102,10 +106,25 @@ load_module(Module, ModuleBinary, ModuleDate) ->
 % @doc Add an Erlang module attribute to the compilation
 %% ----------------------------------------------------------------------------
 add_module_attribute(ModuleId) ->
-	%% -module(ModuleId)
-	erl_syntax:revert(erl_syntax:attribute(erl_syntax:atom(module), [
+	erl_syntax:revert(
+		%% -module(ModuleId)
+		erl_syntax:attribute(erl_syntax:atom(module), [
 			erl_syntax:atom(ModuleId)
-	])).
+
+		])
+	).
+
+%% ----------------------------------------------------------------------------
+% @spec add_webmachine_lib_attribute() -> syntaxTree()
+% @doc Add the Webmachine API library
+%% ----------------------------------------------------------------------------
+add_webmachine_lib_attribute() ->
+	erl_syntax:revert(
+		%% -include_lib("webmachine/include/webmachine.hrl").
+		erl_syntax:attribute(erl_syntax:atom(include_lib), [
+			erl_syntax:string("webmachine/include/webmachine.hrl")
+		])
+	).
 
 %% ----------------------------------------------------------------------------
 % @spec add_file() -> syntaxTree()
