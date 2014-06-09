@@ -16,7 +16,8 @@
 
 -export([
 	start/0,
-	create/2,
+	create_program/2,
+	create_file/2,
 	set_mime_type/2,
 	get_mime_type/1,
 	add_content/2,
@@ -47,11 +48,11 @@ code_change(_OldVersion, StateName, State, _Extra) ->
 %% ----------------------------------------------------------------------------
 % Undefined response (Default)
 %% ----------------------------------------------------------------------------
-undefined({create, file}, _From, _State) ->
+undefined(create_file, _From, _State) ->
 	%% Create a file response, {Binary,Filename}
 	{reply, ok, file, {[],[]}};
 
-undefined({create, program}, _From, _State) ->
+undefined(create_program, _From, _State) ->
 	%% Create a program response {Status,Content,MimeType}
 	{reply, ok, program, {200,[],"text/html"}};
 
@@ -127,7 +128,10 @@ start() ->
 	gen_fsm:start(?MODULE, [], []).
 
 create_program(Response) ->
-	gen_fsm:sync_send_event(Response, create_response).
+	gen_fsm:sync_send_event(Response, create_program).
+
+create_file(Response ->
+	gen_fsm:sync_send_event(Response, create_file).
 
 set_status(Response, Status) ->
 	gen_fsm:sync_send_event(Response, {set_status, Status}).
