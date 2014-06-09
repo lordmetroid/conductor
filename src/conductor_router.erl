@@ -22,18 +22,18 @@ execute(Request) ->
 			case filelib:is_regular(FilePath) of
 				false ->
 					%% Create a "404 File not found" response
-					conductor_session:create_program_response(),
-					conductor_session:set_status_code(404),
+					conductor_response:create_program(),
+					conductor_response:set_status_code(404),
 					execute_program(Request, error);
 				true ->
 					%% Create a file response
-					conductor_session:create_file_response(),
-					conductor_session:add_content(FilePath)
+					conductor_response:create_file(),
+					conductor_response:add_content(FilePath)
 			end;
 		{ProgramName, ProgramFile} ->
 			%% Create a program response
-			conductor_response:create(Response, program),
-			execute_program(ProgramFile, Request, Response)
+			conductor_response:create_program(),
+			execute_program(Request, ProgramFile)
 
 	end.
 
