@@ -13,19 +13,9 @@
 
 init(_Configurations) ->
 	%% Initialize a session
-	conductor_session:create(),
+	conductor_session:create().
 
-
-
-	Response = conductor_response:start(),
-	
-	%% Create a session log
-	Log = conductor_log:create(),
-	
-	%% Pass Response and Log as session context
-	{Response, Log}.
-
-service_available(Request, {Response, Log}) ->
+service_available(Request) ->
 	%% Exceute request
 	conductor_router:execute(Request, Response, Log),
 

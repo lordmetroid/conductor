@@ -68,10 +68,10 @@ start_conductor() ->
 				{conductor_cache, start_link, []},
 				permanent, brutal_kill, worker, [conductor_cache]
 			},
-			%% Conductor session manager
-			{conductor_session,
-				{conductor_session, start_link, []},
-				permanent, brutal_kill, worker, [conductor_session]
+			%% Conductor response manager
+			{conductor_response,
+				{conductor_response, start_link, []},
+				permanent, brutal_kill, worker, [conductor_response]
 			}
 		]
 	}).
