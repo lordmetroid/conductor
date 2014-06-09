@@ -13,7 +13,7 @@
 
 init(_Configurations) ->
 	%% Initialize a session
-	conductor_response:start(),
+	conductor_response:start_session(),
 
 service_available(Request,Response) ->
 	%% Exceute request
@@ -58,6 +58,6 @@ provide_content(Request,Response) ->
 	%%	Publish content to requesting client
 	Content = conductor_response:get_content(Response),
 
-	conductor_response:end(Response),
+	conductor_response:end_session(Response),
 	{Content, Request,Response}.
 
