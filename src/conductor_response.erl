@@ -59,9 +59,19 @@ set_status_code(Status) ->
 	gen_server:call(?MODULE, {set_status_code, Status}).
 
 get_status_code() ->
-	gen_server:call(?MODULE, get_status_code
+	gen_server:call(?MODULE, get_status_code).
 
 add_content(Content) ->
 	gen_server:call(?MODULE, {add_content, Content}).
 
+get_content() ->
+	gen_server:call(?MODULE, get_content).
 
+add_mime_type(MimeType) ->
+	gen_server:call(?MODULE, {add_mime_type, MimeType}).
+
+get_mime_type() ->
+	gen_server:call(?MODULE, get_mime_tyoe).
+
+destroy_response() ->
+	gen_server:call(?MODULE, destroy_response).
