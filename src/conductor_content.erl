@@ -25,7 +25,7 @@
 ]).
 
 %% ----------------------------------------------------------------------------
-% @doc Start a new response with the default undefined response type
+% @doc Start a new content container
 %% ----------------------------------------------------------------------------
 init(_Arguments) ->
 	{ok, undefined, []}.
@@ -46,7 +46,7 @@ code_change(_OldVersion, StateName, State, _Extra) ->
 	{ok, StateName, State}.
 
 %% ----------------------------------------------------------------------------
-% Undefined response (Default)
+% Undefined content (Default)
 %% ----------------------------------------------------------------------------
 undefined(create_file, _From, _State) ->
 	%% Create a file response, {Binary,Filename}
@@ -60,12 +60,8 @@ undefined(_Event, _From, State) ->
 	{reply, error, undefined, State}.
 
 %% ----------------------------------------------------------------------------
-% File response
+% File content
 %% ----------------------------------------------------------------------------
-file(get_status, _From, {Binary,FilePath}) ->
-	%% Get HTTP Status Code
-	{reply, 200, file, {Binary,FilePath}};
-
 file(get_mime_type, _From, {Binary,FilePath}) ->
 	%% Get file mime type
 	case mimetypes:filename(FilePath) of
@@ -79,6 +75,10 @@ file({add_content, FilePath}, _From, {Binary,FilePath}) ->
 	%% TODO: Add binary content
 	{reply, ok, file, {Binary,FilePath}};
 
+file({replace_content, NewFilePath}, _From, {_Binary,FilePath) ->
+	%% TODO: add binary content
+	{reply, ok, file, {NewBinary,NewFilePath}};
+	
 file(get_content, _From, {Binary,FilePath}) ->
 	%% Get file binary
 	{reply, Binary, file, {Binary,FilePath}};
@@ -87,7 +87,7 @@ file(_Event, _From, {Binary,FilePath}) ->
 	{reply, error, file, {Binary,FilePath}}.
 
 %% ----------------------------------------------------------------------------
-% Program response
+% Program content
 %% ----------------------------------------------------------------------------
 program({set_mime_type, NewMimeType}, _From, {Content,_MimeType}) ->
 	%% Set content mime type

@@ -30,10 +30,10 @@ handle_call(start_session, From, Sessions) ->
 	%% Start new session
 
 	%% Start a new content state
-	{ok, Content} =  conductor_content:init(),
+	{ok, ContentId} =  conductor_content:init(),
 
 	%% Add session to the manager
-	{reply, From, [{From, {200 ,Content, []}} | Sessions]};
+	{reply, From, [{From, {200 ,ContentId, []}} | Sessions]};
 
 handle_call(end_session, From, Sessions) ->
 	case lists:keyfind(From, 1, Sessions) of

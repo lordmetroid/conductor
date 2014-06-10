@@ -95,7 +95,7 @@ execute_model(ModelFile,Function,Arguments, Request) ->
 					%% TODO: Create response body
 				true ->
 					%% Execute model
-					Model:Function(Arguments, Request)
+					Model:Function(Request, Arguments)
 			end
 	end.
 
@@ -147,7 +147,7 @@ execute_controller(ControllerFile,Function,Arguments, Request)  ->
 					%% TODO: Create response body
 				true ->
 					%% Execute controller
-					Controller:Function(Arguments, Request)
+					Controller:Function(Request, Arguments)
 			end
 	end.
 
