@@ -33,14 +33,14 @@ handle_call(start_session, From, Sessions) ->
 	{ok, ContentId} =  conductor_content:init(),
 
 	%% Add session to the manager
-	{reply, From, [{From, {200 ,ContentId, []}} | Sessions]};
+	{reply, From, [{From, {200, ContentId, []}} | Sessions]};
 
 handle_call(end_session, From, Sessions) ->
 	case lists:keyfind(From, 1, Sessions) of
 		false ->
 			%% Session does not exist
 			{reply, ok, Sessions};
-		{_StatusCode, Content, _Log} ->
+		{_StatusCode, ContentId, Log} ->
 			%% Delete content
 			conductor_content:delete(Content),
 
@@ -54,7 +54,7 @@ handle_call({set_status_code, NewStatusCode}, From, Sessions) ->
 		false ->
 			%% Session does not exist
 			{reply, ok, Sessions};
-		{_StatusCode, Content, Log} ->
+		{_StatusCode, ContentId, Log} ->
 			%% Set new Status Code
 			UpdatedSessions = lists:keyreplace(From, 1, Sessions, {
 				NewStatusCode, Content, Log
@@ -65,8 +65,10 @@ handle_call({set_status_code, NewStatusCode}, From, Sessions) ->
 handle_call(get_status_code, From, Sessions) ->
 	case lists:keyfind(From, 1, Sessions) of
 		false ->
-			{reply
-
+			{reply, 
+		{StatusCode, _ContentId, Log} ->
+			{reply, StatusCode, Sessions}
+	end;
 
 handle_call(create_file, From, Sessions) ->
 
