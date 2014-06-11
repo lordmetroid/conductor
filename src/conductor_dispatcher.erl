@@ -13,7 +13,7 @@
 
 init(_Configurations) ->
 	%% No context
-	{ok []}.
+	{ok, []}.
 
 service_available(Request,Context) ->
 	%% Exceute request
