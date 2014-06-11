@@ -15,9 +15,9 @@
 ]).
 
 -export([
-	start/0,
-	create_program/2,
 	create_file/2,
+	create_program/2,
+	destroy/0,
 	
 	set_status_code/2,
 	get_status_code/1
