@@ -15,9 +15,9 @@
 ]).
 
 -export([
-	start/0,
 	create_program/2,
 	create_file/2,
+	destroy/0,
 	set_mime_type/2,
 	get_mime_type/1,
 	add_content/2,
@@ -25,7 +25,7 @@
 ]).
 
 %% ----------------------------------------------------------------------------
-% @doc Start a new content container
+% @doc Initialize a new response body
 %% ----------------------------------------------------------------------------
 init(_Arguments) ->
 	{ok, undefined, []}.
@@ -96,21 +96,20 @@ program(_Event, _From, Content) ->
 	{reply, error, program, Content}.
 
 
-%% ----------------------------------------------------------------------------
-%
-%% ----------------------------------------------------------------------------
-init() ->
-	gen_fsm:start(?MODULE, [], []).
 
-delete() -> 
-	gen_fsm:terminate
-
+%% ----------------------------------------------------------------------------
 create_program(Body) ->
+	gen_fsm:start(?MODULE, [], []),
 	gen_fsm:sync_send_event(Body, create_program).
 
 create_file(Body) ->
+	gen_fsm:start(?MODULE, [], []),
 	gen_fsm:sync_send_event(Body, create_file).
 
+destroy() -> 
+	gen_fsm:terminate
+
+%% ----------------------------------------------------------------------------
 add_content(Body, NewContent) ->
 	gen_fsm:sync_send_event(Body, {add_content, NewContent}).
 
@@ -119,4 +118,3 @@ replace_content(Body, NewContet) ->
 
 get_content(Body) ->
 	gen_fsm:sync_send_event(Body, get_content).
-
