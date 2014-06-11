@@ -1,4 +1,4 @@
--module(conductor_execute).
+-module(conductor_cache).
 
 -behavior(gen_server).
 -export([
@@ -61,42 +61,42 @@ handle_call({get_model, ModelFile}, _From, Caches) ->
 	ModelPath = filename:join([ModelRoot, ModelFile]),
 
 	case get_module(ModelFile, ModelPath, Models) of
-		false ->
+		{false, NewModels} ->
 			%% Model does not exist
-			{reply, false, Caches};
+			{reply, false, {P,NewModels,V,C}};
 		{Model, NewModels} ->
 			%% Model found and cache has been updated
-			{reply, Model, {P,NewModels,V,C}
+			{reply, Model, {P,NewModels,V,C}}
 	end;
 
 handle_call({get_view, ViewFile}, _From, Caches) ->
-	{P,M,Views,C} = Cache,
+	{P,M,Views,C} = Caches,
 
 	ViewRoot = conductor_settings:get(view_root),
 	ViewPath = filename:join([ViewRoot, ViewFile]),
 
 	case get_module(ViewFile, ViewPath, Views) of
-		false ->
+		{false, NewViews} ->
 			%% View does not exist
-			{reply, false, Caches};
+			{reply, false,  {P,M,NewViews,C}};
 		{View, NewViews} ->
 			%% View found and cache has been updated
-			{reply, View, {P,M,NewViews,C}
+			{reply, View, {P,M,NewViews,C}}
 	end;
 
 handle_call({get_controller, ControllerFile}, _From, Caches) ->
-	{P,M,V,Controllers} = Cache,
+	{P,M,V,Controllers} = Caches,
 
 	ControllerRoot = conductor_settings:get(controller_root),
 	ControllerPath = filename:join([ControllerRoot, ControllerFile]),
 
 	case get_module(ControllerFile, ControllerPath, Controllers) of
-		false ->
+		{false, NewControllers} ->
 			%% Controller does not exist
-			{reply, false, Caches};
-		{Controller, NewControllers}
+			{reply, false,  {P,M,V,NewControllers}};
+		{Controller, NewControllers} ->
 			%% Controller found and cache has been updated
-			{reply, Controller, {P,M,V,NewControllers}
+			{reply, Controller, {P,M,V,NewControllers}}
 	end;
 
 handle_call(_Event, _From, State) ->
@@ -118,33 +118,34 @@ code_change(_OldVersion, State, _Extra) ->
 % @spec get_module() -> {Module, UpdatedCache}
 % @doc Update cache and get current up to date module
 %% ----------------------------------------------------------------------------
-get_module(File, FilePath, Cache)
-	case lists:keyfind(File,1, Cache) of
+get_module(ModuleFile, ModulePath, Cache) ->
+	case lists:keyfind(ModuleFile,1, Cache) of
 		false ->
-			case filelib:last_modified(FilePath) of
+			case filelib:last_modified(ModulePath) of
 				0 ->
-					%% File does not exists in cache nor in filesystem
-					false;
-				Date ->
+					%% Module file does not exists in cache nor in filesystem
+					{false, Cache};
+				_ModuleDate ->
 					%% Cache new file from filesystem
-					[NewModule] = conductor_compiler:make(ProgramPath),
+					[NewModule] = conductor_compiler:make(ModulePath),
 					{NewModule, [NewModule | Cache]}
 			end;
-		{File, {Module, Date}} ->
-			case filelib:last_modified(FilePath) of
+		{ModuleFile, {Module, ModuleDate}} ->
+			case filelib:last_modified(ModulePath) of
 				0 ->
+					%% Module file does not exist in filesystem
 					%% TODO: Unload old module
 					%% Remove deleted file from cache
-					NewCache = lists:keydelete(File, 1, Cache),
-					false;
-				Date ->
+					NewCache = lists:keydelete(ModuleFile, 1, Cache),
+					{false, NewCache};
+				ModuleDate ->
 					%% Cache is up to date
 					{Module, Cache};
 				NewDate ->
 					%% Update cache with new file
-					[NewModule] = conductor_compiler:make(FilePath),
+					[NewModule] = conductor_compiler:make(ModulePath),
 					UpdatedModule = {NewModule, NewDate},
-					{NewModule, lists:keyreplace(File, 1, UpdatedModule)}
+					{NewModule, lists:keyreplace(ModuleFile, 1, UpdatedModule)}
 			end
 	end.
 
