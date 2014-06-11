@@ -26,6 +26,9 @@ init(_Arguments) ->
 	%% Initalize the session manager
 	{ok, []}.
 
+%% ----------------------------------------------------------------------------
+% Response control functions
+%% ----------------------------------------------------------------------------
 handle_call(create_file, From, Responses) ->
 	%% Create a file response
 	{ok, Header} = conductor_response_header:create_file(),
@@ -59,6 +62,9 @@ handle_call(destroy, From, Responses) ->
 			{reply, ok, UpdatedResponses}
 	end;
 
+%% ----------------------------------------------------------------------------
+% Response header functions
+%% ----------------------------------------------------------------------------
 handle_call({set_status_code, NewStatusCode}, From, Responses) ->
 	case lists:keyfind(From, 1, Responses) of
 		false ->
@@ -81,23 +87,25 @@ handle_call(get_status_code, From, Responses) ->
 			{reply, StatusCode, Responses}
 	end;
 
-handle_call(create_file, From, Responses) ->
-	case lists:keyfind(From, 1, Responses) of
-		false ->
-		{Header,Body, Log} ->
-	end;
-
-handle_call(create_program, From, Responses) ->
-	case lists:keyfind(From, 1, Responses) of
-		false ->
-		{Header,Body, Log} ->
-	end;
+%% ----------------------------------------------------------------------------
+% Response body functions
+%% ----------------------------------------------------------------------------
 handle_call({add_content, Content}, From, Responses) ->
 	case lists:keyfind(From, 1, Responses) of
 		false ->
 		{Header,Body, Log} ->
 	end;
+handle_call({replace_content, Content}, From, Responses) ->
+	case lists:keyfind(From, 1, Responses) of
+		false ->
+		{Header,Body, Log} ->
+	end;	
 
+handle_call({get_content}, From, Responses) ->
+	case lists:keyfind(From, 1, Responses) of
+		false ->
+		{Header,Body, Log} ->
+	end;
 
 
 handle_call(_Event, _From, State) ->
@@ -123,7 +131,7 @@ start_link() ->
 	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 %% ----------------------------------------------------------------------------
-% Response functions
+% Response control functions
 %% ----------------------------------------------------------------------------
 create_file() ->
 	gen_server:call(?MODULE, create_file).
@@ -143,7 +151,7 @@ set_status_code(Status) ->
 get_status_code() ->
 	gen_server:call(?MODULE, get_status_code).
 
-add_mime_type(MimeType) ->
+set_mime_type(MimeType) ->
 	gen_server:call(?MODULE, {add_mime_type, MimeType}).
 
 get_mime_type() ->
