@@ -55,7 +55,7 @@ execute_program(ProgramFile, Request) ->
 					%% Program file is missing the called function 
 					%% Create "500 Internal Server Error" response
 					conductor_response:set_status_code(500),
-					%% TODO: Create response body
+					%% TODO: Create response term
 				true ->
 					%% Execute program
 					Program:execute(Request)
@@ -68,7 +68,7 @@ execute_error(Request) ->
 			%% 'error' is not specified in configuration 
 			%% Create "500 Internal Server Error" response
 			conductor_response:set_status_code(500);
-			%% TODO: Create response body
+			%% TODO: Create response term
 		{error, ProgramFile} ->
 			execute_program(ProgramFile, Request)
 	end;
@@ -84,7 +84,7 @@ execute_model(ModelFile,Function,Arguments, Request) ->
 			%% TODO: Write to log file
 			%% Create "500 Internal Server Error" response
 			conductor_response:set_status_code(500);
-			%% TODO: Create response body
+			%% TODO: Create response term
 		Model ->
 			case erlang:function_exported(Model, Function, 2) of
 				false ->
@@ -92,7 +92,7 @@ execute_model(ModelFile,Function,Arguments, Request) ->
 					%% TODO: Write to log file
 					%% Create "500 Internal Server Error" response
 					conductor_response:set_status_code(500);
-					%% TODO: Create response body
+					%% TODO: Create response term
 				true ->
 					%% Execute model
 					Model:Function(Request, Arguments)
@@ -110,7 +110,7 @@ execute_view(ViewFile, Arguments) ->
 			%% TODO: Write to log file
 			%% Create "500 Internal Server Error" response
 			conductor_response:set_status_code(500);
-			%% TODO: Create response body
+			%% TODO: Create response term
 		View ->
 			case erlang:function_exported(View, render, 1) of
 				false ->
@@ -118,7 +118,7 @@ execute_view(ViewFile, Arguments) ->
 					%% TODO: Write to log file
 					%% Create "500 Internal Server Error" response
 					conductor_response:set_status_code(500);
-					%% TODO: Create response body
+					%% TODO: Create response term
 				true ->
 					%% Execute view
 					View:render(Arguments)
@@ -136,7 +136,7 @@ execute_controller(ControllerFile,Function,Arguments, Request)  ->
 			%% TODO: Write to log file
 			%% Create "500 Internal Server Error" response
 			conductor_response:set_status_code(500);
-			%% TODO: Create response body
+			%% TODO: Create response term
 		Controller ->
 			case erlang:function_exported(Controller, Function, 2) of
 				false ->
@@ -144,7 +144,7 @@ execute_controller(ControllerFile,Function,Arguments, Request)  ->
 					%% TODO: Write to log file
 					%% Create "500 Internal Server Error" response
 					conductor_response:set_status_code(500);
-					%% TODO: Create response body
+					%% TODO: Create response term
 				true ->
 					%% Execute controller
 					Controller:Function(Request, Arguments)
