@@ -98,13 +98,13 @@ program(_Event, _From, Content) ->
 
 
 %% ----------------------------------------------------------------------------
-create_program(Body) ->
-	gen_fsm:start(?MODULE, [], []),
-	gen_fsm:sync_send_event(Body, create_program).
-
 create_file(Body) ->
 	gen_fsm:start(?MODULE, [], []),
 	gen_fsm:sync_send_event(Body, create_file).
+
+create_program(Body) ->
+	gen_fsm:start(?MODULE, [], []),
+	gen_fsm:sync_send_event(Body, create_program).
 
 destroy() -> 
 	gen_fsm:terminate
