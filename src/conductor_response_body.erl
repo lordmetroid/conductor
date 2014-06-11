@@ -1,4 +1,4 @@
--module(conductor_content).
+-module(conductor_response_body).
 
 -behavior(gen_fsm).
 -export([
@@ -62,20 +62,11 @@ undefined(_Event, _From, State) ->
 %% ----------------------------------------------------------------------------
 % File content
 %% ----------------------------------------------------------------------------
-file(get_mime_type, _From, {Binary,FilePath}) ->
-	%% Get file mime type
-	case mimetypes:filename(FilePath) of
-		undefined ->
-			{reply, "text/html", file, {Binary,FilePath}};
-		MimeType ->
-			{reply, MimeType, file,{Binary,FilePath}}
-	end;
-
 file({add_content, FilePath}, _From, {Binary,FilePath}) ->
 	%% TODO: Add binary content
 	{reply, ok, file, {Binary,FilePath}};
 
-file({replace_content, NewFilePath}, _From, {_Binary,FilePath) ->
+file({replace_content, NewFilePath}, _From, {_Binary,_FilePath) ->
 	%% TODO: add binary content
 	{reply, ok, file, {NewBinary,NewFilePath}};
 	
@@ -89,28 +80,20 @@ file(_Event, _From, {Binary,FilePath}) ->
 %% ----------------------------------------------------------------------------
 % Program content
 %% ----------------------------------------------------------------------------
-program({set_mime_type, NewMimeType}, _From, {Content,_MimeType}) ->
-	%% Set content mime type
-	{reply, ok, program, {Content,NewMimeType}};
-
-program(get_mime_type, _From, {Content,MimeType}) ->
-	%% Get content mime type
-	{reply, MimeType, program, {Content,MimeType}};
-
-program({add_content, NewContent}, _From, {Content,MimeType}) ->
+program({add_content, NewContent}, _From, Content) ->
 	%% Add new content to program response
-	{reply, ok, program, {[NewContent | Content],MimeType}};
+	{reply, ok, program, [NewContent | Content]};
 
-program({replace_content, NewContent}, _From, {_Content,MimeType}) ->
+program({replace_content, NewContent}, _From, _Content) ->
 	%% Replace content
-	{reply, ok, program, {NewContent,MimeType}};
+	{reply, ok, program, NewContent};
 
-program(get_content, _From, {Content,MimeType}) ->
+program(get_content, _From, Content) ->
 	%% Get and reset content
-	{reply, lists:reverse(Content), program, {Content,MimeType}};
+	{reply, lists:reverse(Content), program, Content};
 
-program(_Event, _From, {Content,MimeType}) ->
-	{reply, error, program, {Content,MimeType}}.
+program(_Event, _From, Content) ->
+	{reply, error, program, Content}.
 
 
 %% ----------------------------------------------------------------------------
@@ -122,24 +105,18 @@ init() ->
 delete() -> 
 	gen_fsm:terminate
 
-create_program(ContentId) ->
-	gen_fsm:sync_send_event(ContentId, create_program).
+create_program(Body) ->
+	gen_fsm:sync_send_event(Body, create_program).
 
-create_file(ContentId) ->
-	gen_fsm:sync_send_event(ContentId, create_file).
+create_file(Body) ->
+	gen_fsm:sync_send_event(Body, create_file).
 
-set_mime_type(ContentId, NewMimeType) ->
-	gen_fsm:sync_send_event(ContentId, {set_mime_type, NewMimeType}).
+add_content(Body, NewContent) ->
+	gen_fsm:sync_send_event(Body, {add_content, NewContent}).
 
-get_mime_type(ContentId) ->
-	gen_fsm:sync_send_event(ContentId, get_mime_type).
+replace_content(Body, NewContet) ->
+	gen_fsm:sync_send_event(Body, {replace_content, NewContent}).
 
-add_content(ContentId, NewContent) ->
-	gen_fsm:sync_send_event(ContentId, {add_content, NewContent}).
-
-replace_content(ContentId, NewContet) ->
-	gen_fsm:sync_send_event(ContentId, {replace_content, NewContent}).
-
-get_content(ContentId) ->
-	gen_fsm:sync_send_event(ContentId, get_content).
+get_content(Body) ->
+	gen_fsm:sync_send_event(Body, get_content).
 

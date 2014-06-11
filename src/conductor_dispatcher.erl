@@ -12,10 +12,10 @@
 -include_lib("webmachine/include/webmachine.hrl").
 
 init(_Configurations) ->
-	%% Initialize a response session
-	conductor_response:start_session(),
+	%% No context
+	{ok []}.
 
-service_available(Request,Response) ->
+service_available(Request,Context) ->
 	%% Exceute request
 	conductor_router:execute(Request),
 
@@ -24,42 +24,41 @@ service_available(Request,Response) ->
 		500 ->
 			%% "500 Internal Server Error"
 			%% TODO: Print session log as error term
-			{{error, []}, Request,Response};
+			{{error, []}, Request,Context};
 		503 ->
 			%% "503 Service Unavailable"
-			{false, Request,Response};
+			{false, Request,Context};
 		_ ->
 			%% Requested service is available
-			{true, Request,Response}
+			{true, Request,Context}
 	end.
 
-resource_exists(Request,Response) ->
+resource_exists(Request,Context) ->
 	case conductor_response:get_status_code() of
 		404 ->
 			%% "404 File Not Found" 
-			{false, Request,Response};
+			{false, Request,Context};
 		_ ->
 			%% Requested file was found
-			{true, Request,Response}
+			{true, Request,Context}
 	end.
 
-options(Request,Response) ->
+options(Request,Context) ->
 	%% Set custom response headers
-	{[], Request,Response}.
+	{[], Request,Context}.
 
-content_types_provided(Request,Response) ->
+content_types_provided(Request,Context) ->
 	%% Set response mimetype
 	MimeType = conductor_response:get_mime_type(),
-	{[{MimeType, provide_content}], Request,Response}.
+	{[{MimeType, provide_content}], Request,Context}.
 
 %% ----------------------------------------------------------------------------
-% @spec provide_content(Request,Response) -> {Body::iolist(), Request,Response}
+% @spec provide_content(Request,Context) -> {Body::iolist(), Request,Context}
 % @doc Provide the response body to the client
 %% ----------------------------------------------------------------------------
-provide_content(Request,Response) ->
+provide_content(Request,Context) ->
 	%%	Publish content to client
 	Content = conductor_response:get_content(),
 
-	conductor_response:end_session(),
-	{Content, Request,Response}.
-
+	conductor_response:destroy(),
+	{Content, Request,Context}.

@@ -12,8 +12,8 @@
 
 -export([
 	start_link/0,
-	start_session/0,
-	end_session/0,
+	create/0,
+	destroy/0,
 	set_status_code/1,
 	get_status_code/0,
 	add_mime_type/1,
@@ -26,56 +26,66 @@ init(_Arguments) ->
 	%% Initalize the session manager
 	{ok, []}.
 
-handle_call(start_session, From, Sessions) ->
-	%% Start new session
+handle_call(start_session, From, Responses) ->
+	%% Initialize a new response
+	{ok, Header} = conductor_response_header:init(),
+	{ok, Body} =  conductor_response_body:init(),
+	{ok, Log} = conductor_response_log:init(),
 
-	%% Start a new content state
-	{ok, ContentId} =  conductor_content:init(),
+	%% Add response to the manager
+	{reply, From, [{From, {Header,Body, Log}} | Responses]};
 
-	%% Add session to the manager
-	{reply, From, [{From, {200, ContentId, []}} | Sessions]};
-
-handle_call(end_session, From, Sessions) ->
-	case lists:keyfind(From, 1, Sessions) of
+handle_call(end_session, From, Responses) ->
+	case lists:keyfind(From, 1, Responses) of
 		false ->
-			%% Session does not exist
-			{reply, ok, Sessions};
-		{_StatusCode, ContentId, Log} ->
-			%% Delete content
-			conductor_content:delete(Content),
+			%% Response does not exist
+			{reply, ok, Responses};
+		{_Header,Body, Log} ->
+			%% Delete response body
+			conductor_response_body:delete(Content),
 
-			%% Terminate session
-			UpdatedSessions = lists:keydelete(From, Sessions),
-			{reply, ok, UpdatedSessions}
+			%% Destroy response
+			UpdatedResponses = lists:keydelete(From, Responses),
+			{reply, ok, UpdatedResponses}
 	end;
 
-handle_call({set_status_code, NewStatusCode}, From, Sessions) ->
-	case lists:keyfind(From, 1, Sessions) of
+handle_call({set_status_code, NewStatusCode}, From, Responses) ->
+	case lists:keyfind(From, 1, Responses) of
 		false ->
 			%% Session does not exist
-			{reply, ok, Sessions};
-		{_StatusCode, ContentId, Log} ->
+			{reply, ok, Responses};
+		{_Header,Body, Log} ->
 			%% Set new Status Code
-			UpdatedSessions = lists:keyreplace(From, 1, Sessions, {
+			UpdatedResponses = lists:keyreplace(From, 1, Responses, {
 				NewStatusCode, Content, Log
 			}),
-			{reply, ok, UpdatedSessions}
+			{reply, ok, UpdatedResponses}
 	end;
 
-handle_call(get_status_code, From, Sessions) ->
-	case lists:keyfind(From, 1, Sessions) of
+handle_call(get_status_code, From, Responses) ->
+	case lists:keyfind(From, 1, Responses) of
 		false ->
 			{reply, 
-		{StatusCode, _ContentId, Log} ->
-			{reply, StatusCode, Sessions}
+		{Header,Body, Log} ->
+			{reply, StatusCode, Responses}
 	end;
 
-handle_call(create_file, From, Sessions) ->
+handle_call(create_file, From, Responses) ->
+	case lists:keyfind(From, 1, Responses) of
+		false ->
+		{Header,Body, Log} ->
+	end;
 
-handle_call(create_program, From, Sessions) ->
-
-handle_call({add_content, Content}, From, Sessions) ->
-
+handle_call(create_program, From, Responses) ->
+	case lists:keyfind(From, 1, Responses) of
+		false ->
+		{Header,Body, Log} ->
+	end;
+handle_call({add_content, Content}, From, Responses) ->
+	case lists:keyfind(From, 1, Responses) of
+		false ->
+		{Header,Body, Log} ->
+	end;
 
 
 
@@ -96,20 +106,26 @@ code_change(_OldVersion, State, _Extra) ->
 
 %% ----------------------------------------------------------------------------
 % @spec start_link() -> {ok, Pid} | ignore | {error, Error}
-% @doc Start the session manager 
+% @doc Start the response manager 
 % -----------------------------------------------------------------------------
 start_link() ->
 	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 %% ----------------------------------------------------------------------------
-% Session functions
+% Response functions
 %% ----------------------------------------------------------------------------
-start_session() ->
-	gen_server:call(?MODULE, start_session).
-
-end_session() ->
+destroy() ->
 	gen_server:call(?MODULE, destroy_response).
 
+create_file() ->
+	gen_server:call(?MODULE, create_file).
+
+create_program() ->
+	gen_server:call(?MODULE, create_program).
+
+%% ----------------------------------------------------------------------------
+% Response header functions
+%% ----------------------------------------------------------------------------
 set_status_code(Status) ->
 	gen_server:call(?MODULE, {set_status_code, Status}).
 
@@ -117,14 +133,8 @@ get_status_code() ->
 	gen_server:call(?MODULE, get_status_code).
 
 %% ----------------------------------------------------------------------------
-% Content functions
+% Response body functions
 %% ----------------------------------------------------------------------------
-create_file() ->
-	gen_server:call(?MODULE, create_file).
-
-create_program() ->
-	gen_server:call(?MODULE, create_program).
-
 add_content(Content) ->
 	gen_server:call(?MODULE, {add_content, Content}).
 
@@ -139,5 +149,3 @@ add_mime_type(MimeType) ->
 
 get_mime_type() ->
 	gen_server:call(?MODULE, get_mime_tyoe).
-
-
