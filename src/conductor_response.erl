@@ -33,7 +33,7 @@ handle_call(create_file, From, Responses) ->
 	%% Create a file response
 	{ok, Header} = conductor_response_header:create_file(),
 	{ok, Body} =  conductor_response_body:create_file(),
-	{ok, Log} = conductor_response_log:create(),
+	{ok, Log} = ok, %% TODO: conductor_response_log:create(),
 	
 	%% Add the response to the manager
 	{reply, From, [{From, {Header,Body, Log}} | Responses]};
@@ -42,7 +42,7 @@ handle_call(create_program, From, Response) ->
 	%% Create a program response
 	{ok, Header} = conductor_response_header:create_program(),
 	{ok, Body} =  conductor_response_body:create_program(),
-	{ok, Log} = conductor_response_log:create(),
+	{ok, Log} = ok, %% TODO: conductor_response_log:create(),
 	
 	%% Add the response to the manager
 	{reply, From, [{From, {Header,Body, Log}} | Responses]};
@@ -53,11 +53,13 @@ handle_call(destroy, From, Responses) ->
 			%% Response does not exist
 			%% TODO: Write to log
 			{reply, ok, Responses};
-		{_Header,Body, Log} ->
-			%% Delete response body
-			conductor_response_body:destroy(Body),
-
+		{Header,Body, Log} ->
 			%% Destroy response
+			conductor_response_header:destroy(Header),
+			conductor_response_body:destroy(Body),
+			%% TODO: conductor_response_log:destroy(Log),
+
+			%% Remove response from manager
 			UpdatedResponses = lists:keydelete(From, Responses),
 			{reply, ok, UpdatedResponses}
 	end;
