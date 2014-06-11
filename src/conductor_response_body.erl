@@ -18,9 +18,9 @@
 	create_program/2,
 	create_file/2,
 	destroy/0,
-	set_mime_type/2,
-	get_mime_type/1,
+
 	add_content/2,
+	replace_content/2,
 	get_content/1
 ]).
 
@@ -49,12 +49,12 @@ code_change(_OldVersion, StateName, State, _Extra) ->
 % Undefined content (Default)
 %% ----------------------------------------------------------------------------
 undefined(create_file, _From, _State) ->
-	%% Create a file response, {Binary,Filename}
-	{reply, ok, file, {[],[]}};
+	%% Create a file response body, FilePath
+	{reply, ok, file, []};
 
 undefined(create_program, _From, _State) ->
-	%% Create a program response {Body,MimeType}
-	{reply, ok, program, {[],"text/html"}};
+	%% Create a program response body, Content
+	{reply, ok, program, []};
 
 undefined(_Event, _From, State) ->
 	{reply, error, undefined, State}.
@@ -62,20 +62,20 @@ undefined(_Event, _From, State) ->
 %% ----------------------------------------------------------------------------
 % File content
 %% ----------------------------------------------------------------------------
-file({add_content, FilePath}, _From, {Binary,FilePath}) ->
+file({add_content, NewFilePath}, _From, FilePath) ->
 	%% TODO: Add binary content
-	{reply, ok, file, {Binary,FilePath}};
+	{reply, ok, file, FilePath};
 
-file({replace_content, NewFilePath}, _From, {_Binary,_FilePath) ->
+file({replace_content, NewFilePath}, _From, _FilePath) ->
 	%% TODO: add binary content
-	{reply, ok, file, {NewBinary,NewFilePath}};
+	{reply, ok, file, NewFilePath};
 	
-file(get_content, _From, {Binary,FilePath}) ->
+file(get_content, _From, FilePath) ->
 	%% Get file binary
-	{reply, Binary, file, {Binary,FilePath}};
+	{reply, Binary, file, FilePath};
 
-file(_Event, _From, {Binary,FilePath}) ->
-	{reply, error, file, {Binary,FilePath}}.
+file(_Event, _From, FilePath) ->
+	{reply, error, file, FilePath}.
 
 %% ----------------------------------------------------------------------------
 % Program content
