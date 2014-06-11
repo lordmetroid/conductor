@@ -28,13 +28,13 @@ execute(Request) ->
 				true ->
 					%% Create file response
 					conductor_response:create_file(),
-					conductor_response:add_content(FilePath)
+					conductor_response:add_content(FilePath),
+					conductor_response:set_mime_type(FilePath)
 			end;
 		{ProgramName, ProgramFile} ->
 			%% Create program response
 			conductor_response:create_program(),
 			execute_program(ProgramFile, Request)
-
 	end.
 
 %% ----------------------------------------------------------------------------
