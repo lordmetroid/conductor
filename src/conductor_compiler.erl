@@ -20,24 +20,28 @@ make([ModulePath | Rest], Modules) ->
 	case make_module(ModulePath) of
 		error ->
 			%% Do not include uncompiled modules
-			make(Rest, Modules)
+			make(Rest, Modules);
 		{Module, ModuleDate} ->
 			%% Add compiled module to the collection
 			make(Rest, [{Module, ModuleDate} | Modules])
 	end.
 
 make_module(ModulePath) ->
-	%% Get module location, filename and timestamp
+	%% Get module location and timestamp
 	ModuleRoot = filename:dirname(ModulePath),
-	ModuleFile = filename:basename(ModulePath),
 	ModuleDate = filelib:last_modified(ModulePath),
 	
 	%% Generate a dynamic module id
 	ModuleId = uuid:uuid_to_string(uuid:get_v4()),
 
 	%% Identify the module type based on location
-	case ModuleLocation of
-		conductor_settings:get(program_root) ->
+	ProgramRoot = conductor_settings:get(program_root),
+	ModelRoot = conductor_settings:get(model_root),
+	ViewRoot = conductor_settings:get(view_root),
+	ControllerRoot = conductor_settings:get(controller_root),
+
+	case ModuleRoot of
+		ProgramRoot ->
 			%% Compile a program
 			ProgramForm = [
 				add_module_attribute(ModuleId),
@@ -46,7 +50,7 @@ make_module(ModulePath) ->
 				add_run_function()
 			],
 			compile_module(ProgramForm, ModuleDate);
-		conductor_settings:get(model_root) ->
+		ModelRoot ->
 			%% Compile a model
 			ModelForm = [
 				add_module_attribute(ModuleId),
@@ -54,15 +58,15 @@ make_module(ModulePath) ->
 				add_file(ModulePath)
 			],
 			compile_module(ModelForm, ModuleDate);
-		conductor_settings:get(view_root) ->
+		ViewRoot ->
 			%% Compile a view
 			ViewForm = [
 				add_module_attribute(ModuleId),
 				add_webmachine_lib_attribute(),
 				add_view(ModulePath)
 			],
-			compile_module(ViewForm);
-		conductor_settings:get(controller_root) ->
+			compile_module(ViewForm, ModuleDate);
+		ControllerRoot ->
 			%% Compile a controller
 			ControllerForm = [
 				add_module_attribute(ModuleId),
@@ -85,10 +89,10 @@ compile_module(Forms, ModuleDate) ->
 			%% TODO: Write warnings to log
 			error;
 		{ok, Module, ModuleBinary} ->
-			load_module(Module, ModuleBinary);
+			load_module(Module, ModuleBinary, ModuleDate);
 		{ok, Module, ModuleBinary, Warnings} ->
 			%% TODO: Write warnings to log
-			load_module(Module, ModuleBinary)
+			load_module(Module, ModuleBinary, ModuleDate)
 	end.
 	
 load_module(Module, ModuleBinary, ModuleDate) ->
@@ -151,7 +155,7 @@ add_file(ModulePath) ->
 	end.
 
 add_view(ModulePath) ->
-	%% TODO: Add render function compiled from view compiler
+	ok. %% TODO: Add render function compiled from view compiler
 
 %% ----------------------------------------------------------------------------
 % @spec add_data_function() -> syntaxTree()
@@ -172,7 +176,7 @@ add_data_function() ->
 			erl_syntax:application(
 				erl_syntax:module_qualifier(
 					erl_syntax:atom(conductor_router),
-					erl_syntax:atom(execute_model),
+					erl_syntax:atom(execute_model)
 				), [
 				erl_syntax:variable("ModelFile"),
 				erl_syntax:variable("Function"),
@@ -197,7 +201,7 @@ add_render_function() ->
 			erl_syntax:application(
 				erl_syntax:module_qualifier(
 					erl_syntax:atom(conductor_router),
-					erl_syntax:atom(execute_view),
+					erl_syntax:atom(execute_view)
 				), [
 				erl_syntax:variable("ViewFile"),
 				erl_syntax:variable("Arguments")
@@ -224,7 +228,7 @@ add_run_function() ->
 			erl_syntax:application(
 				erl_syntax:module_qualifier(
 					erl_syntax:atom(conductor_router),
-					erl_syntax:atom(execute_controller),
+					erl_syntax:atom(execute_controller)
 				), [
 				erl_syntax:variable("ControllerFile"),
 				erl_syntax:variable("Function"),
