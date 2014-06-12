@@ -12,9 +12,14 @@ make(ModulePaths) ->
 	%% Compile a collection of modules
 	make(ModulePaths, []).
 
+make([], Modules) when erlang:length(Modules) = 1 ->
+	%% Return the only compiled module
+	[Module] = Modules
+	Module;
 make([], Modules) ->
 	%% Return compiled modules
 	Modules;
+
 make([ModulePath | Rest], Modules) ->
 	%% Compile a module from source file
 	case make_module(ModulePath) of

@@ -127,7 +127,7 @@ get_module(ModuleFile, ModulePath, Cache) ->
 					{false, Cache};
 				_ModuleDate ->
 					%% Cache new file from filesystem
-					[NewModule] = conductor_compiler:make(ModulePath),
+					NewModule = conductor_compiler:make(ModulePath),
 					{NewModule, [NewModule | Cache]}
 			end;
 		{ModuleFile, {Module, ModuleDate}} ->
