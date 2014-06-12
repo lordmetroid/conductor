@@ -138,7 +138,7 @@ add_webmachine_lib_attribute() ->
 add_file(ModulePath) ->
 	case file:read_file(ModulePath) of
 		{error, Reason} ->
-			%% TODO: Write to error to log
+			%% TODO: Write error to log
 
 			%% Nothing to return
 			[];
@@ -162,7 +162,15 @@ add_file(ModulePath) ->
 add_view(ModulePath) ->
 	%% Compile view template
 	ViewCompiler = conductor_settings:get(view_compiler),
-	ViewCompiler:make(ModulePath).
+	case ViewCompiler:make(ModulePath) of
+		{error, Reason] ->
+			%% TODO: Write to error to log
+		
+			%% Nothing to return
+			[];
+		{ok, ViewAST} ->
+			erl_syntax:revert(ViewAST)
+	end.
 
 %% ----------------------------------------------------------------------------
 % @spec add_data_function() -> syntaxTree()
