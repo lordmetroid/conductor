@@ -132,8 +132,11 @@ get_module(ModuleFile, ModulePath, Cache) ->
 					{false, Cache};
 				_ModuleDate ->
 					%% Cache new Module file
-					NewModule = conductor_compiler:make_module(ModulePath),
-					{NewModule, [NewModule | Cache]}
+					case conductor_compiler:make_module(ModulePath) of
+						error ->
+						NewModule ->
+							{NewModule, [NewModule | Cache]}
+					end
 			end;
 		{ModuleFile, {Module, ModuleDate}} ->
 			%% Module is previously cached
@@ -154,9 +157,13 @@ get_module(ModuleFile, ModulePath, Cache) ->
 					%% TODO: Unload old module
 					
 					%% Update cache with newer file
-					NewModule = conductor_compiler:make_module(ModulePath),
-					UpdatedModule = {NewModule, NewDate},
-					{NewModule, lists:keyreplace(ModuleFile, 1, UpdatedModule)}
+					case conductor_compiler:make_module(ModulePath) of
+						error ->
+						NewModule ->
+							UpdatedModule = {NewModule, NewDate},
+							NewCache = lists:keyreplace(ModuleFile, 1, UpdatedModule)
+							{NewModule, }
+					end
 			end
 	end.
 
