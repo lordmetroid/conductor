@@ -13,7 +13,7 @@ make(ModulePaths) ->
 	make(ModulePaths, []).
 
 make([], Modules) when erlang:length(Modules) = 1 ->
-	%% Return the only compiled module
+	%% Return the only one compiled module
 	[Module] = Modules
 	Module;
 make([], Modules) ->
