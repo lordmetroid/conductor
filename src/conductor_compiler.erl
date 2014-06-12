@@ -161,9 +161,9 @@ add_file(ModulePath) ->
 % @doc Add an Erlang File to the compilation
 %% ----------------------------------------------------------------------------
 add_view(ModulePath) ->
-	%% 
+	%% Compile view template
 	ViewCompiler = conductor_settings:get(view_compiler),
-	ViewCompile:make_file(ModulePath).
+	ViewCompiler:make_file(ModulePath).
 
 %% ----------------------------------------------------------------------------
 % @spec add_data_function() -> syntaxTree()
