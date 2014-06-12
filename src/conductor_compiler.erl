@@ -156,8 +156,14 @@ add_file(ModulePath) ->
 			end			
 	end.
 
+%% ----------------------------------------------------------------------------
+% @spec add_view() -> syntaxTree()
+% @doc Add an Erlang File to the compilation
+%% ----------------------------------------------------------------------------
 add_view(ModulePath) ->
-	ok. %% TODO: Add render function compiled from view compiler
+	%% 
+	ViewCompiler = conductor_settings:get(view_compiler),
+	ViewCompile:make_file(ModulePath).
 
 %% ----------------------------------------------------------------------------
 % @spec add_data_function() -> syntaxTree()
