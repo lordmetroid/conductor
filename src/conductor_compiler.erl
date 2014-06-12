@@ -1,34 +1,31 @@
 -module(conductor_compiler).
 
 -export([
-	make/1
+	make_modules/1,
+	make_module/1
 ]).
 
 %% ----------------------------------------------------------------------------
 % @spec make(Paths) -> [{Filename, calendar:datetime(), ModuleId}, ...]
 % @doc Compile a modules from specified file paths
 %% ----------------------------------------------------------------------------
-make(ModulePaths) ->
+make_modules(ModulePaths) ->
 	%% Compile a collection of modules
 	make(ModulePaths, []).
 
-make([], Modules) when erlang:length(Modules) = 1 ->
-	%% Return the only one compiled module
-	[Module] = Modules
-	Module;
-make([], Modules) ->
+make_modules([], Modules) ->
 	%% Return compiled modules
 	Modules;
 
-make([ModulePath | Rest], Modules) ->
+make_modules([ModulePath | Rest], Modules) ->
 	%% Compile a module from source file
 	case make_module(ModulePath) of
 		error ->
 			%% Do not include uncompiled modules
-			make(Rest, Modules);
+			make_modules(Rest, Modules);
 		{Module, ModuleDate} ->
 			%% Add compiled module to the collection
-			make(Rest, [{Module, ModuleDate} | Modules])
+			make_modules(Rest, [{Module, ModuleDate} | Modules])
 	end.
 
 make_module(ModulePath) ->

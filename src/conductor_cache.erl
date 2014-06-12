@@ -20,21 +20,25 @@
 
 %% ----------------------------------------------------------------------------
 % @spec
-% @doc Compile and cache all web application files available
+% @doc Compile and cache all web application files available at start
 %% ----------------------------------------------------------------------------
 init(_Arguments) ->
 	%% Compile and cache modules
 	{ok, {
-		conductor_compiler:make(filelib:wildcard(filename:join([
+		%% Compile programs
+		conductor_compiler:make_modules(filelib:wildcard(filename:join([
 			conductor_settings:get(program_root), "*.erl"
 		]))),
-		conductor_compiler:make(filelib:wildcard(filename:join([
+		%% Compile models
+		conductor_compiler:make_modules(filelib:wildcard(filename:join([
 			conductor_settings:get(model_root), "*.erl"
 		]))),
-		conductor_compiler:make(filelib:wildcard(filename:join([
+		%% Compile views
+		conductor_compiler:make_modules(filelib:wildcard(filename:join([
 			conductor_settings:get(view_root), "*.*"
 		]))),
-		conductor_compiler:make(filelib:wildcard(filename:join([
+		%% Compile controllers
+		conductor_compiler:make_modules(filelib:wildcard(filename:join([
 			conductor_settings:get(controller_root), "*.erl"
 		])))
 	}}.
@@ -116,25 +120,28 @@ code_change(_OldVersion, State, _Extra) ->
 	
 %% ----------------------------------------------------------------------------
 % @spec get_module() -> {Module, UpdatedCache}
-% @doc Update cache and get current up to date module
+% @doc Get current up to date module from cache
 %% ----------------------------------------------------------------------------
 get_module(ModuleFile, ModulePath, Cache) ->
 	case lists:keyfind(ModuleFile,1, Cache) of
 		false ->
+			%% Module is not preivously cached
 			case filelib:last_modified(ModulePath) of
 				0 ->
-					%% Module file does not exists in cache nor in filesystem
+					%% Module file does not even exists
 					{false, Cache};
 				_ModuleDate ->
-					%% Cache new file from filesystem
+					%% Cache new Module file
 					NewModule = conductor_compiler:make_module(ModulePath),
 					{NewModule, [NewModule | Cache]}
 			end;
 		{ModuleFile, {Module, ModuleDate}} ->
+			%% Module is previously cached
 			case filelib:last_modified(ModulePath) of
 				0 ->
-					%% Module file does not exist in filesystem
+					%% Module file has been deleted
 					%% TODO: Unload old module
+					
 					%% Remove deleted file from cache
 					NewCache = lists:keydelete(ModuleFile, 1, Cache),
 					{false, NewCache};
@@ -142,7 +149,11 @@ get_module(ModuleFile, ModulePath, Cache) ->
 					%% Cache is up to date
 					{Module, Cache};
 				NewDate ->
-					%% Update cache with new file
+					%% Module file has been updated
+					
+					%% TODO: Unload old module
+					
+					%% Update cache with newer file
 					NewModule = conductor_compiler:make_module(ModulePath),
 					UpdatedModule = {NewModule, NewDate},
 					{NewModule, lists:keyreplace(ModuleFile, 1, UpdatedModule)}
@@ -162,9 +173,12 @@ start_link() ->
 %% ----------------------------------------------------------------------------
 get_program(ProgramFile) ->
 	gen_server:call(?MODULE, {get_program, ProgramFile}).
+
 get_model(ModelFile) ->
-	get_server:call(?MODULE, {get_model, ModelFile}).
+	gen_server:call(?MODULE, {get_model, ModelFile}).
+
 get_view(ViewFile) ->
-	get_server:call(?MODULE, {get_view, ViewFile}).
+	gen_server:call(?MODULE, {get_view, ViewFile}).
+
 get_controller(ControllerFile) ->
-	get_controller:call(?MODULE, {get_controller, ControllerFile}).
+	gen_server:call(?MODULE, {get_controller, ControllerFile}).
