@@ -64,7 +64,6 @@ make_module(ModulePath) ->
 			%% Compile a view
 			ViewForm = [
 				add_module_attribute(ModuleId),
-				add_webmachine_lib_attribute(),
 				add_view(ModulePath)
 			],
 			compile_module(ViewForm, ModuleDate);
@@ -163,7 +162,7 @@ add_file(ModulePath) ->
 add_view(ModulePath) ->
 	%% Compile view template
 	ViewCompiler = conductor_settings:get(view_compiler),
-	ViewCompiler:make_file(ModulePath).
+	ViewCompiler:make(ModulePath).
 
 %% ----------------------------------------------------------------------------
 % @spec add_data_function() -> syntaxTree()
