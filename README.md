@@ -29,6 +29,9 @@ run a server. See the below example configuration and explanation:
 {view_root,              "/path_to_webapp/programs/views"}.
 {controller_root,        "/path_to_webapp/programs/controllers"}.
 
+%% Application view template compiler
+{view_compiler,          symphony}.
+
 ```
 The configuration file consist of a number of value-data pairs.
 
@@ -47,9 +50,13 @@ directory where the programs are stored and the available programs are
 specified by the _programs_ value-data pair. The _programs_ is a __list__ 
 of sets of two values. The absolute web application search path and the 
 corresponing program to be executed on a request for that search path.
+The only exception is the general error program which is speficied by the
+_error_ rather than the search path.
 
 * Application program resources specifies the directories where resources 
 available to a program are stored.
+
+* Application view template compiler specifies the compiler to be used.
 
 ## Writing a web application
 Applications consist of four components. A Program and associated models, 
