@@ -134,7 +134,10 @@ get_module(ModuleFile, ModulePath, Cache) ->
 					%% Cache new Module file
 					case conductor_compiler:make_module(ModulePath) of
 						error ->
+							%% Module could not be compile
+							{false, Cache};
 						NewModule ->
+							%% New module compiled
 							{NewModule, [NewModule | Cache]}
 					end
 			end;
@@ -159,13 +162,19 @@ get_module(ModuleFile, ModulePath, Cache) ->
 					%% Update cache with newer file
 					case conductor_compiler:make_module(ModulePath) of
 						error ->
+							%% Module could not be compiled
+							{false, Cache};
 						NewModule ->
-							UpdatedModule = {NewModule, NewDate},
-							NewCache = lists:keyreplace(ModuleFile, 1, UpdatedModule)
-							{NewModule, }
+							%% New module compiled
+							UpdatedModile = {NewModule,NewDate}
+							update_cache(ModuleFile, UpdatedModule, Cache),
+							{NewModule, NewCache}
 					end
 			end
 	end.
+
+update_cache(ModuleFile, NewModule, Cache) ->
+	lists:keyreplace(ModuleFile, 1, NewModule).
 
 %% ----------------------------------------------------------------------------
 % @spec start() ->
@@ -189,3 +198,4 @@ get_view(ViewFile) ->
 
 get_controller(ControllerFile) ->
 	gen_server:call(?MODULE, {get_controller, ControllerFile}).
+

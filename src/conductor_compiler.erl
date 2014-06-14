@@ -11,12 +11,11 @@
 %% ----------------------------------------------------------------------------
 make_modules(ModulePaths) ->
 	%% Compile a collection of modules
-	make(ModulePaths, []).
+	make_modules(ModulePaths, []).
 
 make_modules([], Modules) ->
 	%% Return compiled modules
 	Modules;
-
 make_modules([ModulePath | Rest], Modules) ->
 	%% Compile a module from source file
 	case make_module(ModulePath) of
@@ -90,13 +89,13 @@ compile_module(Forms, ModuleDate) ->
 			%% TODO: Write warnings to log
 			error;
 		{ok, Module, ModuleBinary} ->
-			load_module(Module, ModuleBinary, ModuleDate);
+			load_compiled_module(Module, ModuleBinary, ModuleDate);
 		{ok, Module, ModuleBinary, Warnings} ->
 			%% TODO: Write warnings to log
-			load_module(Module, ModuleBinary, ModuleDate)
+			load_compiled_module(Module, ModuleBinary, ModuleDate)
 	end.
 	
-load_module(Module, ModuleBinary, ModuleDate) ->
+load_compiled_module(Module, ModuleBinary, ModuleDate) ->
 	case code:load_binary(Module, [], ModuleBinary) of
 		{error, Error} ->
 			%% TODO: Write errors to log
@@ -163,7 +162,7 @@ add_view(ModulePath) ->
 	%% Compile view template
 	ViewCompiler = conductor_settings:get(view_compiler),
 	case ViewCompiler:make(ModulePath) of
-		{error, Reason] ->
+		{error, Reason} ->
 			%% TODO: Write to error to log
 		
 			%% Nothing to return

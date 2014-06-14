@@ -15,9 +15,9 @@
 ]).
 
 -export([
-	create_file/2,
-	create_program/2,
-	destroy/0,
+	create_file/1,
+	create_program/1,
+	destroy/1,
 
 	add_content/2,
 	replace_content/2,
@@ -62,24 +62,26 @@ undefined(_Event, _From, State) ->
 %% ----------------------------------------------------------------------------
 % File content
 %% ----------------------------------------------------------------------------
-file({add_content, NewFilePath}, _From, FilePath) ->
-	%% TODO: Add binary content
-	{reply, ok, file, FilePath};
+file({add_content, FilePath}, _From, Content) ->
+	%% Add binary content
+	case file:read_file(FilePath) of
+		{ok, Binary} ->
+			%% File content 
+			{reply, ok, file, Binary};
+		{error, _Reason} ->
+			%% No file
+			{reply, error, file, Content}
+	end;
 
-file({replace_content, NewFilePath}, _From, _FilePath) ->
-	%% TODO: add binary content
-	{reply, ok, file, NewFilePath};
-	
-file(get_content, _From, FilePath) ->
-	%% Get file binary
-	{reply, Binary, file, FilePath};
+file(get_content, _From, Content) ->
+	{reply, Content, file, Content};
 
-file(destroy, _From, FilePath) ->
+file(destroy, _From, Content) ->
 	%% Destroy response
-	{stop, ok, FilePath};
+	{stop, ok, Content};
 
-file(_Event, _From, FilePath) ->
-	{reply, error, file, FilePath}.
+file(_Event, _From, Content) ->
+	{reply, error, file, Content}.
 
 %% ----------------------------------------------------------------------------
 % Program content
@@ -119,7 +121,7 @@ destroy(Body) ->
 add_content(Body, NewContent) ->
 	gen_fsm:sync_send_event(Body, {add_content, NewContent}).
 
-replace_content(Body, NewContet) ->
+replace_content(Body, NewContent) ->
 	gen_fsm:sync_send_event(Body, {replace_content, NewContent}).
 
 get_content(Body) ->
