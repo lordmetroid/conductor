@@ -74,6 +74,10 @@ file(get_content, _From, FilePath) ->
 	%% Get file binary
 	{reply, Binary, file, FilePath};
 
+file(destroy, _From, FilePath) ->
+	%% Destroy response
+	{stop, ok, FilePath};
+
 file(_Event, _From, FilePath) ->
 	{reply, error, file, FilePath}.
 
@@ -92,10 +96,12 @@ program(get_content, _From, Content) ->
 	%% Get and reset content
 	{reply, lists:reverse(Content), program, Content};
 
+program(destroy, _From, FilePath) ->
+	%% Destroy response
+	{stop, ok, FilePath};
+
 program(_Event, _From, Content) ->
 	{reply, error, program, Content}.
-
-
 
 %% ----------------------------------------------------------------------------
 create_file(Body) ->
@@ -106,8 +112,8 @@ create_program(Body) ->
 	gen_fsm:start(?MODULE, [], []),
 	gen_fsm:sync_send_event(Body, create_program).
 
-destroy() -> 
-	gen_fsm:terminate
+destroy(Body) ->
+	gen_fsm:sync_send_event(Body, destroy).
 
 %% ----------------------------------------------------------------------------
 add_content(Body, NewContent) ->
