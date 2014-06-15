@@ -72,7 +72,7 @@ handle_call({set_status_code, NewStatusCode}, From, Responses) ->
 		false ->
 			%% Session does not exist
 			%% TODO: Write to log
-			{reply, ok, Responses};
+			{reply, false, Responses};
 		{Header,_Body, Log} ->
 			%% Set new Status Code
 			UpdatedResponses = lists:keyreplace(From, 1, Responses, {
@@ -84,7 +84,8 @@ handle_call({set_status_code, NewStatusCode}, From, Responses) ->
 handle_call(get_status_code, From, Responses) ->
 	case lists:keyfind(From, 1, Responses) of
 		false ->
-			{reply, 
+			%% Session does not exist
+			{reply, false, Responses};
 		{Header,Body, Log} ->
 			{reply, StatusCode, Responses}
 	end;
@@ -95,18 +96,27 @@ handle_call(get_status_code, From, Responses) ->
 handle_call({add_content, Content}, From, Responses) ->
 	case lists:keyfind(From, 1, Responses) of
 		false ->
+			%% Session does not exist
+			{reply, false, Responses};
 		{Header,Body, Log} ->
+
 	end;
 handle_call({replace_content, Content}, From, Responses) ->
 	case lists:keyfind(From, 1, Responses) of
 		false ->
+			%% Session does not exist
+			{reply, false, Responses};
 		{Header,Body, Log} ->
+
 	end;	
 
 handle_call({get_content}, From, Responses) ->
 	case lists:keyfind(From, 1, Responses) of
 		false ->
+			%% Session does not exist
+			{reply, false, Responses};
 		{Header,Body, Log} ->
+			
 	end;
 
 
