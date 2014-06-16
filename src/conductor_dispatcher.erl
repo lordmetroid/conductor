@@ -57,8 +57,11 @@ content_types_provided(Request,Context) ->
 % @doc Provide the response body to the client
 %% ----------------------------------------------------------------------------
 provide_content(Request,Context) ->
-	%%	Publish content to client
+	%% Get response body content
 	Content = conductor_response:get_content(),
-
+	
+	%% Cleanup current response session
 	conductor_response:destroy(),
+	
+	%%	Publish content to client
 	{Content, Request,Context}.
