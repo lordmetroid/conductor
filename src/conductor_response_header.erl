@@ -94,6 +94,10 @@ file(get_mime_type, _From, {StatusCode,MimeType}) ->
 			end
 	end;
 
+file(destroy, _From, {StatusCode,MimeType}) ->
+	%% Destroy response
+	{stop, ok, {StatusCode,MimeType}};
+
 file(_Event, _From, {StatusCode,MimeType}) ->
 	{reply, error, file, {StatusCode,MimeType}}}.
 
@@ -116,11 +120,13 @@ program(get_mime_type, _From, {StatusCode,MimeType}) ->
 	%% Get program mime type
 	{reply, MimeType, program, {StatusCode,MimeType}};
 
+program(destroy, _From, {StatusCode,MimeType}) ->
+	%% Destroy response
+	{stop, ok, {StatusCode,MimeType}};
+
 program(_Event, _From, {StatusCode,MimeType}) ->
 	{reply, error, program, {StatusCode,MimeType}}.
-
-
-
+	
 %% ----------------------------------------------------------------------------
 create_file(Header) ->
 	gen_fsm:start(?MODULE, [], []),
@@ -131,7 +137,7 @@ create_program(Header) ->
 	gen_fsm:sync_send_event(Header, create_program).
 
 destroy() -> 
-	gen_fsm:terminate
+	gen_fsm:sync_send_event(Header, destroy).
 	
 %% ----------------------------------------------------------------------------
 set_status_code(Header, NewStatusCode) ->

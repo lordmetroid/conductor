@@ -63,5 +63,5 @@ provide_content(Request,Context) ->
 	%% Cleanup current response session
 	conductor_response:destroy(),
 	
-	%%	Publish content to client
+	%% Publish content to client
 	{Content, Request,Context}.
