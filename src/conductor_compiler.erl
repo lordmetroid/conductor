@@ -63,6 +63,7 @@ make_module(ModulePath) ->
 			%% Compile a view
 			ViewForm = [
 				add_module_attribute(ModuleId),
+				add_view_export_attribute(),
 				add_view(ModulePath)
 			],
 			compile_module(ViewForm, ModuleDate);
@@ -104,6 +105,9 @@ load_compiled_module(Module, ModuleBinary, ModuleDate) ->
 			%% Return module
 			{Module, ModuleDate}
 	end.
+
+
+
 
 %% ----------------------------------------------------------------------------
 % @spec add_module_attribute() -> syntaxTree()
@@ -153,6 +157,17 @@ add_file(ModulePath) ->
 					erl_syntax:revert(FileAST)
 			end			
 	end.
+
+add_view_export_attribute() ->
+	%% -export([render/1]).
+	erl_syntax:attribute(erl_syntax:atom(export), [
+		erl_syntax:list([
+			erl_syntax:arity_qualifier(
+				erl_syntax:atom(render),
+				erl_syntax:integer(1)
+			)
+		])
+	]).
 
 %% ----------------------------------------------------------------------------
 % @spec add_view() -> syntaxTree()
