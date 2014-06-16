@@ -86,10 +86,11 @@ handle_call(get_status_code, From, Responses) ->
 		false ->
 			%% Session does not exist
 			{reply, false, Responses};
-		{Header,Body, Log} ->
+		{Header,_Body, _Log} ->
+			%% Get current status code
+			StatusCode = conductor_response_header:get_status_code(Header),
 			{reply, StatusCode, Responses}
 	end;
-
 %% ----------------------------------------------------------------------------
 % Response body functions
 %% ----------------------------------------------------------------------------
@@ -99,7 +100,15 @@ handle_call({add_content, Content}, From, Responses) ->
 			%% Session does not exist
 			{reply, false, Responses};
 		{Header,Body, Log} ->
-
+			%% Add content to
+			case conductor_response_body:add_content(Body, Content) of
+				{error, Reason} ->
+					%% TODO: Write error reason to log
+					{reply, error, Responses};
+				ok ->
+					%% Content added
+					{reply, ok, Responses}
+			end
 	end;
 handle_call({replace_content, Content}, From, Responses) ->
 	case lists:keyfind(From, 1, Responses) of
@@ -107,7 +116,9 @@ handle_call({replace_content, Content}, From, Responses) ->
 			%% Session does not exist
 			{reply, false, Responses};
 		{Header,Body, Log} ->
-
+			%% Completely replace response body content
+			conductor_response_body:add_content(Body, Content),
+			{reply, ok, Responses}
 	end;	
 
 handle_call({get_content}, From, Responses) ->
@@ -116,7 +127,9 @@ handle_call({get_content}, From, Responses) ->
 			%% Session does not exist
 			{reply, false, Responses};
 		{Header,Body, Log} ->
-			
+			%% Get current response body content
+			Content = conductor_response_body:get_content(Body),
+			{reply, Content, Responses}
 	end;
 
 

@@ -68,9 +68,9 @@ file({add_content, FilePath}, _From, Content) ->
 		{ok, Binary} ->
 			%% File content 
 			{reply, ok, file, Binary};
-		{error, _Reason} ->
+		{error, Reason} ->
 			%% No file
-			{reply, error, file, Content}
+			{reply, {error, Reason}, file, Content}
 	end;
 
 file(get_content, _From, Content) ->
