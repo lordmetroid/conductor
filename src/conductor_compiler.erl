@@ -157,6 +157,7 @@ add_file(ModulePath) ->
 					erl_syntax:revert(FileAST)
 			end			
 	end.
+
 %% ----------------------------------------------------------------------------
 % @spec add_view_export_attribute() -> syntaxTree()
 % @doc Add the export attribute for rending views
