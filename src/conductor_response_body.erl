@@ -90,10 +90,6 @@ program({add_content, NewContent}, _From, Content) ->
 	%% Add new content to program response
 	{reply, ok, program, [NewContent | Content]};
 
-program({replace_content, NewContent}, _From, _Content) ->
-	%% Replace content
-	{reply, ok, program, NewContent};
-
 program(get_content, _From, Content) ->
 	%% Get and reset content
 	{reply, lists:reverse(Content), program, Content};
@@ -104,6 +100,8 @@ program(destroy, _From, FilePath) ->
 
 program(_Event, _From, Content) ->
 	{reply, error, program, Content}.
+
+
 
 %% ----------------------------------------------------------------------------
 create_file(Body) ->
@@ -120,9 +118,6 @@ destroy(Body) ->
 %% ----------------------------------------------------------------------------
 add_content(Body, NewContent) ->
 	gen_fsm:sync_send_event(Body, {add_content, NewContent}).
-
-replace_content(Body, NewContent) ->
-	gen_fsm:sync_send_event(Body, {replace_content, NewContent}).
 
 get_content(Body) ->
 	gen_fsm:sync_send_event(Body, get_content).

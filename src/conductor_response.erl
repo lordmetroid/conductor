@@ -110,16 +110,6 @@ handle_call({add_content, Content}, From, Responses) ->
 					{reply, ok, Responses}
 			end
 	end;
-handle_call({replace_content, Content}, From, Responses) ->
-	case lists:keyfind(From, 1, Responses) of
-		false ->
-			%% Session does not exist
-			{reply, false, Responses};
-		{Header,Body, Log} ->
-			%% Completely replace response body content
-			conductor_response_body:add_content(Body, Content),
-			{reply, ok, Responses}
-	end;	
 
 handle_call({get_content}, From, Responses) ->
 	case lists:keyfind(From, 1, Responses) of
@@ -187,9 +177,6 @@ get_mime_type() ->
 %% ----------------------------------------------------------------------------
 add_content(Content) ->
 	gen_server:call(?MODULE, {add_content, Content}).
-
-replace_content(Content) ->
-	gen_server:call(?MODULE, {replace_content, Content}).
 
 get_content() ->
 	gen_server:call(?MODULE, get_content).
