@@ -41,7 +41,7 @@ make_module(ModulePath) ->
 	case filelib:last_modified(ModulePath) of
 		0 ->
 			%% Module file could not be found
-			{error, ModulePath ++ " not found."};
+			{error, ModulePath ++ " not found"};
 		ModuleDate ->
 			%% Module file exist
 			
