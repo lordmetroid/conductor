@@ -6,27 +6,37 @@
 ]).
 
 %% ----------------------------------------------------------------------------
-% @spec make(Paths) -> [{Filename, calendar:datetime(), ModuleId}, ...]
-% @doc Compile a modules from specified file paths
+% @spec make_modules(ModulePaths) -> {[{ModuleId, datetime()}, ...], [Errors]}
+% @doc Compile modules from a list of specified file paths
 %% ----------------------------------------------------------------------------
 make_modules(ModulePaths) ->
 	%% Compile a collection of modules
-	make_modules(ModulePaths, []).
+	make_modules(ModulePaths, [], []).
 
-make_modules([], Modules) ->
-	%% Return compiled modules
-	Modules;
-make_modules([ModulePath | Rest], Modules) ->
+make_modules([], Modules, Errors) ->
+	%% Return compiled modules and errors
+	{Modules, Errors};
+make_modules([ModulePath | Rest], Modules, Errors) ->
 	%% Compile a module from source file
 	case make_module(ModulePath) of
-		error ->
-			%% Do not include uncompiled modules
-			make_modules(Rest, Modules);
-		{Module, ModuleDate} ->
-			%% Add compiled module to the collection
-			make_modules(Rest, [{Module, ModuleDate} | Modules])
+		{error, NewErrors} ->
+			%% Do not include uncompiled module and report error
+			make_modules(Rest, Modules, [NewErrors | Errors]);
+		{error, NewErrors, Warnings} ->
+			%% Do not include uncompiled module and report errors and warnings
+			make_modules(Rest, Modules, [Warnings | [NewErrors | Errors]]);
+		{ok, NewModule, Warnings} ->
+			%% Add compiled module and report warnings
+			make_modules(Rest, [NewModule | Modules], [Warnings | Errors]);
+		NewModule ->
+			%% Add compiled module
+			make_modules(Rest, [NewModule | Modules], Errors)
 	end.
 
+%% ----------------------------------------------------------------------------
+% @spec make_module(ModulePath) -> {ModuleId, calendar:datetime()}
+% @doc Compile a module from specified file path
+%% ----------------------------------------------------------------------------
 make_module(ModulePath) ->
 	case filelib:last_modified(ModulePath) of
 		0 ->
@@ -83,38 +93,39 @@ make_module(ModulePath) ->
 						add_get_function(),
 						add_render_function()
 					],
-					compile_module(ControllerForm, ModuleDate)
+					compile_module(ModulePath, ModuleDate, ControllerForm)
 			end
 	end.
 
-compile_module(Forms, ModuleDate) ->
+compile_module(ModulePath, ModuleDate, ModuleForms) ->
 	case compile:forms(Forms) of
 		error ->
-			%% TODO: Write compilation failure to log
-			error;
+			%% Report erlang syntax compilation error 
+			{error, ModulePath ++ " - Could not compile erlang syntax."};
 		{error, Errors, Warnings} ->
-			%% TODO: Write errors to log
-			%% TODO: Write warnings to log
-			error;
-		{ok, Module, ModuleBinary} ->
-			load_compiled_module(Module, ModuleBinary, ModuleDate);
+			%% Report erlang syntax compilation error and warnings
+			{error, Errors, Warnings};
 		{ok, Module, ModuleBinary, Warnings} ->
-			%% TODO: Write warnings to log
-			load_compiled_module(Module, ModuleBinary, ModuleDate)
+			%% Load module in spite of warnings and report warnings
+			case code:load_binary(Module, [], ModuleBinary) of
+				{error, Errors} ->
+					%% Loading module failed, report errors and warnings
+					{error, Errors, Warnings};
+				{module, Module} ->
+					%% Return loaded module id and report warnings
+					{ok, {Module, ModuleDate}, Warnings}
+			end;
+		{ok, Module, ModuleBinary} ->
+			%% Load module
+			case code:load_binary(Module, [], ModuleBinary) of
+				{error, Errors} ->
+					%% Loading module failed, report errors 
+					{error, Errors};
+				{module, Module} ->
+					%% Return loaded module id
+					{ok, {Module, ModuleDate}}
+			end
 	end.
-	
-load_compiled_module(Module, ModuleBinary, ModuleDate) ->
-	case code:load_binary(Module, [], ModuleBinary) of
-		{error, Error} ->
-			%% TODO: Write errors to log
-			error;
-		{module, Module} ->
-			%% Return module
-			{Module, ModuleDate}
-	end.
-
-
-
 
 %% ----------------------------------------------------------------------------
 % @spec add_module_attribute() -> syntaxTree()
