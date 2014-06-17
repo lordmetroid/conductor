@@ -43,64 +43,56 @@ init(_Arguments) ->
 		])))
 	}}.
 
-handle_call({get_program, ProgramFile}, _From, Caches) ->
-	{Programs, M,V,C} = Caches,
-	
+handle_call({get_program, ProgramFile}, _From, Cache) ->
 	ProgramRoot = conductor_settings:get(program_root),
 	ProgramPath = filename:join([ProgramRoot, ProgramFile]),
 
-	case get_module(ProgramFile, ProgramPath, Programs) of
+	case get_module(ProgramPath, Programs) of
 		false ->
 			%% Program does not exist
-			{reply, false, Caches};
+			{reply, false, Cache};
 		{Program, NewPrograms} ->
 			%% Program found and cache has been updated
-			{reply, Program, {NewPrograms, M,V,C}}
+			{reply, Program, Cache}
 	end;
 
-handle_call({get_model, ModelFile}, _From, Caches) ->
-	{P,Models,V,C} = Caches,
-
+handle_call({get_model, ModelFile}, _From, Cache) ->
 	ModelRoot = conductor_settings:get(model_root),
 	ModelPath = filename:join([ModelRoot, ModelFile]),
 
-	case get_module(ModelFile, ModelPath, Models) of
+	case get_module(ModelPath, Models) of
 		{false, NewModels} ->
 			%% Model does not exist
-			{reply, false, {P,NewModels,V,C}};
+			{reply, false, Cache};
 		{Model, NewModels} ->
 			%% Model found and cache has been updated
-			{reply, Model, {P,NewModels,V,C}}
+			{reply, Model, Cache}
 	end;
 
-handle_call({get_view, ViewFile}, _From, Caches) ->
-	{P,M,Views,C} = Caches,
-
+handle_call({get_view, ViewFile}, _From, Cache) ->
 	ViewRoot = conductor_settings:get(view_root),
 	ViewPath = filename:join([ViewRoot, ViewFile]),
 
-	case get_module(ViewFile, ViewPath, Views) of
+	case get_module(ViewPath, Views) of
 		{false, NewViews} ->
 			%% View does not exist
-			{reply, false,  {P,M,NewViews,C}};
+			{reply, false,  Cache};
 		{View, NewViews} ->
 			%% View found and cache has been updated
-			{reply, View, {P,M,NewViews,C}}
+			{reply, View, Cache}
 	end;
 
-handle_call({get_controller, ControllerFile}, _From, Caches) ->
-	{P,M,V,Controllers} = Caches,
-
+handle_call({get_controller, ControllerFile}, _From, Cache) ->
 	ControllerRoot = conductor_settings:get(controller_root),
 	ControllerPath = filename:join([ControllerRoot, ControllerFile]),
 
-	case get_module(ControllerFile, ControllerPath, Controllers) of
-		{false, NewControllers} ->
-			%% Controller does not exist
-			{reply, false,  {P,M,V,NewControllers}};
-		{Controller, NewControllers} ->
-			%% Controller found and cache has been updated
-			{reply, Controller, {P,M,V,NewControllers}}
+	case get_module(ControllerPath, Controllers) of
+		error ->
+			%% Controller does not exist in cache
+			{reply, error,  Cache};
+		{ControllerPath, {Controller, ControllerDate}} ->
+			%% Controller found
+			{reply, Controller, Cache}
 	end;
 
 handle_call(_Event, _From, State) ->
@@ -119,59 +111,56 @@ code_change(_OldVersion, State, _Extra) ->
 	{ok, State}.
 	
 %% ----------------------------------------------------------------------------
-% @spec get_module() -> {Module, UpdatedCache}
-% @doc Get current up to date module from cache
+% @spec get_module(ModulePath, Cache) -> Module
+% @doc 
 %% ----------------------------------------------------------------------------
-get_module(ModuleFile, ModulePath, Cache) ->
-	case lists:keyfind(ModuleFile,1, Cache) of
+get_module(ModulePath, Cache) ->
+	case lists:keyfind(ModulePath,1, Cache) of
 		false ->
-			%% Module is not preivously cached
-			case filelib:last_modified(ModulePath) of
-				0 ->
-					%% Module file does not even exists
-					{false, Cache};
-				_ModuleDate ->
-					%% Cache new Module file
-					case conductor_compiler:make_module(ModulePath) of
-						error ->
-							%% Module could not be compile
-							{false, Cache};
-						NewModule ->
-							%% New module compiled
-							{NewModule, [NewModule | Cache]}
-					end
+			%% Module does not exist in cache
+			case conductor_compiler:make_module(ModulePath) of
+				error ->
+					%% Module could not be compile
+					error;
+				{Module, ModuleDate} ->
+					%% New compiled module
+					{Module, ModuleDate}
 			end;
-		{ModuleFile, {Module, ModuleDate}} ->
-			%% Module is previously cached
-			case filelib:last_modified(ModulePath) of
-				0 ->
-					%% Module file has been deleted
-					%% TODO: Unload old module
-					
-					%% Remove deleted file from cache
-					NewCache = lists:keydelete(ModuleFile,1, Cache),
-					{false, NewCache};
-				ModuleDate ->
-					%% Cache is up to date
-					{Module, Cache};
-				NewDate ->
-					%% Module file has been updated
-					
-					%% TODO: Unload old module
-					
-					%% Update cache with newer file
-					case conductor_compiler:make_module(ModulePath) of
-						error ->
-							%% Module could not be compiled
-							{false, Cache};
-						NewModule ->
-							%% New module compiled
-							UpdatedModule = {NewModule,NewDate}
-							NewCache = lists:keyreplace(ModuleFile,1, Cache, UpdatedModule),
-							{NewModule, NewCache}
-					end
-			end
+		{ModulePath, {Module, ModuleDate}} ->
+			%% Module found in cache
+			{Module, ModuleDate}
 	end.
+
+update_cache(ModulePath, {Module, ModuleDate}, Cache) ->
+	case lists:keyfind(ModulePath,1, Cache) of
+		0 ->
+			%% Module file has been deleted
+			%% TODO: Unload old module
+			
+			%% Remove deleted file from cache
+			NewCache = lists:keydelete(ModuleFile,1, Cache),
+			{false, NewCache};
+		ModuleDate ->
+			%% Cache is up to date
+			{Module, Cache};
+		NewDate ->
+			%% Module file has been updated
+			
+			%% TODO: Unload old module
+			
+			%% Update cache with newer file
+			case conductor_compiler:make_module(ModulePath) of
+				error ->
+					%% Module could not be compiled
+					{false, Cache};
+				NewModule ->
+					%% New module compiled
+					UpdatedModule = {NewModule,NewDate}
+					NewCache = lists:keyreplace(ModuleFile,1, Cache, UpdatedModule),
+					{NewModule, NewCache}
+			end
+	end
+
 
 %% ----------------------------------------------------------------------------
 % @spec start() ->
