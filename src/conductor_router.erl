@@ -112,7 +112,7 @@ execute_view(ViewFile, Arguments) ->
 			conductor_response:set_status_code(500);
 			%% TODO: Create response term
 		View ->
-			case erlang:function_exported(View, render, 1) of
+			case erlang:function_exported(View, get, 0) of
 				false ->
 					%% View file code contains errors
 					%% TODO: Write to log file
@@ -120,11 +120,14 @@ execute_view(ViewFile, Arguments) ->
 					conductor_response:set_status_code(500);
 					%% TODO: Create response term
 				true ->
-					%% Execute view
-					View:render(Arguments)
+					%% Get view template
+					render_view(View:get(), Arguments)
 			end
 	end.
 
+render_view(Template, Arguments) ->
+	
+	
 %% ----------------------------------------------------------------------------
 % @spec get_cookies(CookieHeader::string) -> Cookies::Tuplelist()
 % @doc Get cookies from request
@@ -150,4 +153,3 @@ execute_controller(ControllerFile,Function,Arguments, Request)  ->
 					Controller:Function(Request, Arguments)
 			end
 	end.
-
