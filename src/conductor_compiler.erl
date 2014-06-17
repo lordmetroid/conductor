@@ -41,7 +41,7 @@ make_module(ModulePath) ->
 	case filelib:last_modified(ModulePath) of
 		0 ->
 			%% Module file could not be found
-			{error, ModulePath ++ " not found"};
+			{error, ModulePath ++ " not found."};
 		ModuleDate ->
 			%% Module file exist
 			
@@ -101,7 +101,7 @@ compile_module(ModulePath, ModuleDate, ModuleForms) ->
 	case compile:forms(Forms) of
 		error ->
 			%% Report erlang syntax compilation error 
-			{error, ModulePath ++ " - Could not compile erlang syntax."};
+			{error, "Could not compile erlang syntax for " ++ ModulePath};
 		{error, Errors, Warnings} ->
 			%% Report erlang syntax compilation error and warnings
 			{error, Errors, Warnings};
