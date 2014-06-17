@@ -88,11 +88,12 @@ handle_call({get_controller, ControllerFile}, _From, Cache) ->
 
 	case get_module(ControllerPath, Controllers) of
 		error ->
-			%% Controller does not exist in cache
-			{reply, error,  Cache};
-		{ControllerPath, {Controller, ControllerDate}} ->
+			%% Controller could not be found
+			{reply, error, Cache};
+		{Controller,ControllerDate} ->
 			%% Controller found
-			{reply, Controller, Cache}
+			NewEntry = {Controller,ControllerDate},
+			{reply, Controller, update_cache(ControllerPath, NewEntry, Cache)}
 	end;
 
 handle_call(_Event, _From, State) ->
@@ -119,46 +120,36 @@ get_module(ModulePath, Cache) ->
 		false ->
 			%% Module does not exist in cache
 			case conductor_compiler:make_module(ModulePath) of
-				error ->
+				{error, Reason} ->
 					%% Module could not be compile
-					error;
-				{Module, ModuleDate} ->
+					{error, Reason};
+				{Module,ModuleDate} ->
 					%% New compiled module
-					{Module, ModuleDate}
+					{Module,ModuleDate}
 			end;
-		{ModulePath, {Module, ModuleDate}} ->
+		{ModulePath, {Module,ModuleDate}} ->
 			%% Module found in cache
-			{Module, ModuleDate}
+			{Module,ModuleDate}
 	end.
 
-update_cache(ModulePath, {Module, ModuleDate}, Cache) ->
-	case lists:keyfind(ModulePath,1, Cache) of
+update_cache(ModulePath, {Module,ModuleDate}, Cache) ->
+	case filelib:last_modified(ModulePath,1, Cache) of
 		0 ->
 			%% Module file has been deleted
 			%% TODO: Unload old module
 			
 			%% Remove deleted file from cache
-			NewCache = lists:keydelete(ModuleFile,1, Cache),
-			{false, NewCache};
+			lists:keydelete(ModulePath,1, Cache);
 		ModuleDate ->
 			%% Cache is up to date
-			{Module, Cache};
+			Cache;
 		NewDate ->
 			%% Module file has been updated
 			
 			%% TODO: Unload old module
 			
 			%% Update cache with newer file
-			case conductor_compiler:make_module(ModulePath) of
-				error ->
-					%% Module could not be compiled
-					{false, Cache};
-				NewModule ->
-					%% New module compiled
-					UpdatedModule = {NewModule,NewDate}
-					NewCache = lists:keyreplace(ModuleFile,1, Cache, UpdatedModule),
-					{NewModule, NewCache}
-			end
+			lists:keyreplace(ModulePath,1, Cache, {Module,ModuleDate}),
 	end
 
 
