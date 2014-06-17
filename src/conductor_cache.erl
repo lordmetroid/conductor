@@ -149,7 +149,7 @@ get_module(ModuleFile, ModulePath, Cache) ->
 					%% TODO: Unload old module
 					
 					%% Remove deleted file from cache
-					NewCache = lists:keydelete(ModuleFile, 1, Cache),
+					NewCache = lists:keydelete(ModuleFile,1, Cache),
 					{false, NewCache};
 				ModuleDate ->
 					%% Cache is up to date
@@ -166,15 +166,12 @@ get_module(ModuleFile, ModulePath, Cache) ->
 							{false, Cache};
 						NewModule ->
 							%% New module compiled
-							UpdatedModile = {NewModule,NewDate}
-							update_cache(ModuleFile, UpdatedModule, Cache),
+							UpdatedModule = {NewModule,NewDate}
+							NewCache = lists:keyreplace(ModuleFile,1, Cache, UpdatedModule),
 							{NewModule, NewCache}
 					end
 			end
 	end.
-
-update_cache(ModuleFile, NewModule, Cache) ->
-	lists:keyreplace(ModuleFile, 1, NewModule).
 
 %% ----------------------------------------------------------------------------
 % @spec start() ->
