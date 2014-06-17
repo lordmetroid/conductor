@@ -125,9 +125,32 @@ execute_view(ViewFile, Arguments) ->
 			end
 	end.
 
-render_view(Template, Arguments) ->
-	
-	
+%% ----------------------------------------------------------------------------
+% @spec render_view(Template, Arguments) -> ok
+% @doc Add template content to response body
+%% ----------------------------------------------------------------------------
+render_view([], Arguments) ->
+	ok;
+render_view([{Type, String} | Rest], Arguments) ->
+	%% Add template content to response body
+	case Type of
+		text ->
+			%% Render text
+			conductor_response:add_content(String),
+			render_view(Rest, Arguments);
+		tag ->
+			%% Tempate token is a variable
+			case lists:keyfind(String, 1, Arguments) of
+				false ->
+					%% Variable value not provided
+					%% TODO: Write error to log
+					render_view(Rest, Arguments);
+				{String, Value} ->
+					%% Render variable
+					conductor_response:add(Value),
+					render_view(Rest, Arguments)
+	end.
+
 %% ----------------------------------------------------------------------------
 % @spec get_cookies(CookieHeader::string) -> Cookies::Tuplelist()
 % @doc Get cookies from request
