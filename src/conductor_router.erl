@@ -75,7 +75,7 @@ execute_error(Request) ->
 
 %% ----------------------------------------------------------------------------
 % @spec execute_model(ModelFile, Function, Arguments, Parameters, Log)
-% @doc Get cookies from request
+% @doc
 %% ----------------------------------------------------------------------------
 execute_model(ModelFile,Function,Arguments, Request) ->
 	case conductor_cache:get_model(ModelFile) of
@@ -100,8 +100,8 @@ execute_model(ModelFile,Function,Arguments, Request) ->
 	end.
 
 %% ----------------------------------------------------------------------------
-% @spec get_cookies(CookieHeader::string) -> Cookies::Tuplelist()
-% @doc Get cookies from request
+% @spec execute_view(ViewFile, Arguments)
+% @doc
 %% ----------------------------------------------------------------------------
 execute_view(ViewFile, Arguments) ->
 	case conductor_cache:get_view(ViewFile) of
@@ -152,8 +152,8 @@ render_view([{Type, String} | Rest], Arguments) ->
 	end.
 
 %% ----------------------------------------------------------------------------
-% @spec get_cookies(CookieHeader::string) -> Cookies::Tuplelist()
-% @doc Get cookies from request
+% @spec execute_controller(ControllerFile,Function, Arguments, Request)
+% @doc
 %% ----------------------------------------------------------------------------
 execute_controller(ControllerFile,Function,Arguments, Request)  ->
 	case conductor_cache:get_controller(ControllerFile) of
