@@ -23,6 +23,8 @@
 % @doc Compile and cache all web application files available at start
 %% ----------------------------------------------------------------------------
 init(_Arguments) ->
+	%% TODO: Add error reporting
+	
 	%% Compile and cache modules
 	{ok, {
 		%% Compile programs
@@ -52,6 +54,8 @@ handle_call({get_program, ProgramFile}, _From, Cache) ->
 			%% Program does not exist
 			{reply, false, Cache};
 		{Program, NewPrograms} ->
+			%% TODO: Add error reporting
+	
 			%% Program found and cache has been updated
 			{reply, Program, Cache}
 	end;
@@ -65,6 +69,8 @@ handle_call({get_model, ModelFile}, _From, Cache) ->
 			%% Model does not exist
 			{reply, false, Cache};
 		{Model, NewModels} ->
+			%% TODO: Add error reporting
+	
 			%% Model found and cache has been updated
 			{reply, Model, Cache}
 	end;
@@ -78,6 +84,8 @@ handle_call({get_view, ViewFile}, _From, Cache) ->
 			%% View does not exist
 			{reply, false,  Cache};
 		{View, NewViews} ->
+			%% TODO: Add error reporting
+	
 			%% View found and cache has been updated
 			{reply, View, Cache}
 	end;
@@ -91,6 +99,8 @@ handle_call({get_controller, ControllerFile}, _From, Cache) ->
 			%% Controller could not be found
 			{reply, error, Cache};
 		{Controller,ControllerDate} ->
+			%% TODO: Add error reporting
+	
 			%% Controller found
 			NewEntry = {Controller,ControllerDate},
 			{reply, Controller, update_cache(ControllerPath, NewEntry, Cache)}

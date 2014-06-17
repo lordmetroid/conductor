@@ -34,7 +34,7 @@ make_modules([ModulePath | Rest], Modules, Errors) ->
 	end.
 
 %% ----------------------------------------------------------------------------
-% @spec make_module(ModulePath) -> {ModuleId, calendar:datetime()}
+% @spec make_module(ModulePath) -> {ModuleId, datetime()}
 % @doc Compile a module from specified file path
 %% ----------------------------------------------------------------------------
 make_module(ModulePath) ->
