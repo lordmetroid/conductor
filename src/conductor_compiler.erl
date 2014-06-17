@@ -28,56 +28,63 @@ make_modules([ModulePath | Rest], Modules) ->
 	end.
 
 make_module(ModulePath) ->
-	%% Get module location and timestamp
-	ModuleRoot = filename:dirname(ModulePath),
-	ModuleDate = filelib:last_modified(ModulePath),
-	
-	%% Generate a dynamic module id
-	ModuleId = uuid:uuid_to_string(uuid:get_v4()),
-
-	%% Identify the module type based on location
-	ProgramRoot = conductor_settings:get(program_root),
-	ModelRoot = conductor_settings:get(model_root),
-	ViewRoot = conductor_settings:get(view_root),
-	ControllerRoot = conductor_settings:get(controller_root),
-
-	case ModuleRoot of
-		ProgramRoot ->
-			%% Compile a program
-			ProgramForm = [
-				add_module_attribute(ModuleId),
-				add_webmachine_lib_attribute(),
-				add_file(ModulePath),
-				add_run_function()
-			],
-			compile_module(ProgramForm, ModuleDate);
-		ModelRoot ->
-			%% Compile a model
-			ModelForm = [
-				add_module_attribute(ModuleId),
-				add_webmachine_lib_attribute(),
-				add_file(ModulePath)
-			],
-			compile_module(ModelForm, ModuleDate);
-		ViewRoot ->
-			%% Compile a view
-			ViewForm = [
-				add_module_attribute(ModuleId),
-				add_view_export_attribute(),
-				add_view(ModulePath)
-			],
-			compile_module(ViewForm, ModuleDate);
-		ControllerRoot ->
-			%% Compile a controller
-			ControllerForm = [
-				add_module_attribute(ModuleId),
-				add_webmachine_lib_attribute(),
-				add_file(ModulePath),
-				add_run_function(),
-				add_get_function(),
-				add_render_function()
-			],
-			compile_module(ControllerForm, ModuleDate)
+	case filelib:last_modified(ModulePath) of
+		0 ->
+			%% Module file could not be found
+			{error, ModulePath ++ " not found"};
+		ModuleDate ->
+			%% Module file exist
+			
+			%% Generate a dynamic module id
+			ModuleId = uuid:uuid_to_string(uuid:get_v4()),
+			
+			%% Get module location			
+			ProgramRoot = conductor_settings:get(program_root),
+			ModelRoot = conductor_settings:get(model_root),
+			ViewRoot = conductor_settings:get(view_root),
+			ControllerRoot = conductor_settings:get(controller_root),
+			
+			ModuleRoot = filename:dirname(ModulePath),
+			
+			%% Identify the module type based on location
+			case ModuleRoot of
+				ProgramRoot ->
+					%% Compile a program
+					ProgramForm = [
+						add_module_attribute(ModuleId),
+						add_webmachine_lib_attribute(),
+						add_file(ModulePath),
+						add_run_function()
+					],
+					compile_module(ProgramForm, ModuleDate);
+				ModelRoot ->
+					%% Compile a model
+					ModelForm = [
+						add_module_attribute(ModuleId),
+						add_webmachine_lib_attribute(),
+						add_file(ModulePath)
+					],
+					compile_module(ModelForm, ModuleDate);
+				ViewRoot ->
+					%% Compile a view
+					ViewForm = [
+						add_module_attribute(ModuleId),
+						add_view_export_attribute(),
+						add_view(ModulePath)
+					],
+					compile_module(ViewForm, ModuleDate);
+				ControllerRoot ->
+					%% Compile a controller
+					ControllerForm = [
+						add_module_attribute(ModuleId),
+						add_webmachine_lib_attribute(),
+						add_file(ModulePath),
+						add_run_function(),
+						add_get_function(),
+						add_render_function()
+					],
+					compile_module(ControllerForm, ModuleDate)
+			end
 	end.
 
 compile_module(Forms, ModuleDate) ->
