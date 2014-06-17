@@ -60,32 +60,32 @@ make_module(ModulePath) ->
 			case ModuleRoot of
 				ProgramRoot ->
 					%% Compile a program
-					ProgramForm = [
+					ModuleForms = [
 						add_module_attribute(ModuleId),
 						add_webmachine_lib_attribute(),
 						add_file(ModulePath),
 						add_run_function()
 					],
-					compile_module(ProgramForm, ModuleDate);
+					compile_module(ModulePath, ModuleForms, ModuleDate);
 				ModelRoot ->
 					%% Compile a model
-					ModelForm = [
+					ModuleForms = [
 						add_module_attribute(ModuleId),
 						add_webmachine_lib_attribute(),
 						add_file(ModulePath)
 					],
-					compile_module(ModelForm, ModuleDate);
+					compile_module(ModulePath, ModuleForms, ModuleDate);
 				ViewRoot ->
 					%% Compile a view
-					ViewForm = [
+					ModuleForms = [
 						add_module_attribute(ModuleId),
 						add_view_export_attribute(),
 						add_view(ModulePath)
 					],
-					compile_module(ViewForm, ModuleDate);
+					compile_module(ModulePath, ModuleForms, ModuleDate);
 				ControllerRoot ->
 					%% Compile a controller
-					ControllerForm = [
+					ModuleForms = [
 						add_module_attribute(ModuleId),
 						add_webmachine_lib_attribute(),
 						add_file(ModulePath),
@@ -93,12 +93,12 @@ make_module(ModulePath) ->
 						add_get_function(),
 						add_render_function()
 					],
-					compile_module(ModulePath, ModuleDate, ControllerForm)
+					compile_module(ModulePath, ModuleForms, ModuleDate)
 			end
 	end.
 
-compile_module(ModulePath, ModuleDate, ModuleForms) ->
-	case compile:forms(Forms) of
+compile_module(ModulePath, ModuleForms, ModuleDate) ->
+	case compile:forms(ModuleForms) of
 		error ->
 			%% Report erlang syntax compilation error 
 			{error, "Could not compile erlang syntax for " ++ ModulePath};
