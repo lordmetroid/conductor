@@ -120,35 +120,31 @@ execute_view(ViewFile, Arguments) ->
 					conductor_response:set_status_code(500);
 					%% TODO: Create response term
 				true ->
-					%% Get view template
-					render_view(View:get(), Arguments)
+					%% Get view compiler and template
+					{Compiler, Template} = View:get(),
+					render_view(Compiler, Template, Arguments)
 			end
 	end.
 
 %% ----------------------------------------------------------------------------
-% @spec render_view(Template, Arguments) -> ok
+% @spec render_view(Compiler, Template, Arguments) -> 
 % @doc Add template content to response body
 %% ----------------------------------------------------------------------------
-render_view([], Arguments) ->
-	ok;
-render_view([{Type, String} | Rest], Arguments) ->
-	%% Add template content to response body
-	case Type of
-		text ->
-			%% Render text
-			conductor_response:add_content(String),
-			render_view(Rest, Arguments);
-		tag ->
-			%% Tempate token is a variable
-			case lists:keyfind(String, 1, Arguments) of
-				false ->
-					%% Variable value not provided
-					%% TODO: Write error to log
-					render_view(Rest, Arguments);
-				{String, Value} ->
-					%% Render variable
-					conductor_response:add(Value),
-					render_view(Rest, Arguments)
+render_view(Compiler, Template, Arguments) ->
+	render_view(Compiler, Template, Arguments, []).
+
+render_view(Compiler, [], Arguments, Errors) ->
+	Errors;
+render_view(Compiler, [Token | Rest], Arguments, Errors) ->
+	%% Let the compiler render the token
+	case Compiler:render(Token, Arguments) of
+		{error, NewErrors} ->
+			%% Report error
+			render_view(Compiler, Rest, Arguments, [NewErrors | Errors])
+		{ok, Content} ->
+			%% Add rendered content to response body
+			conductor_response:add_content(Content),
+			render_view(Compiler, Rest, Arguments, Errors)
 	end.
 
 %% ----------------------------------------------------------------------------
