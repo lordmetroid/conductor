@@ -173,7 +173,7 @@ add_file(ModulePath) ->
 					[];
 				{ok, FileAST, _EndLocation} ->
 					erl_syntax:revert(FileAST)
-			end			
+			end
 	end.
 
 %% ----------------------------------------------------------------------------
