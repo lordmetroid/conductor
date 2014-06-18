@@ -21,7 +21,7 @@ run a server. See the below example configuration and explanation:
 {programs, [
     {"/",                "index.erl"},
     {"/index.html",      "index.erl"},
-	{error,              "error.erl"}
+	{error_program,      "error.erl"}
 ]}.
 
 %% Application program resources
@@ -47,7 +47,7 @@ specified by the _programs_ value-data pair. The _programs_ is a __list__
 of sets of two values. The absolute web application search path and the 
 corresponing program to be executed on a request for that search path.
 The only exception is the general error program which is speficied by the
-_error_ rather than the search path.
+_error_program_ rather than the search path.
 
 * Application program resources specifies the directories where resources 
 available to a program are stored.
