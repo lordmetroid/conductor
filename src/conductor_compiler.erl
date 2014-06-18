@@ -42,7 +42,7 @@ make_module(ModulePath) ->
 		0 ->
 			%% Module file could not be found
 			{error, ModulePath ++ " not found"};
-		ModuleDate ->
+		Date ->
 			%% Module file exist
 			
 			%% Generate a dynamic module id
@@ -66,7 +66,7 @@ make_module(ModulePath) ->
 						add_file(ModulePath),
 						add_run_function()
 					],
-					compile_module(ModulePath, ModuleForms, ModuleDate);
+					compile_module(ModulePath, ModuleForms, Date);
 				ModelRoot ->
 					%% Compile a model
 					ModuleForms = [
@@ -74,7 +74,7 @@ make_module(ModulePath) ->
 						add_webmachine_lib_attribute(),
 						add_file(ModulePath)
 					],
-					compile_module(ModulePath, ModuleForms, ModuleDate);
+					compile_module(ModulePath, ModuleForms, Date);
 				ViewRoot ->
 					%% Compile a view
 					ModuleForms = [
@@ -82,7 +82,7 @@ make_module(ModulePath) ->
 						add_view_export_attribute(),
 						add_view(ModulePath)
 					],
-					compile_module(ModulePath, ModuleForms, ModuleDate);
+					compile_module(ModulePath, ModuleForms, Date);
 				ControllerRoot ->
 					%% Compile a controller
 					ModuleForms = [
@@ -93,11 +93,11 @@ make_module(ModulePath) ->
 						add_get_function(),
 						add_render_function()
 					],
-					compile_module(ModulePath, ModuleForms, ModuleDate)
+					compile_module(ModulePath, ModuleForms, Date)
 			end
 	end.
 
-compile_module(ModulePath, ModuleForms, ModuleDate) ->
+compile_module(ModulePath, ModuleForms, Date) ->
 	case compile:forms(ModuleForms) of
 		error ->
 			%% Report erlang syntax compilation error 
@@ -113,7 +113,7 @@ compile_module(ModulePath, ModuleForms, ModuleDate) ->
 					{error, Errors, Warnings};
 				{module, Module} ->
 					%% Return loaded module id and report warnings
-					{ok, {Module, ModuleDate}, Warnings}
+					{ok, {Module,Date}, Warnings}
 			end;
 		{ok, Module, ModuleBinary} ->
 			%% Load module
@@ -123,7 +123,7 @@ compile_module(ModulePath, ModuleForms, ModuleDate) ->
 					{error, Errors};
 				{module, Module} ->
 					%% Return loaded module id
-					{ok, {Module, ModuleDate}}
+					{ok, {Module,Date}}
 			end
 	end.
 
