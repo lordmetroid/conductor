@@ -28,10 +28,6 @@ run a server. See the below example configuration and explanation:
 {model_root,             "/path_to_webapp/programs/models"}.
 {view_root,              "/path_to_webapp/programs/views"}.
 {controller_root,        "/path_to_webapp/programs/controllers"}.
-
-%% Application view template compiler
-{view_compiler,          symphony}.
-
 ```
 The configuration file consist of a number of value-data pairs.
 
@@ -55,8 +51,6 @@ _error_ rather than the search path.
 
 * Application program resources specifies the directories where resources 
 available to a program are stored.
-
-* Application view template compiler specifies the compiler to be used.
 
 ## Writing a web application
 Applications consist of four components. A Program and associated models, 

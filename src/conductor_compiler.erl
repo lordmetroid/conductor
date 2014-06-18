@@ -194,8 +194,8 @@ add_view_export_attribute() ->
 	).
 
 %% ----------------------------------------------------------------------------
-% @spec add_view() -> syntaxTree()
-% @doc Add an Erlang File to the compilation
+% @spec add_view(ModulePath) -> erl_syntax()
+% @doc Add a view file to the compilation
 %% ----------------------------------------------------------------------------
 add_view(ModulePath) ->
 	case file:read_file(ModulePath) of
@@ -214,7 +214,7 @@ add_view(ModulePath) ->
 			
 			case Compiler:make(Template) of
 				{error, Reason} ->
-					%% TODO: Write to error to log
+					%% TODO: Report error
 				
 					%% Nothing to return
 					[];
