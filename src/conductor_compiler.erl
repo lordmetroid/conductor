@@ -198,26 +198,43 @@ add_view_export_attribute() ->
 % @doc Add an Erlang File to the compilation
 %% ----------------------------------------------------------------------------
 add_view(ModulePath) ->
-	%% Compile view template
-	ViewCompiler = conductor_settings:get(view_compiler),
-	case ViewCompiler:make(ModulePath) of
-		{error, Reason} ->
-			%% TODO: Write to error to log
+	case file:read_file(ModulePath) of
+		{error, Errors} ->
+			{error, Errors};
+		{ok, Binary} ->
+			%% TODO: Detect encoding of file
 		
-			%% Nothing to return
-			[];
-		{ok, ViewAST} ->
-			%% Store view template as compiled function
-			erl_syntax:revert(
-				%% get() ->
-				erl_syntax:function(erl_syntax:atom(get), [
-					erl_syntax:clause([
-					], none, [
-						%% List of compiled tuples from template
-						ViewAST
-					])
-				])
-			)
+			%% Convert binary to scannable string
+			String = unicode:characters_to_list(Binary,utf8),
+			
+			%% Get compiler and the template
+			FirstRow = string:str(String, "\n")-1,
+			{"#!" ++ CompilerString, Template} = lists:split(FirstRow, String),
+			Compiler = list_to_atom(CompilerString),
+			
+			case Compiler:make(Template) of
+				{error, Reason} ->
+					%% TODO: Write to error to log
+				
+					%% Nothing to return
+					[];
+				{ok, ViewAST} ->
+					%% Store view template as compiled function
+					erl_syntax:revert(
+						%% get() ->
+						erl_syntax:function(erl_syntax:atom(get), [
+							erl_syntax:clause([
+							], none, [
+								erl_syntax:tuple([
+									%% Compiler specification
+									erl_syntax:atom(Compiler),
+									%% List of compiled tuples from template
+									ViewAST
+								])
+							])
+						])
+					)
+			end
 	end.
 
 %% ----------------------------------------------------------------------------
