@@ -45,142 +45,7 @@ init(_Arguments) ->
 		])))
 	}}.
 
-handle_call({get_program, ProgramFile}, _From, Cache) ->
-	ProgramRoot = conductor_settings:get(program_root),
-	ProgramPath = filename:join([ProgramRoot, ProgramFile]),
-
-	case get_module(ProgramPath, Cache) of
-		{error, Errors} ->
-			%% Report errors
-			{reply, {error, Errors}, Cache};
-		{error, Errors, Warnings} ->
-			%% Report errors and warnings
-			{reply, {error, Errors, Warnings}, Cache};
-		{ok, {Program,Date}, Warnings} ->
-			%% Update cache with new module despite warnings
-			case update_cache(ProgramPath, {Program,Date}, Cache),
-				{error, Errors} ->
-					{reply, {error, Errors, Warnings}, Cache};	
-				{ok, UpdatedCache} ->
-					{reply, {ok, Program, Warnings}, UpdatedCache}
-			end;
-		{ok, {Program,Date}} ->
-			%% Update cache with new module
-			case update_cache(ProgramPath, {Program,Date}, Cache),
-				{error, Errors} ->
-					{reply, {error, Errors, Warnings}, Cache};	
-				{ok, UpdatedCache} ->
-					{reply, {ok, Program}, UpdatedCache}
-			end;
-	end;
-
-handle_call({get_model, ModelFile}, _From, Cache) ->
-	ModelRoot = conductor_settings:get(model_root),
-	ModelPath = filename:join([ModelRoot, ModelFile]),
-
-	case get_module(ModelPath, Cache) of
-		{error, Errors} ->
-			%% Report errors
-			{reply, {error, Errors}, Cache};
-		{error, Errors, Warnings} ->
-			%% Report errors and warnings
-			{reply, {error, Errors, Warnings}, Cache};
-		{ok, {Model,Date}, Warnings} ->
-			%% Update cache with new module despite warnings
-			case update_cache(ModelPath, {Model,Date}, Cache),
-				{error, Errors} ->
-					{reply, {error, Errors, Warnings}, Cache};	
-				{ok, UpdatedCache} ->
-					{reply, {ok, Model, Warnings}, UpdatedCache}
-			end;
-		{ok, {Model,Date}} ->
-			%% Update cache with new module
-			case update_cache(ModelPath, {Model,Date}, Cache),
-				{error, Errors} ->
-					{reply, {error, Errors, Warnings}, Cache};	
-				{ok, UpdatedCache} ->
-					{reply, {ok, Model}, UpdatedCache}
-			end;
-	end;
-
-handle_call({get_view, ViewFile}, _From, Cache) ->
-	ViewRoot = conductor_settings:get(view_root),
-	ViewPath = filename:join([ViewRoot, ViewFile]),
-
-	case get_module(ViewPath, Cache) of
-		{error, Errors} ->
-			%% Report errors
-			{reply, {error, Errors}, Cache};
-		{error, Errors, Warnings} ->
-			%% Report errors and warnings
-			{reply, {error, Errors, Warnings}, Cache};
-		{ok, {View,Date}, Warnings} ->
-			%% Update cache with new module despite warnings
-			case update_cache(ViewPath, {View,Date}, Cache),
-				{error, Errors} ->
-					{reply, {error, Errors, Warnings}, Cache};	
-				{ok, UpdatedCache} ->
-					{reply, {ok, View, Warnings}, UpdatedCache}
-			end;
-		{ok, {View,Date}} ->
-			%% Update cache with new module
-			case update_cache(ViewPath, {View,Date}, Cache),
-				{error, Errors} ->
-					{reply, {error, Errors, Warnings}, Cache};	
-				{ok, UpdatedCache} ->
-					{reply, {ok, View}, UpdatedCache}
-			end;
-	end;
-
-handle_call({get_controller, ControllerFile}, _From, Cache) ->
-	ControllerRoot = conductor_settings:get(controller_root),
-	ControllerPath = filename:join([ControllerRoot, ControllerFile]),
-
-	case get_module(ControllerPath, Cache) of
-		{error, Errors} ->
-			%% Report errors
-			{reply, {error, Errors}, Cache};
-		{error, Errors, Warnings} ->
-			%% Report errors and warnings
-			{reply, {error, Errors, Warnings}, Cache};
-		{ok, {Controller,Date}, Warnings} ->
-			%% Update cache with new module despite warnings
-			case update_cache(ControllerPath, {Controller,Date}, Cache),
-				{error, Errors} ->
-					{reply, {error, Errors, Warnings}, Cache};	
-				{ok, UpdatedCache} ->
-					{reply, {ok, Controller, Warnings}, UpdatedCache}
-			end;
-		{ok, {Controller,Date}} ->
-			%% Update cache with new module
-			case update_cache(ControllerPath, {Controller,Date}, Cache),
-				{error, Errors} ->
-					{reply, {error, Errors, Warnings}, Cache};	
-				{ok, UpdatedCache} ->
-					{reply, {ok, Controller}, UpdatedCache}
-			end;
-	end;
-
-handle_call(_Event, _From, State) ->
-	{stop, State}.
-
-handle_cast(_Event, State) ->
-	{stop, State}.
-
-handle_info(_Information, State) ->
-	{stop, State}.
-
-terminate(_Reason, _State) ->
-	ok.
-
-code_change(_OldVersion, State, _Extra) ->
-	{ok, State}.
-	
-%% ----------------------------------------------------------------------------
-% @spec get_module(ModulePath, Cache) -> 
-% @doc 
-%% ----------------------------------------------------------------------------
-get_module(ModulePath, Cache) ->
+handle_call({get_module, ModulePath}, _From, Cache) ->
 	case lists:keyfind(ModulePath,1, Cache) of
 		false ->
 			%% Module does not exist in cache
@@ -193,10 +58,20 @@ get_module(ModulePath, Cache) ->
 					{error, Errors, Warnings};
 				{ok, {Module,Date}, Warnings} ->
 					%% Report compilation warnings of new module
-					{ok, {Module,Date}, Warnings};
+					case update_cache(ModulePath, {Module,Date}, Cache) of
+						{error, Errors} ->
+							{reply, {error, Errors, Warnings}, Cache};	
+						{ok, UpdatedCache} ->
+							{reply, {ok, Module, Warnings}, UpdatedCache}
+					end;
 				{ok, {Module,Date}} ->
 					%% New compiled module
-					{ok, {Module,Date}}
+					case update_cache(ModulePath, {Module,Date}, Cache) of
+						{error, Errors} ->
+							{reply, {error, Errors, Warnings}, Cache};	
+						{ok, UpdatedCache} ->
+							{reply, {ok, Module}, UpdatedCache}
+					end
 			end;
 		{ModulePath, {Module,Date}} ->
 			%% Module found in cache
@@ -235,6 +110,21 @@ update_cache(ModulePath, {Module,Date}, Cache) ->
 			end
 	end.
 
+handle_call(_Event, _From, State) ->
+	{stop, State}.
+
+handle_cast(_Event, State) ->
+	{stop, State}.
+
+handle_info(_Information, State) ->
+	{stop, State}.
+
+terminate(_Reason, _State) ->
+	ok.
+
+code_change(_OldVersion, State, _Extra) ->
+	{ok, State}.
+
 %% ----------------------------------------------------------------------------
 % @spec start() ->
 % @doc Start the web application file cache manager
@@ -247,14 +137,26 @@ start_link() ->
 % @doc Get the cached web application file
 %% ----------------------------------------------------------------------------
 get_program(ProgramFile) ->
-	gen_server:call(?MODULE, {get_program, ProgramFile}).
+	ProgramRoot = conductor_settings:get(program_root),
+	ProgramPath = filename:join([ProgramRoot, ProgramFile]),
+
+	gen_server:call(?MODULE, {get_module, ProgramPath}).
 
 get_model(ModelFile) ->
-	gen_server:call(?MODULE, {get_model, ModelFile}).
+	ModelRoot = conductor_settings:get(model_root),
+	ModelPath = filename:join([ModelRoot, ModelFile]),
+
+	gen_server:call(?MODULE, {get_module, ModelPath}).
 
 get_view(ViewFile) ->
-	gen_server:call(?MODULE, {get_view, ViewFile}).
+	ViewRoot = conductor_settings:get(view_root),
+	ViewPath = filename:join([ViewRoot, ViewFile]),
+
+	gen_server:call(?MODULE, {get_module, ViewPath}).
 
 get_controller(ControllerFile) ->
-	gen_server:call(?MODULE, {get_controller, ControllerFile}).
+	ControllerRoot = conductor_settings:get(controller_root),
+	ControllerPath = filename:join([ControllerRoot, ControllerFile]),
+
+	gen_server:call(?MODULE, {get_module, ControllerPath}).
 
