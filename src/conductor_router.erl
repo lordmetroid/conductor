@@ -44,12 +44,16 @@ execute(Request) ->
 execute_program(ProgramFile, Request) ->
 	%% Get the program module from cache
 	case conductor_cache:get_program(ProgramFile) of
-		false ->
+		{error, Errors} ->
 			%% Program file does not exist
 			%% Create "410 Gone" response
 			conductor_response:set_status_code(410),
 			execute_error(Request);
-		Program ->
+		{error, Errors, Warnings} ->
+
+		{ok, Model, Warnings} ->
+
+		{ok, Model} ->
 			case erlang:function_exported(Program, execute, 1) of
 				false ->
 					%% Program file is missing the called function 
@@ -63,13 +67,13 @@ execute_program(ProgramFile, Request) ->
 	end.
 
 execute_error(Request) ->
-	case lists:keyfind(error, 1, conductor_settings:get(programs)) of
+	case lists:keyfind(error_program, 1, conductor_settings:get(programs)) of
 		false ->
 			%% 'error' is not specified in configuration 
 			%% Create "500 Internal Server Error" response
 			conductor_response:set_status_code(500);
 			%% TODO: Create response term
-		{error, ProgramFile} ->
+		{error_program, ProgramFile} ->
 			execute_program(ProgramFile, Request)
 	end;
 
