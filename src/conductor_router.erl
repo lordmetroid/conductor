@@ -130,18 +130,21 @@ execute_view(ViewFile, Arguments) ->
 % @spec render_view(Compiler, Template, Arguments) -> 
 % @doc Add template content to response body
 %% ----------------------------------------------------------------------------
-render_view(Compiler, [], Arguments) ->
-	ok;
-render_view(Compiler, [Token | Rest], Arguments) ->
+render_view(Compiler, Template, Arguments) ->
+	render_view(Compiler, Template, Arguments, []).
+
+render_view(Compiler, [], Arguments, Errors) ->
+	Errors;
+render_view(Compiler, [Token | Rest], Arguments, Errors) ->
 	%% Let the compiler render the token
 	case Compiler:render(Token, Arguments) of
-		{error, Errors} ->
-			%% TODO: Report error
-			
+		{error, NewErrors} ->
+			%% Report error
+			render_view(Compiler, Rest, Arguments, [NewErrors | Errors])
 		{ok, Content} ->
 			%% Add rendered content to response body
 			conductor_response:add_content(Content),
-			render_view(Compiler, Rest, Arguments)
+			render_view(Compiler, Rest, Arguments, Errors)
 	end.
 
 %% ----------------------------------------------------------------------------
