@@ -202,38 +202,39 @@ add_view(ModulePath) ->
 		{error, Errors} ->
 			{error, Errors};
 		{ok, Binary} ->
-			%% TODO: Detect encoding of file
-		
 			%% Convert binary to scannable string
-			String = unicode:characters_to_list(Binary,utf8),
+			%% TODO: Detect encoding of file
+			String = unicode:characters_to_list(Binary, utf8),
 			
 			%% Get compiler and the template
-			FirstRow = string:str(String, "\n")-1,
-			{"#!" ++ CompilerString, Template} = lists:split(FirstRow, String),
-			Compiler = list_to_atom(string:strip(CompilerString)),
-			
-			case Compiler:make(Template) of
-				{error, Reason} ->
-					%% TODO: Report error
-				
-					%% Nothing to return
-					[];
-				{ok, ViewAST} ->
-					%% Store view template as compiled function
-					erl_syntax:revert(
-						%% get() ->
-						erl_syntax:function(erl_syntax:atom(get), [
-							erl_syntax:clause([
-							], none, [
-								erl_syntax:tuple([
-									%% Compiler specification
-									erl_syntax:atom(Compiler),
-									%% List of compiled tuples from template
-									ViewAST
+			case lists:split(string:str(String, "\n")-1, String) of
+				{"#!" ++ CompilerString, Template} ->
+					%% Compile view
+					Compiler = list_to_atom(string:strip(CompilerString)),
+					case Compiler:make(Template) of
+						{error, Reason} ->
+							%% TODO: Report error
+						
+							%% Nothing to return
+							[];
+						{ok, ViewAST} ->
+							%% Store view as compiled function
+							erl_syntax:revert(
+								%% get() ->
+								erl_syntax:function(erl_syntax:atom(get), [
+									erl_syntax:clause([
+									], none, [
+										%% {Compiler, Template}
+										erl_syntax:tuple([
+											erl_syntax:atom(Compiler),
+											ViewAST
+										])
+									])
 								])
-							])
-						])
-					)
+							)
+					end
+				_ ->
+					%% TODO: Report error
 			end
 	end.
 
