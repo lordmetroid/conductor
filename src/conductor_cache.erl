@@ -75,7 +75,13 @@ handle_call({get_module, ModulePath}, _From, Cache) ->
 			end;
 		{ModulePath, {Module,Date}} ->
 			%% Module found in cache
-			{ok, {Module,Date}}
+			%% TODO: Check if module is out of date
+			case filelib:last_modified(ModulePath) of
+				0 ->
+				Date ->
+					%% Module in cache is up to date
+					{reply, {Module,Date}, Cache};
+				NewDate ->
 	end.
 
 %% ----------------------------------------------------------------------------
