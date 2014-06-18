@@ -105,8 +105,7 @@ update_cache(ModulePath, {Module,Date}, Cache) ->
 					{error, "Could not update " ++ ModulePath};
 				true ->
 					%% Update cache with newer file
-					NewModule = {Module,Date},
-					{ok, lists:keyreplace(ModulePath,1, Cache, NewModule)}
+					{ok, lists:keyreplace(ModulePath,1, Cache, {Module,Date})}
 			end
 	end.
 
