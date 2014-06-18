@@ -210,7 +210,7 @@ add_view(ModulePath) ->
 			%% Get compiler and the template
 			FirstRow = string:str(String, "\n")-1,
 			{"#!" ++ CompilerString, Template} = lists:split(FirstRow, String),
-			Compiler = list_to_atom(CompilerString),
+			Compiler = list_to_atom(string:strip(CompilerString)),
 			
 			case Compiler:make(Template) of
 				{error, Reason} ->
