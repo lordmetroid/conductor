@@ -75,13 +75,47 @@ handle_call({get_module, ModulePath}, _From, Cache) ->
 			end;
 		{ModulePath, {Module,Date}} ->
 			%% Module found in cache
-			%% TODO: Check if module is out of date
 			case filelib:last_modified(ModulePath) of
 				0 ->
+					%% Module file has been deleted
+					case update_cache(ModulePath, {Module,Date}, Cache) of
+						{error, Errors} ->
+							{reply, {error, Errors, Warnings}, Cache};	
+						{ok, UpdatedCache} ->
+							{reply, {ok, Module}, UpdatedCache}
+					end;
 				Date ->
 					%% Module in cache is up to date
 					{reply, {Module,Date}, Cache};
 				NewDate ->
+					%% Module file has been updated
+			end	
+	end.
+
+compile_module(ModulePath, Cache) ->
+	case conductor_compiler:make_module(ModulePath) of
+		{error, Errors} ->
+			%% Report compilation errors
+			{error, Errors};
+		{error, Errors, Warnings} ->
+			%% Report compilation errors and warnings
+			{error, Errors, Warnings};
+		{ok, {Module,Date}, Warnings} ->
+			%% Report compilation warnings of new module
+			case update_cache(ModulePath, {Module,Date}, Cache) of
+				{error, Errors} ->
+					{reply, {error, Errors, Warnings}, Cache};	
+				{ok, UpdatedCache} ->
+					{reply, {ok, Module, Warnings}, UpdatedCache}
+			end;
+		{ok, {Module,Date}} ->
+			%% New compiled module
+			case update_cache(ModulePath, {Module,Date}, Cache) of
+				{error, Errors} ->
+					{reply, {error, Errors, Warnings}, Cache};	
+				{ok, UpdatedCache} ->
+					{reply, {ok, Module}, UpdatedCache}
+			end
 	end.
 
 %% ----------------------------------------------------------------------------
