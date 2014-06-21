@@ -44,16 +44,12 @@ execute(Request) ->
 execute_program(ProgramFile, Request) ->
 	%% Get the program module from cache
 	case conductor_cache:get_program(ProgramFile) of
-		{error, Errors} ->
+		false ->
 			%% Program file does not exist
 			%% Create "410 Gone" response
 			conductor_response:set_status_code(410),
 			execute_error(Request);
-		{error, Errors, Warnings} ->
-
-		{ok, Model, Warnings} ->
-
-		{ok, Model} ->
+		Model ->
 			case erlang:function_exported(Program, execute, 1) of
 				false ->
 					%% Program file is missing the called function 
