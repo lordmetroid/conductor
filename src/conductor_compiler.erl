@@ -104,27 +104,13 @@ compile_module(ModulePath, ModuleForms, Date) ->
 			{error, "Could not compile erlang syntax for " ++ ModulePath};
 		{error, Errors, Warnings} ->
 			%% Report erlang syntax compilation error and warnings
-			{error, Errors, Warnings};
+			{error,  Errors, Warnings};
 		{ok, Module, ModuleBinary, Warnings} ->
 			%% Load module in spite of warnings and report warnings
-			case code:load_binary(Module, [], ModuleBinary) of
-				{error, Errors} ->
-					%% Loading module failed, report errors and warnings
-					{error, Errors, Warnings};
-				{module, Module} ->
-					%% Return loaded module id and report warnings
-					{ok, {Module,Date}, Warnings}
-			end;
+			{ok, {Module,Date}, ModuleBinary, Warnings};
 		{ok, Module, ModuleBinary} ->
 			%% Load module
-			case code:load_binary(Module, [], ModuleBinary) of
-				{error, Errors} ->
-					%% Loading module failed, report errors 
-					{error, Errors};
-				{module, Module} ->
-					%% Return loaded module id
-					{ok, {Module,Date}}
-			end
+			{ok, {Module,Date}, ModuleBinary}
 	end.
 
 %% ----------------------------------------------------------------------------
@@ -216,7 +202,20 @@ add_view(ModulePath) ->
 							%% TODO: Report error
 						
 							%% Nothing to return
-							[];
+							erl_syntax:revert(
+								%% get() ->
+								erl_syntax:function(erl_syntax:atom(get), [
+									erl_syntax:clause([
+									], none, [
+										%% {Compiler, []}
+										erl_syntax:tuple([
+											erl_syntax:atom(Compiler),
+											erl_syntax:lists([])
+										])
+									])
+								])
+							)
+
 						{ok, ViewAST} ->
 							%% Store view as compiled function
 							erl_syntax:revert(
@@ -232,9 +231,12 @@ add_view(ModulePath) ->
 									])
 								])
 							)
-					end
+					end;
 				_ ->
+					%% No compiler defined
+
 					%% TODO: Report error
+
 			end
 	end.
 
