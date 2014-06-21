@@ -203,7 +203,7 @@ add_view(ModulePath) ->
 							%% View template could not be compiled
 							%% TODO: Report error
 						
-							%% Nothing to return
+							%% Return empty function
 							erl_syntax:revert(
 								%% get() ->
 								erl_syntax:function(erl_syntax:atom(get), [
@@ -218,7 +218,7 @@ add_view(ModulePath) ->
 								])
 							);
 						{ok, ViewAST} ->
-							%% Store view template as function
+							%% Return view template as function
 							erl_syntax:revert(
 								%% get() ->
 								erl_syntax:function(erl_syntax:atom(get), [
@@ -234,10 +234,19 @@ add_view(ModulePath) ->
 							)
 					end;
 				_ ->
-					%% No compiler defined
-
+					%% No compiler defined in template file
 					%% TODO: Report error
 
+					%% Return dummy function
+					erl_syntax:revert(
+						%% get() ->
+						erl_syntax:function(erl_syntax:atom(get), [
+							erl_syntax:clause([
+							], none, [
+								erl_syntax:atom(error)
+							])
+						])
+					)
 			end
 	end.
 
