@@ -200,6 +200,7 @@ add_view(ModulePath) ->
 
 					case Compiler:make(Template) of
 						{error, Reason} ->
+							%% View template could not be compiled
 							%% TODO: Report error
 						
 							%% Nothing to return
@@ -217,7 +218,7 @@ add_view(ModulePath) ->
 								])
 							);
 						{ok, ViewAST} ->
-							%% Store view as compiled function
+							%% Store view template as function
 							erl_syntax:revert(
 								%% get() ->
 								erl_syntax:function(erl_syntax:atom(get), [
