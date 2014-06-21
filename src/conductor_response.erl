@@ -29,31 +29,31 @@ init(_Arguments) ->
 %% ----------------------------------------------------------------------------
 % Response control functions
 %% ----------------------------------------------------------------------------
-handle_call(create_file, From, Responses) ->
+handle_call(create_file, {Client,_}, Responses) ->
 	%% Create a file response
 	{ok, Header} = conductor_response_header:create_file(),
 	{ok, Body} =  conductor_response_body:create_file(),
 	{ok, Log} = ok, %% TODO: conductor_response_log:create(),
 	
 	%% Add the response to the manager
-	{reply, From, [{From, {Header,Body, Log}} | Responses]};
+	{reply, Client, [{Client, {Header,Body, Log}} | Responses]};
 
-handle_call(create_program, From, Response) ->
+handle_call(create_program, {Client,_}, Response) ->
 	%% Create a program response
 	{ok, Header} = conductor_response_header:create_program(),
 	{ok, Body} =  conductor_response_body:create_program(),
 	{ok, Log} = ok, %% TODO: conductor_response_log:create(),
 	
 	%% Add the response to the manager
-	{reply, From, [{From, {Header,Body, Log}} | Responses]};
+	{reply, Client, [{Client, {Header,Body, Log}} | Responses]};
 
-handle_call(destroy, From, Responses) ->
-	case lists:keyfind(From, 1, Responses) of
+handle_call(destroy, {Client,_}, Responses) ->
+	case lists:keyfind(Client, 1, Responses) of
 		false ->
 			%% Response does not exist
 			%% TODO: Write to log
-			{reply, ok, Responses};
-		{Header,Body, Log} ->
+			{reply, error, Responses};
+		{Client, {Header,Body, Log}} ->
 			%% Destroy response
 			conductor_response_header:destroy(Header),
 			conductor_response_body:destroy(Body),
@@ -67,26 +67,25 @@ handle_call(destroy, From, Responses) ->
 %% ----------------------------------------------------------------------------
 % Response header functions
 %% ----------------------------------------------------------------------------
-handle_call({set_status_code, NewStatusCode}, From, Responses) ->
-	case lists:keyfind(From, 1, Responses) of
+handle_call({set_status_code, NewStatusCode}, {Client,_}, Responses) ->
+	case lists:keyfind(Client, 1, Responses) of
 		false ->
 			%% Session does not exist
 			%% TODO: Write to log
-			{reply, false, Responses};
-		{Header,_Body, Log} ->
+			{reply, error, Responses};
+		{Client, {Header,_Body, Log}} ->
 			%% Set new Status Code
-			UpdatedResponses = lists:keyreplace(From, 1, Responses, {
-				NewStatusCode, Content, Log
-			}),
+			NewEntry = {NewStatusCode, Content, Log},
+			UpdatedResponses = lists:keyreplace(Client,1, Responses, NewEntry),
 			{reply, ok, UpdatedResponses}
 	end;
 
-handle_call(get_status_code, From, Responses) ->
-	case lists:keyfind(From, 1, Responses) of
+handle_call(get_status_code, {Client,_}, Responses) ->
+	case lists:keyfind(Client, 1, Responses) of
 		false ->
 			%% Session does not exist
-			{reply, false, Responses};
-		{Header,_Body, _Log} ->
+			{reply, error, Responses};
+		{Client, {Header,_Body, _Log}} ->
 			%% Get current status code
 			StatusCode = conductor_response_header:get_status_code(Header),
 			{reply, StatusCode, Responses}
@@ -94,12 +93,12 @@ handle_call(get_status_code, From, Responses) ->
 %% ----------------------------------------------------------------------------
 % Response body functions
 %% ----------------------------------------------------------------------------
-handle_call({add_content, Content}, From, Responses) ->
-	case lists:keyfind(From, 1, Responses) of
+handle_call({add_content, Content}, {Client,_}, Responses) ->
+	case lists:keyfind(Client, 1, Responses) of
 		false ->
 			%% Session does not exist
-			{reply, false, Responses};
-		{Header,Body, Log} ->
+			{reply, error, Responses};
+		{Client, {Header,Body, Log}} ->
 			%% Add content to
 			case conductor_response_body:add_content(Body, Content) of
 				{error, Reason} ->
@@ -111,12 +110,12 @@ handle_call({add_content, Content}, From, Responses) ->
 			end
 	end;
 
-handle_call({get_content}, From, Responses) ->
-	case lists:keyfind(From, 1, Responses) of
+handle_call({get_content}, {Client,_}, Responses) ->
+	case lists:keyfind(Client, 1, Responses) of
 		false ->
 			%% Session does not exist
-			{reply, false, Responses};
-		{Header,Body, Log} ->
+			{reply, error, Responses};
+		{Client, {Header,Body, Log}} ->
 			%% Get current response body content
 			Content = conductor_response_body:get_content(Body),
 			{reply, Content, Responses}
