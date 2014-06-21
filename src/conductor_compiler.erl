@@ -197,6 +197,7 @@ add_view(ModulePath) ->
 				{"#!" ++ CompilerString, Template} ->
 					%% Compile view
 					Compiler = list_to_atom(string:strip(CompilerString)),
+
 					case Compiler:make(Template) of
 						{error, Reason} ->
 							%% TODO: Report error
@@ -214,8 +215,7 @@ add_view(ModulePath) ->
 										])
 									])
 								])
-							)
-
+							);
 						{ok, ViewAST} ->
 							%% Store view as compiled function
 							erl_syntax:revert(
