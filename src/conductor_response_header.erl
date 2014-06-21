@@ -15,16 +15,14 @@
 ]).
 
 -export([
-	create_file/2,
-	create_program/2,
-	destroy/0,
+	create_file/1,
+	create_program/1,
+	destroy/1,
 	
 	set_status_code/2,
-	get_status_code/1
+	get_status_code/1,
 	set_mime_type/2,
-	get_mime_type/1,
-	add_content/2,
-	get_content/1
+	get_mime_type/1
 ]).
 
 %% ----------------------------------------------------------------------------
@@ -75,7 +73,7 @@ file(get_status_code, _From, {StatusCode,MimeType}) ->
 
 file({set_mime_type, NewMimeType}, _From, {StatusCode,_MimeType}) ->
 	%% Set file mime type
-	{reply, ok, file, {StatusCode,NewMimeType})};
+	{reply, ok, file, {StatusCode,NewMimeType}};
 	
 file(get_mime_type, _From, {StatusCode,MimeType}) ->
 	case filelib:is_file(MimeType) of
@@ -99,7 +97,7 @@ file(destroy, _From, {StatusCode,MimeType}) ->
 	{stop, ok, {StatusCode,MimeType}};
 
 file(_Event, _From, {StatusCode,MimeType}) ->
-	{reply, error, file, {StatusCode,MimeType}}}.
+	{reply, error, file, {StatusCode,MimeType}}.
 
 %% ----------------------------------------------------------------------------
 % Program header
@@ -136,7 +134,7 @@ create_program(Header) ->
 	gen_fsm:start(?MODULE, [], []),
 	gen_fsm:sync_send_event(Header, create_program).
 
-destroy() -> 
+destroy(Header) -> 
 	gen_fsm:sync_send_event(Header, destroy).
 	
 %% ----------------------------------------------------------------------------
