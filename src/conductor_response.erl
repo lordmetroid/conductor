@@ -35,16 +35,16 @@ handle_call(create_file, {Client,_}, Responses) ->
 	%% Create a file response
 	{ok, Header} = conductor_response_header:create_file(),
 	{ok, Body} =  conductor_response_body:create_file(),
-	{ok, Log} = ok, %% TODO: conductor_response_log:create(),
+	{ok, Log} = {ok, []}, %% TODO: conductor_response_log:create(),
 	
 	%% Add the response to the manager
 	{reply, Client, [{Client, {Header,Body, Log}} | Responses]};
 
-handle_call(create_program, {Client,_}, Response) ->
+handle_call(create_program, {Client,_}, Responses) ->
 	%% Create a program response
 	{ok, Header} = conductor_response_header:create_program(),
 	{ok, Body} =  conductor_response_body:create_program(),
-	{ok, Log} = ok, %% TODO: conductor_response_log:create(),
+	{ok, Log} = {ok, []}, %% TODO: conductor_response_log:create(),
 	
 	%% Add the response to the manager
 	{reply, Client, [{Client, {Header,Body, Log}} | Responses]};
@@ -62,7 +62,7 @@ handle_call(destroy, {Client,_}, Responses) ->
 			%% TODO: conductor_response_log:destroy(Log),
 
 			%% Remove response from manager
-			UpdatedResponses = lists:keydelete(From, Responses),
+			UpdatedResponses = lists:keydelete(Client, Responses),
 			{reply, ok, UpdatedResponses}
 	end;
 
@@ -133,11 +133,11 @@ handle_call({add_content, Content}, {Client,_}, Responses) ->
 	end;
 
 handle_call(purge_content, {Client,_}, Responses) ->
-	case lists:keyfind(Client,1, Responese) of
+	case lists:keyfind(Client,1, Responses) of
 		false ->
 			%% Session does not exist
 			{reply, error, Responses};
-		{Client, {_Header,Body, _Log} ->
+		{Client, {_Header,Body, _Log}} ->
 			%% Purge all content from response body
 			conductor_response_body:purge_content(Body),
 			{reply, ok, Responses}
@@ -148,7 +148,7 @@ handle_call({get_content}, {Client,_}, Responses) ->
 		false ->
 			%% Session does not exist
 			{reply, error, Responses};
-		{Client, {Header,Body, Log}} ->
+		{Client, {_Header,Body, _Log}} ->
 			%% Get current response body content
 			Content = conductor_response_body:get_content(Body),
 			{reply, Content, Responses}
