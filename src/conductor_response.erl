@@ -12,14 +12,16 @@
 
 -export([
 	start_link/0,
-	create/0,
+
+	create_file/0,
+	create_program/0,
 	destroy/0,
 	set_status_code/1,
 	get_status_code/0,
 	set_mime_type/1,
 	get_mime_type/0,
 	add_content/1,
-	replace_content/1,
+	purge_content/0,
 	get_content/0
 ]).
 init(_Arguments) ->
@@ -73,7 +75,7 @@ handle_call({set_status_code, NewStatusCode}, {Client,_}, Responses) ->
 			%% Session does not exist
 			%% TODO: Write to log
 			{reply, error, Responses};
-		{Client, {Header,_Body, Log}} ->
+		{Client, {Header,_Body, _Log}} ->
 			%% Set new Status Code
 			conductor_response_header:set_status_code(Header, NewStatusCode),
 			{reply, ok, Responses}
@@ -118,8 +120,8 @@ handle_call({add_content, Content}, {Client,_}, Responses) ->
 		false ->
 			%% Session does not exist
 			{reply, error, Responses};
-		{Client, {Header,Body, Log}} ->
-			%% Add content to
+		{Client, {_Header,Body, _Log}} ->
+			%% Add content to response body
 			case conductor_response_body:add_content(Body, Content) of
 				{error, Reason} ->
 					%% TODO: Write error reason to log
@@ -128,6 +130,17 @@ handle_call({add_content, Content}, {Client,_}, Responses) ->
 					%% Content added
 					{reply, ok, Responses}
 			end
+	end;
+
+handle_call(purge_content, {Client,_}, Responses) ->
+	case lists:keyfind(Client,1, Responese) of
+		false ->
+			%% Session does not exist
+			{reply, error, Responses};
+		{Client, {_Header,Body, _Log} ->
+			%% Purge all content from response body
+			conductor_response_body:purge_content(Body),
+			{reply, ok, Responses}
 	end;
 
 handle_call({get_content}, {Client,_}, Responses) ->
@@ -196,6 +209,9 @@ get_mime_type() ->
 %% ----------------------------------------------------------------------------
 add_content(Content) ->
 	gen_server:call(?MODULE, {add_content, Content}).
+
+purge_content() ->
+	gen_server:call(?MODULE, purge_content).
 
 get_content() ->
 	gen_server:call(?MODULE, get_content).
