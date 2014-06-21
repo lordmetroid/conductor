@@ -28,7 +28,7 @@ make_modules([ModulePath | Rest], Modules, Errors) ->
 		{ok, NewModule, Warnings} ->
 			%% Add compiled module and report warnings
 			make_modules(Rest, [NewModule | Modules], [Warnings | Errors]);
-		NewModule ->
+		{ok, NewModule} ->
 			%% Add compiled module
 			make_modules(Rest, [NewModule | Modules], Errors)
 	end.
