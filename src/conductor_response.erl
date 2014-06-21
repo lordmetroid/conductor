@@ -16,14 +16,14 @@
 	destroy/0,
 	set_status_code/1,
 	get_status_code/0,
-	add_mime_type/1,
+	set_mime_type/1,
 	get_mime_type/0,
 	add_content/1,
 	replace_content/1,
 	get_content/0
 ]).
 init(_Arguments) ->
-	%% Initalize the session manager
+	%% Initalize an empty session manager
 	{ok, []}.
 
 %% ----------------------------------------------------------------------------
@@ -68,20 +68,19 @@ handle_call(destroy, {Client,_}, Responses) ->
 % Response header functions
 %% ----------------------------------------------------------------------------
 handle_call({set_status_code, NewStatusCode}, {Client,_}, Responses) ->
-	case lists:keyfind(Client, 1, Responses) of
+	case lists:keyfind(Client,1, Responses) of
 		false ->
 			%% Session does not exist
 			%% TODO: Write to log
 			{reply, error, Responses};
 		{Client, {Header,_Body, Log}} ->
 			%% Set new Status Code
-			NewEntry = {NewStatusCode, Content, Log},
-			UpdatedResponses = lists:keyreplace(Client,1, Responses, NewEntry),
-			{reply, ok, UpdatedResponses}
+			conductor_response_header:set_status_code(Header, NewStatusCode),
+			{reply, ok, Responses}
 	end;
 
 handle_call(get_status_code, {Client,_}, Responses) ->
-	case lists:keyfind(Client, 1, Responses) of
+	case lists:keyfind(Client,1, Responses) of
 		false ->
 			%% Session does not exist
 			{reply, error, Responses};
@@ -90,11 +89,32 @@ handle_call(get_status_code, {Client,_}, Responses) ->
 			StatusCode = conductor_response_header:get_status_code(Header),
 			{reply, StatusCode, Responses}
 	end;
+
+handle_call({set_mime_type, NewMimeType}, {Client,_}, Responses) ->
+	case lists:keyfind(Client,1, Responses) of
+		false ->
+			%% Session does not exist
+			{reply, error, Responses};
+		{Client, {Header,_Body, _Log}} ->
+			conductor_response_header:set_mime_type(Header, NewMimeType),
+			{reply, ok, Responses}
+	end;
+
+handle_call(get_mime_type, {Client,_}, Responses) ->
+	case lists:keyfind(Client,1, Responses) of
+		false ->
+			%% Session does not exist
+			{reply, error, Responses};
+		{Client, {Header,_Body, _Log}} ->
+			MimeType = conductor_response_header:get_mime_type(Header),
+			{reply, MimeType, Responses}
+	end;
+
 %% ----------------------------------------------------------------------------
 % Response body functions
 %% ----------------------------------------------------------------------------
 handle_call({add_content, Content}, {Client,_}, Responses) ->
-	case lists:keyfind(Client, 1, Responses) of
+	case lists:keyfind(Client,1, Responses) of
 		false ->
 			%% Session does not exist
 			{reply, error, Responses};
@@ -111,7 +131,7 @@ handle_call({add_content, Content}, {Client,_}, Responses) ->
 	end;
 
 handle_call({get_content}, {Client,_}, Responses) ->
-	case lists:keyfind(Client, 1, Responses) of
+	case lists:keyfind(Client,1, Responses) of
 		false ->
 			%% Session does not exist
 			{reply, error, Responses};
@@ -166,7 +186,7 @@ get_status_code() ->
 	gen_server:call(?MODULE, get_status_code).
 
 set_mime_type(MimeType) ->
-	gen_server:call(?MODULE, {add_mime_type, MimeType}).
+	gen_server:call(?MODULE, {set_mime_type, MimeType}).
 
 get_mime_type() ->
 	gen_server:call(?MODULE, get_mime_tyoe).
