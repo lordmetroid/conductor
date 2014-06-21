@@ -20,7 +20,7 @@
 	destroy/1,
 
 	add_content/2,
-	replace_content/2,
+	purge_content/1,
 	get_content/1
 ]).
 
@@ -90,6 +90,10 @@ program({add_content, NewContent}, _From, Content) ->
 	%% Add new content to program response
 	{reply, ok, program, [NewContent | Content]};
 
+program(purge_content, _From, _Content) ->
+	%% Purge content
+	{reply, ok, program, []};
+
 program(get_content, _From, Content) ->
 	%% Get and reset content
 	{reply, lists:reverse(Content), program, Content};
@@ -118,6 +122,9 @@ destroy(Body) ->
 %% ----------------------------------------------------------------------------
 add_content(Body, NewContent) ->
 	gen_fsm:sync_send_event(Body, {add_content, NewContent}).
+
+purge_content(Body) ->
+	gen_fsm:sync_send_event(Body, purge_content).
 
 get_content(Body) ->
 	gen_fsm:sync_send_event(Body, get_content).
