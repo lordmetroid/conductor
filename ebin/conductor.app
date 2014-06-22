@@ -7,12 +7,17 @@
 		conductor_cache,
 		conductor_compiler,
 		conductor_dispatcher,
+		conductor_log,
 		conductor_response,
+		conductor_response_body,
+		conductor_response_header,
 		conductor_router,
 		conductor_settings,
 		conductor_supervisor
 	]},
 	{registered, [
+		conductor_cache,
+		conductor_log
 		conductor_settings,
 		conductor_supervisor,
 		conductor_system_supervisor,
