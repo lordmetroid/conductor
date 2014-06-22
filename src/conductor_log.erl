@@ -15,7 +15,13 @@
 ]).
 init(_Arguments) ->
 	%% Initalize a logging manager
-	{ok, []}.
+	LogRoot = conductor_settings:get(log_root),
+
+	
+	{ok, }.
+
+handle_call({add, Message}, _From, LogPath) ->
+	
 
 handle_call(_Event, _From, State) ->
 	{stop, State}.

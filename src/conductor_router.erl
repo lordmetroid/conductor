@@ -65,7 +65,7 @@ execute_program(ProgramFile, Request) ->
 execute_error(Request) ->
 	case lists:keyfind(error_program, 1, conductor_settings:get(programs)) of
 		false ->
-			%% 'error' is not specified in configuration 
+			%% 'error_program' is not specified in configuration 
 			%% Create "500 Internal Server Error" response
 			conductor_response:set_status_code(500);
 			%% TODO: Create response term
