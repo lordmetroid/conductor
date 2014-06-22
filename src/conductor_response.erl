@@ -35,19 +35,17 @@ handle_call(create_file, {Client,_}, Responses) ->
 	%% Create a file response
 	{ok, Header} = conductor_response_header:create_file(),
 	{ok, Body} =  conductor_response_body:create_file(),
-	{ok, Log} = {ok, []}, %% TODO: conductor_response_log:create(),
 	
 	%% Add the response to the manager
-	{reply, Client, [{Client, {Header,Body, Log}} | Responses]};
+	{reply, Client, [{Client, {Header,Body}} | Responses]};
 
 handle_call(create_program, {Client,_}, Responses) ->
 	%% Create a program response
 	{ok, Header} = conductor_response_header:create_program(),
 	{ok, Body} =  conductor_response_body:create_program(),
-	{ok, Log} = {ok, []}, %% TODO: conductor_response_log:create(),
 	
 	%% Add the response to the manager
-	{reply, Client, [{Client, {Header,Body, Log}} | Responses]};
+	{reply, Client, [{Client, {Header,Body}} | Responses]};
 
 handle_call(destroy, {Client,_}, Responses) ->
 	case lists:keyfind(Client, 1, Responses) of
@@ -55,11 +53,10 @@ handle_call(destroy, {Client,_}, Responses) ->
 			%% Response does not exist
 			%% TODO: Write to log
 			{reply, error, Responses};
-		{Client, {Header,Body, Log}} ->
+		{Client, {Header,Body}} ->
 			%% Destroy response
 			conductor_response_header:destroy(Header),
 			conductor_response_body:destroy(Body),
-			%% TODO: conductor_response_log:destroy(Log),
 
 			%% Remove response from manager
 			UpdatedResponses = lists:keydelete(Client, Responses),
@@ -75,7 +72,7 @@ handle_call({set_status_code, NewStatusCode}, {Client,_}, Responses) ->
 			%% Session does not exist
 			%% TODO: Write to log
 			{reply, error, Responses};
-		{Client, {Header,_Body, _Log}} ->
+		{Client, {Header,_Body}} ->
 			%% Set new Status Code
 			conductor_response_header:set_status_code(Header, NewStatusCode),
 			{reply, ok, Responses}
@@ -86,7 +83,7 @@ handle_call(get_status_code, {Client,_}, Responses) ->
 		false ->
 			%% Session does not exist
 			{reply, error, Responses};
-		{Client, {Header,_Body, _Log}} ->
+		{Client, {Header,_Body}} ->
 			%% Get current status code
 			StatusCode = conductor_response_header:get_status_code(Header),
 			{reply, StatusCode, Responses}
@@ -97,7 +94,7 @@ handle_call({set_mime_type, NewMimeType}, {Client,_}, Responses) ->
 		false ->
 			%% Session does not exist
 			{reply, error, Responses};
-		{Client, {Header,_Body, _Log}} ->
+		{Client, {Header,_Body}} ->
 			conductor_response_header:set_mime_type(Header, NewMimeType),
 			{reply, ok, Responses}
 	end;
@@ -107,7 +104,7 @@ handle_call(get_mime_type, {Client,_}, Responses) ->
 		false ->
 			%% Session does not exist
 			{reply, error, Responses};
-		{Client, {Header,_Body, _Log}} ->
+		{Client, {Header,_Body}} ->
 			MimeType = conductor_response_header:get_mime_type(Header),
 			{reply, MimeType, Responses}
 	end;
@@ -120,7 +117,7 @@ handle_call({add_content, Content}, {Client,_}, Responses) ->
 		false ->
 			%% Session does not exist
 			{reply, error, Responses};
-		{Client, {_Header,Body, _Log}} ->
+		{Client, {_Header,Body}} ->
 			%% Add content to response body
 			case conductor_response_body:add_content(Body, Content) of
 				{error, Reason} ->
@@ -137,7 +134,7 @@ handle_call(purge_content, {Client,_}, Responses) ->
 		false ->
 			%% Session does not exist
 			{reply, error, Responses};
-		{Client, {_Header,Body, _Log}} ->
+		{Client, {_Header,Body}} ->
 			%% Purge all content from response body
 			conductor_response_body:purge_content(Body),
 			{reply, ok, Responses}
@@ -148,7 +145,7 @@ handle_call({get_content}, {Client,_}, Responses) ->
 		false ->
 			%% Session does not exist
 			{reply, error, Responses};
-		{Client, {_Header,Body, _Log}} ->
+		{Client, {_Header,Body}} ->
 			%% Get current response body content
 			Content = conductor_response_body:get_content(Body),
 			{reply, Content, Responses}
