@@ -72,6 +72,11 @@ start_conductor() ->
 			{conductor_response,
 				{conductor_response, start_link, []},
 				permanent, brutal_kill, worker, [conductor_response]
+			},
+			%% Conductor logging manager
+			{conductor_log,
+				{conductor_log, start_link, []},
+				permanent, brutal_kill, worker, [conductor_log]
 			}
 		]
 	}).

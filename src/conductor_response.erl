@@ -212,3 +212,4 @@ purge_content() ->
 
 get_content() ->
 	gen_server:call(?MODULE, get_content).
+

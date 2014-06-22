@@ -105,8 +105,8 @@ program(destroy, _From, FilePath) ->
 program(_Event, _From, Content) ->
 	{reply, error, program, Content}.
 
-
-
+%% ----------------------------------------------------------------------------
+% Response body control functions
 %% ----------------------------------------------------------------------------
 create_file(Body) ->
 	gen_fsm:start(?MODULE, [], []),
@@ -119,6 +119,9 @@ create_program(Body) ->
 destroy(Body) ->
 	gen_fsm:sync_send_event(Body, destroy).
 
+
+%% ----------------------------------------------------------------------------
+% Response body content function
 %% ----------------------------------------------------------------------------
 add_content(Body, NewContent) ->
 	gen_fsm:sync_send_event(Body, {add_content, NewContent}).
