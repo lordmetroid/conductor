@@ -14,7 +14,7 @@
 	start_link/0,
 ]).
 init(_Arguments) ->
-	%% Initalize an empty session manager
+	%% Initalize a logging manager
 	{ok, []}.
 
 handle_call(_Event, _From, State) ->
