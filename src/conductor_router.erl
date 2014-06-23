@@ -145,7 +145,7 @@ render_view(Compiler, [Token | Rest], Arguments) ->
 				{error, Errors} ->
 					%% Token could not be rendered
 					%% TODO: Log error
-					[];
+					render_view(Compiler, Rest, Arguments);
 				{ok, Content} ->
 					%% Add rendered content to response body
 					conductor_response:add_content(Content),
