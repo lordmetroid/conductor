@@ -18,9 +18,9 @@
 init(_Arguments) ->
 	%% Initalize a logging manager
 	LogRoot = conductor_settings:get(log_root),
-
+	LogPath = filename:join([LogRoot, "conductor.log"]),
 	
-	{ok, }.
+	{ok, LogPath}.
 
 handle_call({add, Message}, _From, LogPath) ->
 	file:write_file(LogPath, Message, append);
