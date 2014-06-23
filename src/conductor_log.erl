@@ -12,6 +12,8 @@
 
 -export([
 	start_link/0,
+
+	add/1
 ]).
 init(_Arguments) ->
 	%% Initalize a logging manager
@@ -21,7 +23,7 @@ init(_Arguments) ->
 	{ok, }.
 
 handle_call({add, Message}, _From, LogPath) ->
-	
+	file:write_file(LogPath, Message, append);
 
 handle_call(_Event, _From, State) ->
 	{stop, State}.
