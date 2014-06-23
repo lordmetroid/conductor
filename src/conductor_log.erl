@@ -45,3 +45,6 @@ code_change(_OldVersion, State, _Extra) ->
 start_link() ->
 	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
+add(Message) ->
+	gen_server:call(?MODULE, {add, Message}).
+
