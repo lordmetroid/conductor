@@ -133,15 +133,24 @@ execute_view(ViewFile, Arguments) ->
 render_view(Compiler, [], Arguments) ->
 	ok;
 render_view(Compiler, [Token | Rest], Arguments) ->
-	%% Let the compiler render the token
-	case Compiler:render(Token, Arguments) of
-		{error, Errors} ->
+	%% Let the view compiler render the token
+	case erlang:function_exported(Compiler, render, 2) of
+		false ->
+			%% Undefined view compiler specified
 			%% TODO: Log error
-			
-		{ok, Content} ->
-			%% Add rendered content to response body
-			conductor_response:add_content(Content),
-			render_view(Compiler, Rest, Arguments)
+			error;
+		true ->
+			%% Render token
+			case Compiler:render(Token, Arguments) of
+				{error, Errors} ->
+					%% Token could not be rendered
+					%% TODO: Log error
+					[];
+				{ok, Content} ->
+					%% Add rendered content to response body
+					conductor_response:add_content(Content),
+					render_view(Compiler, Rest, Arguments)
+			end
 	end.
 
 %% ----------------------------------------------------------------------------
