@@ -100,16 +100,24 @@ make_module(ModulePath) ->
 compile_module(ModulePath, ModuleForms, Date) ->
 	case compile:forms(ModuleForms) of
 		error ->
-			%% Report erlang syntax compilation error 
-			{error, "Could not compile erlang syntax for " ++ ModulePath};
+			%% Report erlang syntax compilation errors
+			conductor_log:add(ModulePath,
+				"Could not compile erlang syntax"),
+
+			error;
 		{error, Errors, Warnings} ->
-			%% Report erlang syntax compilation error and warnings
-			{error,  Errors, Warnings};
+			%% Report erlang syntax compilation errors
+			conductor_log:add(ModulePath, [Errors | Warnings]),
+
+			error;
 		{ok, Module, ModuleBinary, Warnings} ->
-			%% Load module in spite of warnings and report warnings
-			{ok, {Module,Date}, ModuleBinary, Warnings};
+			%% Report erlang syntax compilation errors
+			conductor_log:add(ModulePath, Warnings),
+
+			%% Return compiled module
+			{ok, {Module,Date}, ModuleBinarys};
 		{ok, Module, ModuleBinary} ->
-			%% Load module
+			%% Return compiled module 
 			{ok, {Module,Date}, ModuleBinary}
 	end.
 
