@@ -130,27 +130,26 @@ execute_view(ViewFile, Arguments) ->
 % @spec render_view(Compiler, Template, Arguments) -> 
 % @doc Add template content to response body
 %% ----------------------------------------------------------------------------
-render_view(Compiler, [], Arguments) ->
-	ok;
-render_view(Compiler, [Token | Rest], Arguments) ->
+render_view(Compiler, Template, Arguments) ->
 	%% Let the view compiler render the token
 	case erlang:function_exported(Compiler, render, 2) of
 		false ->
 			%% Undefined view compiler specified
-			%% TODO: Log error
-			error;
+			case Compiler of
+				error ->
+					conductor_log:add("No compiler specified in template"),
+				_ ->
+					conductor_log:add(Compiler++ " does not contain render function")
+			end;
 		true ->
-			%% Render token
-			case Compiler:render(Token, Arguments) of
-				{error, Errors} ->
-					%% Token could not be rendered
-					%% TODO: Log error
-					render_view(Compiler, Rest, Arguments);
-				{ok, Content} ->
-					%% Add rendered content to response body
-					conductor_response:add_content(Content),
-					render_view(Compiler, Rest, Arguments)
-			end
+			%% Render template
+			{Content, Errors} = Compiler:render(Token, Arguments),
+			
+			%% Log errors from rendering
+			conductor_log:add(Errors),
+			
+			%% Add rendered content to response body
+			conductor_response:add_content(Content)
 	end.
 
 %% ----------------------------------------------------------------------------
@@ -161,7 +160,8 @@ execute_controller(ControllerFile,Function,Arguments, Request)  ->
 	case conductor_cache:get_controller(ControllerFile) of
 		false ->
 			%% Controller file does not exist
-			%% TODO: Write to log file
+			conductor_log:add(ControllerFile ++ " - does not exist"),
+			
 			%% Create "500 Internal Server Error" response
 			conductor_response:set_status_code(500);
 			%% TODO: Create response term
@@ -169,7 +169,8 @@ execute_controller(ControllerFile,Function,Arguments, Request)  ->
 			case erlang:function_exported(Controller, Function, 2) of
 				false ->
 					%% Controller code contains errors 
-					%% TODO: Write to log file
+					conductor_log:add(ControllerFile ++ " - does not contain " ++ Function),
+					
 					%% Create "500 Internal Server Error" response
 					conductor_response:set_status_code(500);
 					%% TODO: Create response term
