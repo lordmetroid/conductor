@@ -1,43 +1,15 @@
 -module(conductor_compiler).
 
 -export([
-	make_modules/1,
-	make_module/1
+	make/1
 ]).
 
-%% ----------------------------------------------------------------------------
-% @spec make_modules(ModulePaths) -> {[{ModuleId, datetime()}, ...], [Errors]}
-% @doc Compile modules from a list of specified file paths
-%% ----------------------------------------------------------------------------
-make_modules(ModulePaths) ->
-	%% Compile a collection of modules
-	make_modules(ModulePaths, [], []).
-
-make_modules([], Modules, Errors) ->
-	%% Return compiled modules and errors
-	{Modules, Errors};
-make_modules([ModulePath | Rest], Modules) ->
-	%% Compile a module from source file
-	case make_module(ModulePath) of
-		{error, NewErrors} ->
-			%% Do not include uncompiled module and report error
-			make_modules(Rest, Modules, [NewErrors | Errors]);
-		{error, NewErrors, Warnings} ->
-			%% Do not include uncompiled module and report errors and warnings
-			make_modules(Rest, Modules, [Warnings | [NewErrors | Errors]]);
-		{ok, NewModule, Warnings} ->
-			%% Add compiled module and report warnings
-			make_modules(Rest, [NewModule | Modules], [Warnings | Errors]);
-		{ok, NewModule} ->
-			%% Add compiled module
-			make_modules(Rest, [NewModule | Modules], Errors)
-	end.
 
 %% ----------------------------------------------------------------------------
 % @spec make_module(ModulePath) -> {ModuleId, datetime()}
 % @doc Compile a module from specified file path
 %% ----------------------------------------------------------------------------
-make_module(ModulePath) ->
+make(ModulePath) ->
 	case filelib:last_modified(ModulePath) of
 		0 ->
 			%% Module file could not be found
@@ -66,7 +38,7 @@ make_module(ModulePath) ->
 						add_file(ModulePath),
 						add_run_function()
 					],
-					compile_module(ModulePath, ModuleForms, Date);
+					make_module(ModulePath, ModuleForms, Date);
 				ModelRoot ->
 					%% Compile a model
 					ModuleForms = [
@@ -74,7 +46,7 @@ make_module(ModulePath) ->
 						add_webmachine_lib_attribute(),
 						add_file(ModulePath)
 					],
-					compile_module(ModulePath, ModuleForms, Date);
+					make_module(ModulePath, ModuleForms, Date);
 				ViewRoot ->
 					%% Compile a view
 					ModuleForms = [
@@ -82,7 +54,7 @@ make_module(ModulePath) ->
 						add_view_export_attribute(),
 						add_view(ModulePath)
 					],
-					compile_module(ModulePath, ModuleForms, Date);
+					make_module(ModulePath, ModuleForms, Date);
 				ControllerRoot ->
 					%% Compile a controller
 					ModuleForms = [
@@ -93,11 +65,11 @@ make_module(ModulePath) ->
 						add_get_function(),
 						add_render_function()
 					],
-					compile_module(ModulePath, ModuleForms, Date)
+					make_module(ModulePath, ModuleForms, Date)
 			end
 	end.
 
-compile_module(ModulePath, ModuleForms, Date) ->
+make_module(ModulePath, ModuleForms, Date) ->
 	case compile:forms(ModuleForms) of
 		error ->
 			%% Report erlang syntax compilation errors
