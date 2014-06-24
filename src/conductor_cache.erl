@@ -199,27 +199,15 @@ start_link() ->
 % @spec get_...() ->
 % @doc Get the cached web application file
 %% ----------------------------------------------------------------------------
-get_program(ProgramFile) ->
-	ProgramRoot = conductor_settings:get(program_root),
-	ProgramPath = filename:join([ProgramRoot, ProgramFile]),
-
+get_program(ProgramPath) ->
 	gen_server:call(?MODULE, {get_module, ProgramPath}).
 
-get_model(ModelFile) ->
-	ModelRoot = conductor_settings:get(model_root),
-	ModelPath = filename:join([ModelRoot, ModelFile]),
-
+get_model(ModelPath) ->
 	gen_server:call(?MODULE, {get_module, ModelPath}).
 
-get_view(ViewFile) ->
-	ViewRoot = conductor_settings:get(view_root),
-	ViewPath = filename:join([ViewRoot, ViewFile]),
-
+get_view(ViewPath) ->
 	gen_server:call(?MODULE, {get_module, ViewPath}).
 
-get_controller(ControllerFile) ->
-	ControllerRoot = conductor_settings:get(controller_root),
-	ControllerPath = filename:join([ControllerRoot, ControllerFile]),
-
+get_controller(ControllerPath) ->
 	gen_server:call(?MODULE, {get_module, ControllerPath}).
 
