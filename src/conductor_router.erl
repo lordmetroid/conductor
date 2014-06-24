@@ -160,18 +160,23 @@ execute_view(ViewFile, Arguments) ->
 								_ ->
 									%% View compiler does not comply to API
 									conductor_log:add(atom_to_list(Compiler),
-										"API-function render not found")
+										"Function render not found")
 							end;
 						true ->
 							%% Render template
-							{Content, Errors} = Compiler:render(Template, Arguments),
-							
-							%% Log errors from rendering
-							conductor_log:add(ViewFile, Errors),
-							
-							%% Add rendered content to response body
-							conductor_response:add_content(Content)
-					end.
+							case Compiler:render(Template, Arguments) of
+								{Content, Errors} ->
+									%% Log errors from rendering
+									conductor_log:add(ViewFile, Errors),
+									
+									%% Add rendered content to response body
+									conductor_response:add_content(Content)
+								_ ->
+									%% Render function does not comply to API
+									conductor_log:add(atom_to_list(Compiler),
+										"Invalid value from function render")
+							end
+					end
 			end
 	end.
 
