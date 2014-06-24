@@ -135,7 +135,24 @@ add_view_export_attribute() ->
 add_view(ModulePath) ->
 	case file:read_file(ModulePath) of
 		{error, Errors} ->
-			{error, Errors};
+			%% Unable to read file
+			conductor_log:add(ModulePath,
+				"Could not read file"),
+
+			%% Return dummy function
+			erl_syntax:revert(
+				%% get() ->
+				erl_syntax:function(erl_syntax:atom(get), [
+					erl_syntax:clause([
+					], none, [
+						%% {error, []}
+						erl_syntax:tuple([
+							erl_syntax:atom(error),
+							erl_syntax:lists([])
+						])
+					])
+				])
+			);
 		{ok, Binary} ->
 			%% Convert binary to scannable string
 			
@@ -327,16 +344,17 @@ add_run_function() ->
 %% ----------------------------------------------------------------------------
 add_file(ModulePath) ->
 	case file:read_file(ModulePath) of
-		{error, Reason} ->
-			%% TODO: Write error to log
+		{error, Errors} ->
+			conductor_log:add(ModulePath,
+				"Could not read file"),
 
-			%% Nothing to return
+			%% Return nothing
 			[];
 		{ok, Binary} ->
 			FileString = unicode:characters_to_list(Binary, utf8),
 			case erl_scan:string(FileString) of
 				{error, ErrorInfo, ErrorLocation} ->
-					%% TODO: Write errors to log
+					%% TODO add log
 
 					%% Nothing to return
 					[];
