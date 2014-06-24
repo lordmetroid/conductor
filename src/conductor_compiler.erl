@@ -6,14 +6,16 @@
 
 
 %% ----------------------------------------------------------------------------
-% @spec make_module(ModulePath) -> {ModuleId, datetime()}
+% @spec make_module(ModulePath) -> {ok, {ModuleId, date()}, Binary} | error
 % @doc Compile a module from specified file path
 %% ----------------------------------------------------------------------------
 make(ModulePath) ->
 	case filelib:last_modified(ModulePath) of
 		0 ->
 			%% Module file could not be found
-			{error, ModulePath ++ " not found"};
+			conductor_log:add(ModulePath,
+				"File not found"),
+			error;
 		Date ->
 			%% Module file exist
 			
@@ -28,7 +30,7 @@ make(ModulePath) ->
 			
 			ModuleRoot = filename:dirname(ModulePath),
 			
-			%% Identify the module type based on location
+			%% Assemble module appropiately based on type
 			case ModuleRoot of
 				ProgramRoot ->
 					%% Compile a program
@@ -69,6 +71,10 @@ make(ModulePath) ->
 			end
 	end.
 
+%% ----------------------------------------------------------------------------
+% @spec make() -> {ok, {ModuleId,date()}, Binary} | error
+% @doc Add an Erlang module attribute to the compilation
+%% ----------------------------------------------------------------------------
 make_module(ModulePath, ModuleForms, Date) ->
 	case compile:forms(ModuleForms) of
 		error ->
@@ -105,43 +111,6 @@ add_module_attribute(ModuleId) ->
 
 		])
 	).
-
-%% ----------------------------------------------------------------------------
-% @spec add_webmachine_lib_attribute() -> syntaxTree()
-% @doc Add the Webmachine API library
-%% ----------------------------------------------------------------------------
-add_webmachine_lib_attribute() ->
-	erl_syntax:revert(
-		%% -include_lib("webmachine/include/webmachine.hrl").
-		erl_syntax:attribute(erl_syntax:atom(include_lib), [
-			erl_syntax:string("webmachine/include/webmachine.hrl")
-		])
-	).
-
-%% ----------------------------------------------------------------------------
-% @spec add_file() -> syntaxTree()
-% @doc Add an Erlang File to the compilation
-%% ----------------------------------------------------------------------------
-add_file(ModulePath) ->
-	case file:read_file(ModulePath) of
-		{error, Reason} ->
-			%% TODO: Write error to log
-
-			%% Nothing to return
-			[];
-		{ok, Binary} ->
-			FileString = unicode:characters_to_list(Binary, utf8),
-			case erl_scan:string(FileString) of
-				{error, ErrorInfo, ErrorLocation} ->
-					%% TODO: Write errors to log
-
-					%% Nothing to return
-					[];
-				{ok, FileAST, _EndLocation} ->
-					erl_syntax:revert(FileAST)
-			end
-	end.
-
 %% ----------------------------------------------------------------------------
 % @spec add_view_export_attribute() -> syntaxTree()
 % @doc Add the export attribute for rending views
@@ -169,19 +138,20 @@ add_view(ModulePath) ->
 			{error, Errors};
 		{ok, Binary} ->
 			%% Convert binary to scannable string
+			
 			%% TODO: Detect encoding of file
 			String = unicode:characters_to_list(Binary, utf8),
 			
 			%% Get compiler and the template
 			case lists:split(string:str(String, "\n")-1, String) of
 				{"#!" ++ CompilerString, Template} ->
-					%% Compile view
+					%% Compile template
 					Compiler = list_to_atom(string:strip(CompilerString)),
 
 					case Compiler:make(Template) of
-						{error, Reason} ->
-							%% View template could not be compiled
-							%% TODO: Report error
+						{error, Errors} ->
+							%% Template could not be compiled
+							conductor_log:add(ModulePath, Errors),
 						
 							%% Return empty function
 							erl_syntax:revert(
@@ -198,7 +168,7 @@ add_view(ModulePath) ->
 								])
 							);
 						{ok, ViewAST} ->
-							%% Return view template as function
+							%% Return template as function
 							erl_syntax:revert(
 								%% get() ->
 								erl_syntax:function(erl_syntax:atom(get), [
@@ -211,11 +181,31 @@ add_view(ModulePath) ->
 										])
 									])
 								])
+							);
+						_ ->
+							%% Make function does not comply to API
+							conductor_log:add(atom_to_list(Compiler),
+								"Invalid value from function make"),
+
+							%% Return dummy function
+							erl_syntax:revert(
+								%% get() ->
+								erl_syntax:function(erl_syntax:atom(get), [
+									erl_syntax:clause([
+									], none, [
+										%% {error, []}
+										erl_syntax:tuple([
+											erl_syntax:atom(error),
+											erl_syntax:lists([])
+										])
+									])
+								])
 							)
 					end;
 				_ ->
 					%% No compiler defined in template file
-					%% TODO: Report error
+					conductor_log:add(ModulePath,
+						"No compiler specified in template"),
 
 					%% Return dummy function
 					erl_syntax:revert(
@@ -223,12 +213,28 @@ add_view(ModulePath) ->
 						erl_syntax:function(erl_syntax:atom(get), [
 							erl_syntax:clause([
 							], none, [
-								erl_syntax:atom(error)
+								%% {error, []}
+								erl_syntax:tuple([
+									erl_syntax:atom(error),
+									erl_syntax:lists([])
+								])
 							])
 						])
 					)
 			end
 	end.
+
+%% ----------------------------------------------------------------------------
+% @spec add_webmachine_lib_attribute() -> syntaxTree()
+% @doc Add the Webmachine API library
+%% ----------------------------------------------------------------------------
+add_webmachine_lib_attribute() ->
+	erl_syntax:revert(
+		%% -include_lib("webmachine/include/webmachine.hrl").
+		erl_syntax:attribute(erl_syntax:atom(include_lib), [
+			erl_syntax:string("webmachine/include/webmachine.hrl")
+		])
+	).
 
 %% ----------------------------------------------------------------------------
 % @spec add_get_function() -> syntaxTree()
@@ -314,4 +320,28 @@ add_run_function() ->
 			])
 		])
 	).
+
+%% ----------------------------------------------------------------------------
+% @spec add_file() -> syntaxTree()
+% @doc Add an Erlang File to the compilation
+%% ----------------------------------------------------------------------------
+add_file(ModulePath) ->
+	case file:read_file(ModulePath) of
+		{error, Reason} ->
+			%% TODO: Write error to log
+
+			%% Nothing to return
+			[];
+		{ok, Binary} ->
+			FileString = unicode:characters_to_list(Binary, utf8),
+			case erl_scan:string(FileString) of
+				{error, ErrorInfo, ErrorLocation} ->
+					%% TODO: Write errors to log
+
+					%% Nothing to return
+					[];
+				{ok, FileAST, _EndLocation} ->
+					erl_syntax:revert(FileAST)
+			end
+	end.
 
