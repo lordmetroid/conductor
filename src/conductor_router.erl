@@ -48,10 +48,12 @@ execute_program(ProgramFile, Request) ->
 
 	case conductor_cache:get_program(ProgramPath) of
 		false ->
-			%% Program file does not exist
-			%% Create "410 Gone" response
-			conductor_response:set_status_code(410),
-			execute_error(Request);
+			%% Cache unable to provide program
+			conductor_log:add(ProgramPath, Errors),
+			
+			%% Create "500 Internal Server Error" response
+			conductor_response:set_status_code(500);
+			%% TODO: Create response term
 		Model ->
 			case erlang:function_exported(Program, execute, 1) of
 				false ->
@@ -93,8 +95,8 @@ execute_model(ModelFile,Function,Arguments, Request) ->
 	
 	case conductor_cache:get_model(ModelPath) of
 		{error, Errors} ->
-			%% Model file does not exist
-			conductor_log:add(Errors),
+			%% Cache unable to provide model
+			conductor_log:add(ModelPath, Errors),
 			
 			%% Create "500 Internal Server Error" response
 			conductor_response:set_status_code(500);
@@ -103,7 +105,9 @@ execute_model(ModelFile,Function,Arguments, Request) ->
 			case erlang:function_exported(Model, Function, 2) of
 				false ->
 					%% Model file 
-					%% TODO: Write to log file
+					conductor_log:add(ModelPath, 
+						"Function " ++ atom_to_list(Function) ++ " not found"),
+						
 					%% Create "500 Internal Server Error" response
 					conductor_response:set_status_code(500);
 					%% TODO: Create response term
@@ -124,7 +128,7 @@ execute_view(ViewFile, Arguments) ->
 	
 	case conductor_cache:get_view(ViewPath) of
 		{error, Errors} ->
-			%% View file does not exist
+			%% Cache unable to provide view
 			conductor_log:add(Errors),
 			
 			%% Create "500 Internal Server Error" response
@@ -133,8 +137,9 @@ execute_view(ViewFile, Arguments) ->
 		{ok, View} ->
 			case erlang:function_exported(View, get, 0) of
 				false ->
-					%% View file code contains errors
-					conductor_log:add(ViewFile ++ " - could not executed"),
+					%% View is not compiled
+					conductor_log:add(ViewPath,
+						"Unable to execute uncompiled view"),
 					
 					%% Create "500 Internal Server Error" response
 					conductor_response:set_status_code(500);
@@ -149,13 +154,17 @@ execute_view(ViewFile, Arguments) ->
 							%% Undefined view compiler specified
 							case Compiler of
 								error ->
-									conductor_log:add("No compiler specified in template"),
+									%% No compiler sepcified in template
+									conductor_log:add(ViewPath,
+										"No compiler specified in template"),
 								_ ->
-									conductor_log:add(Compiler ++ " does not contain render function")
+									%% View compiler does not comply to API
+									conductor_log:add(atom_to_list(Compiler),
+										"API-function render not found")
 							end;
 						true ->
 							%% Render template
-							{Content, Errors} = Compiler:render(Token, Arguments),
+							{Content, Errors} = Compiler:render(Template, Arguments),
 							
 							%% Log errors from rendering
 							conductor_log:add(ViewFile, Errors),
@@ -177,7 +186,7 @@ execute_controller(ControllerFile,Function,Arguments, Request)  ->
 	
 	case conductor_cache:get_controller(ControllerPath) of
 		{error, Errors} ->
-			%% Cache could not provide ControllerFile
+			%% Cache unable to provide controller
 			conductor_log:add(ControllerPath, Errors),
 			
 			%% Create "500 Internal Server Error" response
@@ -186,9 +195,9 @@ execute_controller(ControllerFile,Function,Arguments, Request)  ->
 		{ok, Controller} ->
 			case erlang:function_exported(Controller, Function, 2) of
 				false ->
-					%% Controller does not called contain function
+					%% Controller does not contain function
 					conductor_log:add(ControllerPath, 
-						atom_to_list(Function) ++ " function not found"),
+						"Function " ++ atom_to_list(Function) ++ " not found"),
 					
 					%% Create "500 Internal Server Error" response
 					conductor_response:set_status_code(500);
