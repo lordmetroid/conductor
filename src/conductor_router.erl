@@ -43,7 +43,10 @@ execute(Request) ->
 %% ----------------------------------------------------------------------------
 execute_program(ProgramFile, Request) ->
 	%% Get the program module from cache
-	case conductor_cache:get_program(ProgramFile) of
+	ProgramRoot = conductor_settings:get(program_root),
+	ProgramPath = filename:join([ProgramRoot, ProgramFile]),
+
+	case conductor_cache:get_program(ProgramPath) of
 		false ->
 			%% Program file does not exist
 			%% Create "410 Gone" response
@@ -78,6 +81,7 @@ execute_error(Request) ->
 % @doc
 %% ----------------------------------------------------------------------------
 execute_model(ModelFile,Function,Arguments, Request) ->
+	%% Get the model module from cache
 	ModelRoot = conductor_settings:get(model_root),
 	ModelPath = filename:join([ModelRoot, ModelFile]),
 	
@@ -108,6 +112,7 @@ execute_model(ModelFile,Function,Arguments, Request) ->
 % @doc
 %% ----------------------------------------------------------------------------
 execute_view(ViewFile, Arguments) ->
+	%% Get the view module from cache
 	ViewRoot = conductor_settings:get(view_root),
 	ViewPath = filename:join([ViewRoot, ViewFile]),
 	
@@ -160,7 +165,11 @@ execute_view(ViewFile, Arguments) ->
 % @doc
 %% ----------------------------------------------------------------------------
 execute_controller(ControllerFile,Function,Arguments, Request)  ->
-	case conductor_cache:get_controller(ControllerFile) of
+	%% Get the controller module from cache
+	ControllerRoot = conductor_settings:get(controller_root),
+	ControllerPath = filename:join([ControllerRoot, ControllerFile]),
+	
+	case conductor_cache:get_controller(ControllerPath) of
 		{error, Errors} ->
 			%% Cache could not provide ControllerFile
 			conductor_log:add(Errors),
