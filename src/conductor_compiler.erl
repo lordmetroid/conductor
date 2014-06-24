@@ -16,7 +16,7 @@ make_modules(ModulePaths) ->
 make_modules([], Modules, Errors) ->
 	%% Return compiled modules and errors
 	{Modules, Errors};
-make_modules([ModulePath | Rest], Modules, Errors) ->
+make_modules([ModulePath | Rest], Modules) ->
 	%% Compile a module from source file
 	case make_module(ModulePath) of
 		{error, NewErrors} ->
@@ -265,8 +265,7 @@ add_get_function() ->
 				erl_syntax:variable("Parameters")
 			], none, [
 				%% conductor_router:execute_model(
-				%%		ModelFile, Function, Arguments, Parameters
-				%% )
+				%%		ModelFile, Function, Arguments, Parameters)
 				erl_syntax:application(
 					erl_syntax:module_qualifier(
 						erl_syntax:atom(conductor_router),
@@ -321,8 +320,7 @@ add_run_function() ->
 				erl_syntax:variable("Parameters")
 			], none, [
 				%% conductor_router:execute_controller(
-				%% 		ControllerFile, Function, Arguments, Parameters
-				%% )
+				%% 		ControllerFile, Function, Arguments, Parameters)
 				erl_syntax:application(
 					erl_syntax:module_qualifier(
 						erl_syntax:atom(conductor_router),
