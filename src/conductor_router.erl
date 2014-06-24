@@ -1,10 +1,10 @@
 -module(conductor_router).
 
 -export([
-	execute/2,
-	execute_model/3,
+	execute/1,
+	execute_model/4,
 	execute_view/2,
-	execute_controller/3
+	execute_controller/4
 ]).
 
 -include_lib("webmachine/include/webmachine.hrl").
@@ -47,14 +47,14 @@ execute_program(ProgramFile, Request) ->
 	ProgramPath = filename:join([ProgramRoot, ProgramFile]),
 
 	case conductor_cache:get_program(ProgramPath) of
-		false ->
+		{error, Errors} ->
 			%% Cache unable to provide program
 			conductor_log:add(ProgramPath, Errors),
 			
 			%% Create "500 Internal Server Error" response
 			conductor_response:set_status_code(500);
 			%% TODO: Create response term
-		Model ->
+		{ok, Program} ->
 			case erlang:function_exported(Program, execute, 1) of
 				false ->
 					%% Program file is missing the execute function
@@ -62,7 +62,7 @@ execute_program(ProgramFile, Request) ->
 						"Function execute not found"),
 					
 					%% Create "500 Internal Server Error" response
-					conductor_response:set_status_code(500),
+					conductor_response:set_status_code(500);
 					%% TODO: Create response term
 				true ->
 					%% Execute program
@@ -86,7 +86,7 @@ execute_error(Request) ->
 			%% TODO: Create response term
 		{error_program, ProgramFile} ->
 			execute_program(ProgramFile, Request)
-	end;
+	end.
 
 %% ----------------------------------------------------------------------------
 % @spec execute_model(ModelFile, Function, Arguments, Parameters, Log)
@@ -160,7 +160,7 @@ execute_view(ViewFile, Arguments) ->
 								error ->
 									%% No compiler sepcified in template
 									conductor_log:add(ViewPath,
-										"No compiler specified in template"),
+										"No compiler specified in template");
 								_ ->
 									%% View compiler does not comply to API
 									conductor_log:add(atom_to_list(Compiler),
@@ -174,7 +174,7 @@ execute_view(ViewFile, Arguments) ->
 									conductor_log:add(ViewFile, Errors),
 									
 									%% Add rendered content to response body
-									conductor_response:add_content(Content)
+									conductor_response:add_content(Content);
 								_ ->
 									%% Render function does not comply to API
 									conductor_log:add(atom_to_list(Compiler),

@@ -23,7 +23,6 @@ service_available(Request,Context) ->
 	case conductor_response:get_status_code() of
 		500 ->
 			%% "500 Internal Server Error"
-			%% TODO: Print session log as error term
 			{{error, []}, Request,Context};
 		503 ->
 			%% "503 Service Unavailable"
