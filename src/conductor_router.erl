@@ -39,7 +39,7 @@ execute(Request) ->
 
 %% ----------------------------------------------------------------------------
 % @spec execute_program(ProgramFile, Parameters) -> ok
-% @doc Execute a program
+% @doc Execute a program file during runtime
 %% ----------------------------------------------------------------------------
 execute_program(ProgramFile, Request) ->
 	%% Get the program module from cache
@@ -65,10 +65,16 @@ execute_program(ProgramFile, Request) ->
 			end
 	end.
 
+%% ----------------------------------------------------------------------------
+% @spec execute_program(ProgramFile, Parameters) -> ok
+% @doc Execute an error program during runtime
+%% ----------------------------------------------------------------------------
 execute_error(Request) ->
 	case lists:keyfind(error_program, 1, conductor_settings:get(programs)) of
 		false ->
 			%% 'error_program' is not specified in configuration 
+			conductor_log:add()
+			
 			%% Create "500 Internal Server Error" response
 			conductor_response:set_status_code(500);
 			%% TODO: Create response term
@@ -78,7 +84,7 @@ execute_error(Request) ->
 
 %% ----------------------------------------------------------------------------
 % @spec execute_model(ModelFile, Function, Arguments, Parameters, Log)
-% @doc
+% @doc Execute a model file during runtime
 %% ----------------------------------------------------------------------------
 execute_model(ModelFile,Function,Arguments, Request) ->
 	%% Get the model module from cache
@@ -109,7 +115,7 @@ execute_model(ModelFile,Function,Arguments, Request) ->
 
 %% ----------------------------------------------------------------------------
 % @spec execute_view(ViewFile, Arguments)
-% @doc
+% @doc Render a view file
 %% ----------------------------------------------------------------------------
 execute_view(ViewFile, Arguments) ->
 	%% Get the view module from cache
@@ -162,7 +168,7 @@ execute_view(ViewFile, Arguments) ->
 
 %% ----------------------------------------------------------------------------
 % @spec execute_controller(ControllerFile,Function, Arguments, Request)
-% @doc
+% @doc Execute a controller file during runtime
 %% ----------------------------------------------------------------------------
 execute_controller(ControllerFile,Function,Arguments, Request)  ->
 	%% Get the controller module from cache
@@ -172,7 +178,7 @@ execute_controller(ControllerFile,Function,Arguments, Request)  ->
 	case conductor_cache:get_controller(ControllerPath) of
 		{error, Errors} ->
 			%% Cache could not provide ControllerFile
-			conductor_log:add(Errors),
+			conductor_log:add(ControllerPath, Errors),
 			
 			%% Create "500 Internal Server Error" response
 			conductor_response:set_status_code(500);
@@ -180,8 +186,9 @@ execute_controller(ControllerFile,Function,Arguments, Request)  ->
 		{ok, Controller} ->
 			case erlang:function_exported(Controller, Function, 2) of
 				false ->
-					%% Controller code contains errors 
-					conductor_log:add(ControllerFile ++ " - does not contain " ++ Function),
+					%% Controller does not called contain function
+					conductor_log:add(ControllerPath, 
+						atom_to_list(Function) ++ " function not found"),
 					
 					%% Create "500 Internal Server Error" response
 					conductor_response:set_status_code(500);
