@@ -12,8 +12,9 @@
 
 -export([
 	start_link/0,
-
-	add/1
+	
+	add/1,
+	add/2
 ]).
 init(_Arguments) ->
 	%% Initalize a logging manager
@@ -49,4 +50,7 @@ start_link() ->
 
 add(Message) ->
 	gen_server:call(?MODULE, {add, Message}).
-
+	
+add(File, Message) ->
+	gen_server:call(?MODULE, {add, File, Message}).
+	
