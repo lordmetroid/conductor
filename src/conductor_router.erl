@@ -57,7 +57,10 @@ execute_program(ProgramFile, Request) ->
 		Model ->
 			case erlang:function_exported(Program, execute, 1) of
 				false ->
-					%% Program file is missing the called function 
+					%% Program file is missing the execute function
+					conductor_log:add(ProgramPath, 
+						"Function execute not found"),
+					
 					%% Create "500 Internal Server Error" response
 					conductor_response:set_status_code(500),
 					%% TODO: Create response term
@@ -75,7 +78,8 @@ execute_error(Request) ->
 	case lists:keyfind(error_program, 1, conductor_settings:get(programs)) of
 		false ->
 			%% 'error_program' is not specified in configuration 
-			conductor_log:add()
+			conductor_log:add("Server configuration file",
+				"error_program not specified"),
 			
 			%% Create "500 Internal Server Error" response
 			conductor_response:set_status_code(500);
