@@ -78,14 +78,18 @@ execute_error(Request) ->
 % @doc
 %% ----------------------------------------------------------------------------
 execute_model(ModelFile,Function,Arguments, Request) ->
-	case conductor_cache:get_model(ModelFile) of
-		false ->
+	ModelRoot = conductor_settings:get(model_root),
+	ModelPath = filename:join([ModelRoot, ModelFile]),
+	
+	case conductor_cache:get_model(ModelPath) of
+		{error, Errors} ->
 			%% Model file does not exist
-			%% TODO: Write to log file
+			conductor_log:add(Errors),
+			
 			%% Create "500 Internal Server Error" response
 			conductor_response:set_status_code(500);
 			%% TODO: Create response term
-		Model ->
+		{ok, Model} ->
 			case erlang:function_exported(Model, Function, 2) of
 				false ->
 					%% Model file 
@@ -104,52 +108,51 @@ execute_model(ModelFile,Function,Arguments, Request) ->
 % @doc
 %% ----------------------------------------------------------------------------
 execute_view(ViewFile, Arguments) ->
-	case conductor_cache:get_view(ViewFile) of
-		false ->
+	ViewRoot = conductor_settings:get(view_root),
+	ViewPath = filename:join([ViewRoot, ViewFile]),
+	
+	case conductor_cache:get_view(ViewPath) of
+		{error, Errors} ->
 			%% View file does not exist
-			%% TODO: Write to log file
+			conductor_log:add(Errors),
+			
 			%% Create "500 Internal Server Error" response
 			conductor_response:set_status_code(500);
 			%% TODO: Create response term
-		View ->
+		{ok, View} ->
 			case erlang:function_exported(View, get, 0) of
 				false ->
 					%% View file code contains errors
-					%% TODO: Write to log file
+					conductor_log:add(ViewFile ++ " - could not executed"),
+					
 					%% Create "500 Internal Server Error" response
 					conductor_response:set_status_code(500);
 					%% TODO: Create response term
 				true ->
 					%% Get view compiler and template
 					{Compiler, Template} = View:get(),
-					render_view(Compiler, Template, Arguments)
-			end
-	end.
 
-%% ----------------------------------------------------------------------------
-% @spec render_view(Compiler, Template, Arguments) -> 
-% @doc Add template content to response body
-%% ----------------------------------------------------------------------------
-render_view(Compiler, Template, Arguments) ->
-	%% Let the view compiler render the token
-	case erlang:function_exported(Compiler, render, 2) of
-		false ->
-			%% Undefined view compiler specified
-			case Compiler of
-				error ->
-					conductor_log:add("No compiler specified in template"),
-				_ ->
-					conductor_log:add(Compiler++ " does not contain render function")
-			end;
-		true ->
-			%% Render template
-			{Content, Errors} = Compiler:render(Token, Arguments),
-			
-			%% Log errors from rendering
-			conductor_log:add(Errors),
-			
-			%% Add rendered content to response body
-			conductor_response:add_content(Content)
+					%% Render template
+					case erlang:function_exported(Compiler, render, 2) of
+						false ->
+							%% Undefined view compiler specified
+							case Compiler of
+								error ->
+									conductor_log:add("No compiler specified in template"),
+								_ ->
+									conductor_log:add(Compiler ++ " does not contain render function")
+							end;
+						true ->
+							%% Render template
+							{Content, Errors} = Compiler:render(Token, Arguments),
+							
+							%% Log errors from rendering
+							conductor_log:add(ViewFile, Errors),
+							
+							%% Add rendered content to response body
+							conductor_response:add_content(Content)
+					end.
+			end
 	end.
 
 %% ----------------------------------------------------------------------------
@@ -158,14 +161,14 @@ render_view(Compiler, Template, Arguments) ->
 %% ----------------------------------------------------------------------------
 execute_controller(ControllerFile,Function,Arguments, Request)  ->
 	case conductor_cache:get_controller(ControllerFile) of
-		false ->
-			%% Controller file does not exist
-			conductor_log:add(ControllerFile ++ " - does not exist"),
+		{error, Errors} ->
+			%% Cache could not provide ControllerFile
+			conductor_log:add(Errors),
 			
 			%% Create "500 Internal Server Error" response
 			conductor_response:set_status_code(500);
 			%% TODO: Create response term
-		Controller ->
+		{ok, Controller} ->
 			case erlang:function_exported(Controller, Function, 2) of
 				false ->
 					%% Controller code contains errors 
