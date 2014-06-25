@@ -10,18 +10,14 @@
 % @doc Compile a module from specified file path
 %% ----------------------------------------------------------------------------
 make(ModulePath) ->
-	case filelib:last_modified(ModulePath) of
-		0 ->
+	case filelib:is_regular(ModulePath) of
+		false ->
 			%% Module file could not be found
-			conductor_log:add(ModulePath,
-				"File not found"),
+			conductor_log:add(ModulePath, "File not found"),
 			error;
-		Date ->
+		true ->
 			%% Module file exist
-			
-			%% Generate a dynamic module id
-			ModuleId = uuid:uuid_to_string(uuid:get_v4()),
-			
+
 			%% Get module location			
 			ProgramRoot = conductor_settings:get(program_root),
 			ModelRoot = conductor_settings:get(model_root),
@@ -35,39 +31,39 @@ make(ModulePath) ->
 				ProgramRoot ->
 					%% Compile a program
 					ModuleForms = [
-						add_module_attribute(ModuleId),
+						add_module_attribute(),
 						add_webmachine_lib_attribute(),
 						add_file(ModulePath),
 						add_run_function()
 					],
-					make_module(ModulePath, ModuleForms, Date);
+					make_module(ModulePath, ModuleForms);
 				ModelRoot ->
 					%% Compile a model
 					ModuleForms = [
-						add_module_attribute(ModuleId),
+						add_module_attribute(),
 						add_webmachine_lib_attribute(),
 						add_file(ModulePath)
 					],
-					make_module(ModulePath, ModuleForms, Date);
+					make_module(ModulePath, ModuleForms);
 				ViewRoot ->
 					%% Compile a view
 					ModuleForms = [
-						add_module_attribute(ModuleId),
+						add_module_attribute(),
 						add_view_export_attribute(),
 						add_view(ModulePath)
 					],
-					make_module(ModulePath, ModuleForms, Date);
+					make_module(ModulePath, ModuleForms);
 				ControllerRoot ->
 					%% Compile a controller
 					ModuleForms = [
-						add_module_attribute(ModuleId),
+						add_module_attribute(),
 						add_webmachine_lib_attribute(),
 						add_file(ModulePath),
 						add_run_function(),
 						add_get_function(),
 						add_render_function()
 					],
-					make_module(ModulePath, ModuleForms, Date)
+					make_module(ModulePath, ModuleForms)
 			end
 	end.
 
@@ -75,40 +71,34 @@ make(ModulePath) ->
 % @spec make() -> {ok, {ModuleId,date()}, Binary} | error
 % @doc Add an Erlang module attribute to the compilation
 %% ----------------------------------------------------------------------------
-make_module(ModulePath, ModuleForms, Date) ->
+make_module(ModulePath, ModuleForms) ->
 	case compile:forms(ModuleForms) of
 		error ->
 			%% Report erlang syntax compilation errors
-			conductor_log:add(ModulePath,
-				"Could not compile erlang syntax"),
-
+			conductor_log:add(ModulePath, "Could not compile erlang syntax"),
 			error;
 		{error, Errors, Warnings} ->
 			%% Report erlang syntax compilation errors
 			conductor_log:add(ModulePath, [Errors | Warnings]),
-
 			error;
 		{ok, Module, ModuleBinary, Warnings} ->
 			%% Report erlang syntax compilation errors
 			conductor_log:add(ModulePath, Warnings),
-
-			%% Return compiled module
-			{ok, {Module,Date}, ModuleBinarys};
+			{ok, Module, ModuleBinarys};
 		{ok, Module, ModuleBinary} ->
 			%% Return compiled module 
-			{ok, {Module,Date}, ModuleBinary}
+			{ok, Module, ModuleBinary}
 	end.
 
 %% ----------------------------------------------------------------------------
 % @spec add_module_attribute() -> syntaxTree()
 % @doc Add an Erlang module attribute to the compilation
 %% ----------------------------------------------------------------------------
-add_module_attribute(ModuleId) ->
+add_module_attribute() ->
 	erl_syntax:revert(
-		%% -module(ModuleId)
+		%% -module(uuid())
 		erl_syntax:attribute(erl_syntax:atom(module), [
-			erl_syntax:atom(ModuleId)
-
+			erl_syntax:atom(uuid:uuid_to_string(uuid:get_v4()))
 		])
 	).
 %% ----------------------------------------------------------------------------
@@ -136,23 +126,10 @@ add_view(ModulePath) ->
 	case file:read_file(ModulePath) of
 		{error, Errors} ->
 			%% Unable to read file
-			conductor_log:add(ModulePath,
-				"Could not read file"),
+			conductor_log:add(ModulePath, "Could not read file"),
 
 			%% Return dummy function
-			erl_syntax:revert(
-				%% get() ->
-				erl_syntax:function(erl_syntax:atom(get), [
-					erl_syntax:clause([
-					], none, [
-						%% {error, []}
-						erl_syntax:tuple([
-							erl_syntax:atom(error),
-							erl_syntax:lists([])
-						])
-					])
-				])
-			);
+			add_view_get_function(error, []);
 		{ok, Binary} ->
 			%% Convert binary to scannable string
 			
@@ -161,9 +138,9 @@ add_view(ModulePath) ->
 			
 			%% Get compiler and the template
 			case lists:split(string:str(String, "\n")-1, String) of
-				{"#!" ++ CompilerString, Template} ->
+				{"#!" ++ CompilerName, Template} ->
 					%% Compile template
-					Compiler = list_to_atom(string:strip(CompilerString)),
+					Compiler = list_to_atom(string:strip(CompilerName)),
 
 					case Compiler:make(Template) of
 						{error, Errors} ->
@@ -171,53 +148,17 @@ add_view(ModulePath) ->
 							conductor_log:add(ModulePath, Errors),
 						
 							%% Return empty function
-							erl_syntax:revert(
-								%% get() ->
-								erl_syntax:function(erl_syntax:atom(get), [
-									erl_syntax:clause([
-									], none, [
-										%% {Compiler, []}
-										erl_syntax:tuple([
-											erl_syntax:atom(Compiler),
-											erl_syntax:lists([])
-										])
-									])
-								])
-							);
+							add_view_get_function(Compiler, [])
 						{ok, ViewAST} ->
 							%% Return template as function
-							erl_syntax:revert(
-								%% get() ->
-								erl_syntax:function(erl_syntax:atom(get), [
-									erl_syntax:clause([
-									], none, [
-										%% {Compiler, Template}
-										erl_syntax:tuple([
-											erl_syntax:atom(Compiler),
-											ViewAST
-										])
-									])
-								])
-							);
+							add_view_get_function(Compiler, ViewAST)
 						_ ->
 							%% Make function does not comply to API
 							conductor_log:add(atom_to_list(Compiler),
 								"Invalid value from function make"),
 
 							%% Return dummy function
-							erl_syntax:revert(
-								%% get() ->
-								erl_syntax:function(erl_syntax:atom(get), [
-									erl_syntax:clause([
-									], none, [
-										%% {error, []}
-										erl_syntax:tuple([
-											erl_syntax:atom(error),
-											erl_syntax:lists([])
-										])
-									])
-								])
-							)
+							add_view_get_function(Compiler, [])
 					end;
 				_ ->
 					%% No compiler defined in template file
@@ -225,22 +166,28 @@ add_view(ModulePath) ->
 						"No compiler specified in template"),
 
 					%% Return dummy function
-					erl_syntax:revert(
-						%% get() ->
-						erl_syntax:function(erl_syntax:atom(get), [
-							erl_syntax:clause([
-							], none, [
-								%% {error, []}
-								erl_syntax:tuple([
-									erl_syntax:atom(error),
-									erl_syntax:lists([])
-								])
-							])
-						])
-					)
+					add_view_get_function(error, [])
 			end
 	end.
 
+%% ----------------------------------------------------------------------------
+% @spec add_view_get_function(Compiler, Template) -> syntaxTree()
+% @doc Add the Webmachine API library
+%% ----------------------------------------------------------------------------
+add_view_get_function(Compiler, Template) ->
+	erl_syntax:revert(
+		%% get() ->
+		erl_syntax:function(erl_syntax:atom(get), [
+			erl_syntax:clause([
+			], none, [
+				%% {Compiler, Template}
+				erl_syntax:tuple([
+					erl_syntax:atom(Compiler),
+					erl_syntax:list(Template)
+				])
+			])
+		])
+	).
 %% ----------------------------------------------------------------------------
 % @spec add_webmachine_lib_attribute() -> syntaxTree()
 % @doc Add the Webmachine API library
@@ -345,8 +292,7 @@ add_run_function() ->
 add_file(ModulePath) ->
 	case file:read_file(ModulePath) of
 		{error, Errors} ->
-			conductor_log:add(ModulePath,
-				"Could not read file"),
+			conductor_log:add(ModulePath, "Could not read file"),
 
 			%% Return nothing
 			[];

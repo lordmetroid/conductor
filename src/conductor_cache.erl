@@ -50,20 +50,18 @@ init(_Arguments) ->
 handle_call({get_module, ModulePath}, _From, Cache) ->
 	case lists:keyfind(ModulePath,1, Cache) of
 		false ->
+			%% Module not in cache
+			
 		{ModulePath, {Module,Date}} ->
 			case filelib:last_modified(ModulePath) of
 				0 ->
-
+					%% Module file has been deleted
 				Date ->
 					%% Module in cache is up to date
 					{reply, {ok, Module}, Cache};
 				NewDate ->
 					%% Module file has been updated
-					case compile_module(ModulePath, Cache) of
-						{error, Errors} ->
-							{reply, {error, Errors}, Cache};
-						{ok, {Module,Date}, UpdatedCache} ->
-							{reply, {ok, Module}, UpdatedCache}
+
 					end
 			end
 	end.
