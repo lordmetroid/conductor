@@ -23,9 +23,9 @@
 % @doc Compile and cache all web application files available at start
 %% ----------------------------------------------------------------------------
 init(_Arguments) ->
-	%% TODO: Add error reporting
+	%% Compile and cache modules existing at start
+	conductor_compiler:make_module
 	
-	%% Compile and cache modules
 	{ok, {
 		%% Compile programs
 		conductor_compiler:make_modules(filelib:wildcard(filename:join([
@@ -44,6 +44,8 @@ init(_Arguments) ->
 			conductor_settings:get(controller_root), "*.erl"
 		])))
 	}}.
+
+
 
 handle_call({get_module, ModulePath}, _From, Cache) ->
 	case lists:keyfind(ModulePath,1, Cache) of
@@ -74,28 +76,8 @@ compile_module(ModulePath) ->
 		false ->
 			%% Module does not exist in cache
 			case conductor_compiler:make_module(ModulePath) of
-				{error, Errors} ->
-					%% Report compilation errors
-					{error, Errors};
-				{error, Errors, Warnings} ->
-					%% Report compilation errors and warnings
-					{error, Errors, Warnings};
-				{ok, {Module,Date}, Warnings} ->
-					%% Report compilation warnings of new module
-					case update_cache(ModulePath, {Module,Date}, Cache) of
-						{error, Errors} ->
-							{reply, {error, Errors, Warnings}, Cache};	
-						{ok, UpdatedCache} ->
-							{reply, {ok, Module, Warnings}, UpdatedCache}
-					end;
-				{ok, {Module,Date}} ->
-					%% New compiled module
-					case update_cache(ModulePath, {Module,Date}, Cache) of
-						{error, Errors} ->
-							{reply, {error, Errors, Warnings}, Cache};	
-						{ok, UpdatedCache} ->
-							{reply, {ok, Module}, UpdatedCache}
-					end
+				error ->
+				{ok, {Module,Date}, ModuleBinary} ->
 			end;
 		{ModulePath, {Module,Date}} ->
 			%% Module found in cache
