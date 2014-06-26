@@ -47,10 +47,8 @@ execute_program(ProgramFile, Request) ->
 	ProgramPath = filename:join([ProgramRoot, ProgramFile]),
 
 	case conductor_cache:get_program(ProgramPath) of
-		{error, Errors} ->
+		error ->
 			%% Cache unable to provide program
-			conductor_log:add(ProgramPath, Errors),
-			
 			%% Create "500 Internal Server Error" response
 			conductor_response:set_status_code(500);
 			%% TODO: Create response term
@@ -98,10 +96,8 @@ execute_model(ModelFile,Function,Arguments, Request) ->
 	ModelPath = filename:join([ModelRoot, ModelFile]),
 	
 	case conductor_cache:get_model(ModelPath) of
-		{error, Errors} ->
+		error ->
 			%% Cache unable to provide model
-			conductor_log:add(ModelPath, Errors),
-			
 			%% Create "500 Internal Server Error" response
 			conductor_response:set_status_code(500);
 			%% TODO: Create response term
@@ -131,10 +127,8 @@ execute_view(ViewFile, Arguments) ->
 	ViewPath = filename:join([ViewRoot, ViewFile]),
 	
 	case conductor_cache:get_view(ViewPath) of
-		{error, Errors} ->
+		error ->
 			%% Cache unable to provide view
-			conductor_log:add(Errors),
-			
 			%% Create "500 Internal Server Error" response
 			conductor_response:set_status_code(500);
 			%% TODO: Create response term
@@ -194,10 +188,8 @@ execute_controller(ControllerFile,Function,Arguments, Request)  ->
 	ControllerPath = filename:join([ControllerRoot, ControllerFile]),
 	
 	case conductor_cache:get_controller(ControllerPath) of
-		{error, Errors} ->
+		error ->
 			%% Cache unable to provide controller
-			conductor_log:add(ControllerPath, Errors),
-			
 			%% Create "500 Internal Server Error" response
 			conductor_response:set_status_code(500);
 			%% TODO: Create response term

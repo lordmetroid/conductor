@@ -141,7 +141,6 @@ add_view(ModulePath) ->
 				{"#!" ++ CompilerName, Template} ->
 					%% Compile template
 					Compiler = list_to_atom(string:strip(CompilerName)),
-
 					case Compiler:make(Template) of
 						{error, Errors} ->
 							%% Template could not be compiled
@@ -297,8 +296,8 @@ add_file(ModulePath) ->
 			%% Return nothing
 			[];
 		{ok, Binary} ->
-			FileString = unicode:characters_to_list(Binary, utf8),
-			case erl_scan:string(FileString) of
+			File = unicode:characters_to_list(Binary, utf8),
+			case erl_scan:string(File) of
 				{error, ErrorInfo, ErrorLocation} ->
 					%% TODO add log
 
