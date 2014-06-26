@@ -4,67 +4,57 @@
 	make/1
 ]).
 
-
 %% ----------------------------------------------------------------------------
 % @spec make_module(ModulePath) -> {ok, {ModuleId, date()}, Binary} | error
 % @doc Compile a module from specified file path
 %% ----------------------------------------------------------------------------
 make(ModulePath) ->
-	case filelib:is_regular(ModulePath) of
-		false ->
-			%% Module file could not be found
-			conductor_log:add(ModulePath, "File not found"),
-			error;
-		true ->
-			%% Module file exist
-
-			%% Get module location			
-			ProgramRoot = conductor_settings:get(program_root),
-			ModelRoot = conductor_settings:get(model_root),
-			ViewRoot = conductor_settings:get(view_root),
-			ControllerRoot = conductor_settings:get(controller_root),
-			
-			ModuleRoot = filename:dirname(ModulePath),
-			
-			%% Assemble module appropiately based on type
-			case ModuleRoot of
-				ProgramRoot ->
-					%% Compile a program
-					ModuleForms = [
-						add_module_attribute(),
-						add_webmachine_lib_attribute(),
-						add_file(ModulePath),
-						add_run_function()
-					],
-					make_module(ModulePath, ModuleForms);
-				ModelRoot ->
-					%% Compile a model
-					ModuleForms = [
-						add_module_attribute(),
-						add_webmachine_lib_attribute(),
-						add_file(ModulePath)
-					],
-					make_module(ModulePath, ModuleForms);
-				ViewRoot ->
-					%% Compile a view
-					ModuleForms = [
-						add_module_attribute(),
-						add_view_export_attribute(),
-						add_view(ModulePath)
-					],
-					make_module(ModulePath, ModuleForms);
-				ControllerRoot ->
-					%% Compile a controller
-					ModuleForms = [
-						add_module_attribute(),
-						add_webmachine_lib_attribute(),
-						add_file(ModulePath),
-						add_run_function(),
-						add_get_function(),
-						add_render_function()
-					],
-					make_module(ModulePath, ModuleForms)
-			end
+	%% Get module location			
+	ProgramRoot = conductor_settings:get(program_root),
+	ModelRoot = conductor_settings:get(model_root),
+	ViewRoot = conductor_settings:get(view_root),
+	ControllerRoot = conductor_settings:get(controller_root),
+	
+	ModuleRoot = filename:dirname(ModulePath),
+	
+	%% Assemble module appropiately based on type
+	case ModuleRoot of
+		ProgramRoot ->
+			%% Compile a program
+			ModuleForms = [
+				add_module_attribute(),
+				add_webmachine_lib_attribute(),
+				add_file(ModulePath),
+				add_run_function()
+			],
+			make_module(ModulePath, ModuleForms);
+		ModelRoot ->
+			%% Compile a model
+			ModuleForms = [
+				add_module_attribute(),
+				add_webmachine_lib_attribute(),
+				add_file(ModulePath)
+			],
+			make_module(ModulePath, ModuleForms);
+		ViewRoot ->
+			%% Compile a view
+			ModuleForms = [
+				add_module_attribute(),
+				add_view_export_attribute(),
+				add_view(ModulePath)
+			],
+			make_module(ModulePath, ModuleForms);
+		ControllerRoot ->
+			%% Compile a controller
+			ModuleForms = [
+				add_module_attribute(),
+				add_webmachine_lib_attribute(),
+				add_file(ModulePath),
+				add_run_function(),
+				add_get_function(),
+				add_render_function()
+			],
+			make_module(ModulePath, ModuleForms)
 	end.
 
 %% ----------------------------------------------------------------------------
