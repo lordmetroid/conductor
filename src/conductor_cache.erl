@@ -88,6 +88,10 @@ update(Cache, ModulePath) ->
 	end.
 	
 remove(Cache, ModulePath) ->
+	lists:keydelete
+
+purge_module(ModulePath) ->
+	case code:
 
 compile_module(ModulePath) ->
 	%% Get data of module file
