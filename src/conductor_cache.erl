@@ -23,136 +23,88 @@
 % @doc Compile and cache all web application files available at start
 %% ----------------------------------------------------------------------------
 init(_Arguments) ->
-	%% Compile and cache modules existing at start
-	conductor_compiler:make_module
-	
-	{ok, {
-		%% Compile programs
-		conductor_compiler:make_modules(filelib:wildcard(filename:join([
-			conductor_settings:get(program_root), "*.erl"
-		]))),
-		%% Compile models
-		conductor_compiler:make_modules(filelib:wildcard(filename:join([
-			conductor_settings:get(model_root), "*.erl"
-		]))),
-		%% Compile views
-		conductor_compiler:make_modules(filelib:wildcard(filename:join([
-			conductor_settings:get(view_root), "*.*"
-		]))),
-		%% Compile controllers
-		conductor_compiler:make_modules(filelib:wildcard(filename:join([
-			conductor_settings:get(controller_root), "*.erl"
-		])))
-	}}.
-
-
+	%% TODO: Compile and cache modules existing at start
+	{ok, []}.
 
 handle_call({get_module, ModulePath}, _From, Cache) ->
 	case lists:keyfind(ModulePath,1, Cache) of
 		false ->
-			%% Module not in cache
-			
+			%% Module does not exist in cache
+			case add_module(Cache, ModulePath) of
+				error ->
+				{ok, Module, UpdatedCache} ->
+			end;
 		{ModulePath, {Module,Date}} ->
 			case filelib:last_modified(ModulePath) of
 				0 ->
 					%% Module file has been deleted
+					case remove_module(Cache, ModulePath) of
+						error ->
+							%% Module could not be removed from cache
+							{reply, error, Cache}
+						{ok, UpdatedCache} ->
+							%% Module removed from cache
+							{Reply error, UpdatedCache};
+					end;
 				Date ->
 					%% Module in cache is up to date
 					{reply, {ok, Module}, Cache};
 				NewDate ->
-					%% Module file has been updated
-
+					%% Module file has been changed since last cached
+					case update_module(Cache, ModulePath) of
+						error ->
+							%% Cache could not be updated
+							{reply, error, Cache};
+						{ok, Module, UpdatedCache} ->
+							%% Updated cache with new module
+							{reply, {ok, Module}, UpdatedCache}
 					end
 			end
+	end.
+	
+add_module(Cache, ModulePath) ->
+	case compile_module(ModulePath) of
+		error ->
+			%% Module could not be compiled
+			error;
+		{ok, {Module,Date}} ->
+			%% Add module to cache
+			{ok, Module, [{ModulePath, {Module,Date}} | Cache]}
+	end.
+
+update_module(Cache, ModulePath) ->
+	case compile_module(ModulePath) of
+		error ->
+			%% Module could not be compiled
+			error;
+		{ok, {Module,Date}} ->
+			%% Update cache with new module
+			NewModule = {ModulePath, {Module,Date}},
+			{ok, Module, lists:keyreplace(ModulePath,1, Cache, NewModule)}
 	end.
 
 compile_module(ModulePath) ->
-
-
-
-	case lists:keyfind(ModulePath,1, Cache) of
-		false ->
-			%% Module does not exist in cache
-			case conductor_compiler:make_module(ModulePath) of
-				error ->
-				{ok, {Module,Date}, ModuleBinary} ->
-			end;
-		{ModulePath, {Module,Date}} ->
-			%% Module found in cache
-			case filelib:last_modified(ModulePath) of
-				0 ->
-					%% Module file has been deleted
-					case update_cache(ModulePath, {Module,Date}, Cache) of
-						{error, Errors} ->
-							{reply, {error, Errors, Warnings}, Cache};	
-						{ok, UpdatedCache} ->
-							{reply, {ok, Module}, UpdatedCache}
-					end;
-				NewDate ->
-					%% Module file has been updated
-					case conductor_compiler:make_module(ModulePath, Cache) of
-						
-					end
-			end	
-	end.
-
-compile_module(ModulePath, Cache) ->
-	case conductor_compiler:make_module(ModulePath) of
-		{error, Errors} ->
-			%% Report compilation errors
-			{error, Errors};
-		{error, Errors, Warnings} ->
-			%% Report compilation errors and warnings
-			{error, Errors, Warnings};
-		{ok, {Module,Date}, Warnings} ->
-			%% Report compilation warnings of new module
-			case update_cache(ModulePath, {Module,Date}, Cache) of
-				{error, Errors} ->
-					{reply, {error, Errors, Warnings}, Cache};	
-				{ok, UpdatedCache} ->
-					{reply, {ok, Module, Warnings}, UpdatedCache}
-			end;
-		{ok, {Module,Date}} ->
-			%% New compiled module
-			case update_cache(ModulePath, {Module,Date}, Cache) of
-				{error, Errors} ->
-					{reply, {error, Errors, Warnings}, Cache};	
-				{ok, UpdatedCache} ->
-					{reply, {ok, Module}, UpdatedCache}
-			end
-	end.
-
-%% ----------------------------------------------------------------------------
-% @spec update_cache(ModulePath, {Module,Date}, Cache) -> UpdatedCache
-% @doc 
-%% ----------------------------------------------------------------------------
-update_cache(ModulePath, {Module,Date}, Cache) ->
-	case filelib:last_modified(ModulePath,1, Cache) of
+	%% Get data of module file
+	case filelib:last_modified(ModulePath) of
 		0 ->
-			%% Module file has been deleted
-			case code:delete(Module) of
-				false ->
-					%% Failed to delete old code
-					{error, "Could not update " ++ ModulePath};
-				true ->
-					%% Deleted file from cache
-					{ok, lists:keydelete(ModulePath,1, Cache)}
-			end;
+			%% Module file does not exist
+			conductor_log:add(ModulePath, "File not found"),
+			error;
 		Date ->
-			%% Cache is up to date
-			Cache;
-		NewDate ->
-			%% Module file has been updated
-			case code:delete(Module) of
-				false ->
-					%% Failed to delete old code
-					{error, "Could not update " ++ ModulePath};
-				true ->
-					%% Update cache with newer file
-					{ok, lists:keyreplace(ModulePath,1, Cache, {Module,Date})}
+			case conductor_compiler:make(ModulePath) of
+				error ->
+					%% Could not compile module
+					conductor_log:add(ModulePath, "Could not be compiled"),
+					error;
+				{ok, Module, ModuleBinary}
+					%% TODO: Load compiled module
+					{ok, {Module, Date}}
 			end
 	end.
 
+remove_module(Cache, ModulePath) ->
+
+	
 handle_call(_Event, _From, State) ->
 	{stop, State}.
 
