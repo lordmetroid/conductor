@@ -30,39 +30,43 @@ handle_call({get_module, ModulePath}, _From, Cache) ->
 	case lists:keyfind(ModulePath,1, Cache) of
 		false ->
 			%% Module does not exist in cache
-			case add_module(Cache, ModulePath) of
+			case add(Cache, ModulePath) of
 				error ->
-				{ok, Module, UpdatedCache} ->
+					%% Could not add module
+					{reply, error, Cache};
+				{ok, NewModule, UpdatedCache} ->
+					%% New module added to cache
+					{reply, {ok, Module}, UpdatedCache}
 			end;
 		{ModulePath, {Module,Date}} ->
 			case filelib:last_modified(ModulePath) of
 				0 ->
 					%% Module file has been deleted
-					case remove_module(Cache, ModulePath) of
+					case remove(Cache, ModulePath) of
 						error ->
-							%% Module could not be removed from cache
+							%% Cache has not been changed
 							{reply, error, Cache}
 						{ok, UpdatedCache} ->
 							%% Module removed from cache
-							{Reply error, UpdatedCache};
+							{Reply, error, UpdatedCache};
 					end;
 				Date ->
 					%% Module in cache is up to date
 					{reply, {ok, Module}, Cache};
 				NewDate ->
 					%% Module file has been changed since last cached
-					case update_module(Cache, ModulePath) of
+					case update(Cache, ModulePath) of
 						error ->
 							%% Cache could not be updated
 							{reply, error, Cache};
-						{ok, Module, UpdatedCache} ->
+						{ok, NewModule, UpdatedCache} ->
 							%% Updated cache with new module
-							{reply, {ok, Module}, UpdatedCache}
+							{reply, {ok, NewModule}, UpdatedCache}
 					end
 			end
 	end.
 	
-add_module(Cache, ModulePath) ->
+add(Cache, ModulePath) ->
 	case compile_module(ModulePath) of
 		error ->
 			%% Module could not be compiled
@@ -72,7 +76,7 @@ add_module(Cache, ModulePath) ->
 			{ok, Module, [{ModulePath, {Module,Date}} | Cache]}
 	end.
 
-update_module(Cache, ModulePath) ->
+update(Cache, ModulePath) ->
 	case compile_module(ModulePath) of
 		error ->
 			%% Module could not be compiled
@@ -82,6 +86,8 @@ update_module(Cache, ModulePath) ->
 			NewModule = {ModulePath, {Module,Date}},
 			{ok, Module, lists:keyreplace(ModulePath,1, Cache, NewModule)}
 	end.
+	
+remove(Cache, ModulePath) ->
 
 compile_module(ModulePath) ->
 	%% Get data of module file
@@ -102,7 +108,7 @@ compile_module(ModulePath) ->
 			end
 	end.
 
-remove_module(Cache, ModulePath) ->
+
 
 	
 handle_call(_Event, _From, State) ->
