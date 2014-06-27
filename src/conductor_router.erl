@@ -46,7 +46,7 @@ execute_program(ProgramFile, Request) ->
 	ProgramRoot = conductor_settings:get(program_root),
 	ProgramPath = filename:join([ProgramRoot, ProgramFile]),
 
-	case conductor_cache:get_program(ProgramPath) of
+	case conductor_cache:get_module(ProgramPath) of
 		error ->
 			%% Cache unable to provide program
 			%% Create "500 Internal Server Error" response
@@ -95,7 +95,7 @@ execute_model(ModelFile,Function,Arguments, Request) ->
 	ModelRoot = conductor_settings:get(model_root),
 	ModelPath = filename:join([ModelRoot, ModelFile]),
 	
-	case conductor_cache:get_model(ModelPath) of
+	case conductor_cache:get_module(ModelPath) of
 		error ->
 			%% Cache unable to provide model
 			%% Create "500 Internal Server Error" response
@@ -126,7 +126,7 @@ execute_view(ViewFile, Arguments) ->
 	ViewRoot = conductor_settings:get(view_root),
 	ViewPath = filename:join([ViewRoot, ViewFile]),
 	
-	case conductor_cache:get_view(ViewPath) of
+	case conductor_cache:get_module(ViewPath) of
 		error ->
 			%% Cache unable to provide view
 			%% Create "500 Internal Server Error" response
@@ -187,7 +187,7 @@ execute_controller(ControllerFile,Function,Arguments, Request)  ->
 	ControllerRoot = conductor_settings:get(controller_root),
 	ControllerPath = filename:join([ControllerRoot, ControllerFile]),
 	
-	case conductor_cache:get_controller(ControllerPath) of
+	case conductor_cache:get_module(ControllerPath) of
 		error ->
 			%% Cache unable to provide controller
 			%% Create "500 Internal Server Error" response
