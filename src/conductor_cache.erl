@@ -144,19 +144,19 @@ purge_module([], DeathRow) ->
 % @doc Compile and load module from file into memory
 %% ----------------------------------------------------------------------------
 install_module(ModulePath) ->
-	%% Get data of module file
 	case filelib:last_modified(ModulePath) of
 		0 ->
 			%% Module file does not exist
 			conductor_log:add(ModulePath, "File not found"),
 			error;
 		Date ->
+			%% Compile and load module
 			case conductor_compiler:make(ModulePath) of
 				error ->
 					%% Could not compile module
 					conductor_log:add(ModulePath, "Could not be compiled"),
 					error;
-				{ok, Module, ModuleBinary}
+				{ok, Module, ModuleBinary} ->
 					%% Load compiled module
 					case code:load_module(Module, ModuleBinary) of
 						{error, Errors} ->
