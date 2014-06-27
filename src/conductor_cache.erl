@@ -12,10 +12,7 @@
 
 -export([
 	start_link/0,
-	get_program/1,
-	get_model/1,
-	get_view/1,
-	get_controller/1
+	get_module/1
 ]).
 
 %% ----------------------------------------------------------------------------
@@ -24,7 +21,7 @@
 %% ----------------------------------------------------------------------------
 init(_Arguments) ->
 	%% TODO: Compile and cache modules existing at start
-	{ok, []}.
+	{ok, {[],[]}}.
 
 handle_call({get_module, ModulePath}, _From, Cache) ->
 	case lists:keyfind(ModulePath,1, Cache) of
@@ -34,7 +31,7 @@ handle_call({get_module, ModulePath}, _From, Cache) ->
 				error ->
 					%% Could not add module
 					{reply, error, Cache};
-				{ok, NewModule, UpdatedCache} ->
+				{ok, UpdatedCache, NewModule} ->
 					%% New module added to cache
 					{reply, {ok, Module}, UpdatedCache}
 			end;
@@ -42,7 +39,7 @@ handle_call({get_module, ModulePath}, _From, Cache) ->
 			case filelib:last_modified(ModulePath) of
 				0 ->
 					%% Module file has been deleted
-					case remove(Cache, ModulePath) of
+					case remove(Cache, Module, ModulePath) of
 						error ->
 							%% Cache has not been changed
 							{reply, error, Cache}
@@ -55,65 +52,16 @@ handle_call({get_module, ModulePath}, _From, Cache) ->
 					{reply, {ok, Module}, Cache};
 				NewDate ->
 					%% Module file has been changed since last cached
-					case update(Cache, ModulePath) of
+					case update(Cache, Module ModulePath) of
 						error ->
 							%% Cache could not be updated
 							{reply, error, Cache};
-						{ok, NewModule, UpdatedCache} ->
+						{ok, UpdatedCache, NewModule} ->
 							%% Updated cache with new module
 							{reply, {ok, NewModule}, UpdatedCache}
 					end
 			end
 	end.
-	
-add(Cache, ModulePath) ->
-	case compile_module(ModulePath) of
-		error ->
-			%% Module could not be compiled
-			error;
-		{ok, {Module,Date}} ->
-			%% Add module to cache
-			{ok, Module, [{ModulePath, {Module,Date}} | Cache]}
-	end.
-
-update(Cache, ModulePath) ->
-	case compile_module(ModulePath) of
-		error ->
-			%% Module could not be compiled
-			error;
-		{ok, {Module,Date}} ->
-			%% Update cache with new module
-			NewModule = {ModulePath, {Module,Date}},
-			{ok, Module, lists:keyreplace(ModulePath,1, Cache, NewModule)}
-	end.
-	
-remove(Cache, ModulePath) ->
-	lists:keydelete
-
-purge_module(ModulePath) ->
-	case code:
-
-compile_module(ModulePath) ->
-	%% Get data of module file
-	case filelib:last_modified(ModulePath) of
-		0 ->
-			%% Module file does not exist
-			conductor_log:add(ModulePath, "File not found"),
-			error;
-		Date ->
-			case conductor_compiler:make(ModulePath) of
-				error ->
-					%% Could not compile module
-					conductor_log:add(ModulePath, "Could not be compiled"),
-					error;
-				{ok, Module, ModuleBinary}
-					%% TODO: Load compiled module
-					{ok, {Module, Date}}
-			end
-	end.
-
-
-
 	
 handle_call(_Event, _From, State) ->
 	{stop, State}.
@@ -130,6 +78,102 @@ terminate(_Reason, _State) ->
 code_change(_OldVersion, State, _Extra) ->
 	{ok, State}.
 
+add({Cache, DeathRow}, ModulePath) ->
+	case install_module(ModulePath) of
+		error ->
+			%% Module could not be compiled
+			error;
+		{ok, {Module,Date}} ->
+			%% Add module to cache
+			{ok, Module, {[{ModulePath, {Module,Date}} | Cache], DeathRow}}
+	end.
+
+%% ----------------------------------------------------------------------------
+% get_module helper function
+%% ----------------------------------------------------------------------------
+update({Cache, DeathRow}, Module, ModulePath) ->
+	case install_module(ModulePath) of
+		error ->
+			%% Module could not be compiled
+			error;
+		{ok, {Module,Date}} ->
+			%% Update cache with new module
+			NewModule = {ModulePath, {Module,Date}},
+			UpdatedCache = lists:keyreplace(ModulePath,1, Cache, NewModule),
+			
+			{ok, {{UpdatedCache, DeathRow}, Module}
+	end.
+	
+remove({Cache, DeathRow}, Module, ModulePath) ->
+	case 
+
+	%% Block processes from executing old code
+	case code:delete(Module) of
+		false ->
+			%% 
+		true ->
+			%% Purge modules lingering in memory
+			UpdatedDeathRow = purge_module([Module | DeathRow]),
+			
+			%% Remove module from cache
+			UpdatedCache = lists:keydelete(ModulePath,1, Cache),
+			{ok, {UpdatedCache, UpdatedDeathRow}
+	end.
+
+%% ----------------------------------------------------------------------------
+% @spec purge_module(DeathRow) -> UpdatedDeathRow
+% @doc Purge all lingering modules from memory
+%% ----------------------------------------------------------------------------
+purge_module(DeathRow) ->
+	purge_module(DeathRow, []).
+purge_module([Module | Rest], DeathRow) ->
+	case code:soft_purge(Module) of
+		false ->
+			%% Module still occupied by process
+			purge_module(Rest, [Module | DeathRow]);
+		true ->
+			%% Module successfully purged from memory
+			purge_module(Rest, DeathRow)
+	end;
+purge_module([], DeathRow) ->
+	%% Return updated deathrow
+	DeathRow.
+
+%% ----------------------------------------------------------------------------
+% @spec load_module(ModulePath) -> error | {ok, {Module, Date}}
+% @doc Compile and load module from file into memory
+%% ----------------------------------------------------------------------------
+install_module(ModulePath) ->
+	%% Get data of module file
+	case filelib:last_modified(ModulePath) of
+		0 ->
+			%% Module file does not exist
+			conductor_log:add(ModulePath, "File not found"),
+			error;
+		Date ->
+			case conductor_compiler:make(ModulePath) of
+				error ->
+					%% Could not compile module
+					conductor_log:add(ModulePath, "Could not be compiled"),
+					error;
+				{ok, Module, ModuleBinary}
+					%% Load compiled module
+					case code:load_module(Module, ModuleBinary) of
+						{error, Errors} ->
+							%% Module could not be loaded
+							conductor_log:add(ModulePath,
+								"Could not load code"),
+							error;
+						{module, Module} ->
+							%% Module loaded
+							{ok, {Module, Date}}
+					end
+			end
+	end.
+
+
+
+	
 %% ----------------------------------------------------------------------------
 % @spec start() ->
 % @doc Start the web application file cache manager
@@ -141,15 +185,7 @@ start_link() ->
 % @spec get_...() ->
 % @doc Get the cached web application file
 %% ----------------------------------------------------------------------------
-get_program(ProgramPath) ->
-	gen_server:call(?MODULE, {get_module, ProgramPath}).
+get_module(ProgramPath) ->
+	gen_server:call(?MODULE, {get_module, ModulePath}).
 
-get_model(ModelPath) ->
-	gen_server:call(?MODULE, {get_module, ModelPath}).
-
-get_view(ViewPath) ->
-	gen_server:call(?MODULE, {get_module, ViewPath}).
-
-get_controller(ControllerPath) ->
-	gen_server:call(?MODULE, {get_module, ControllerPath}).
 
