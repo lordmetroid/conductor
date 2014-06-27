@@ -23,42 +23,42 @@ init(_Arguments) ->
 	%% TODO: Compile and cache modules existing at start
 	{ok, {[],[]}}.
 
-handle_call({get_module, ModulePath}, _From, Cache) ->
-	case lists:keyfind(ModulePath,1, Cache) of
+handle_call({get_module, ModulePath}, _From, Modules) ->
+	case lists:keyfind(ModulePath,1, Modules) of
 		false ->
 			%% Module does not exist in cache
-			case add(Cache, ModulePath) of
+			case add(Modules, ModulePath) of
 				error ->
 					%% Could not add module
-					{reply, error, Cache};
-				{ok, UpdatedCache, NewModule} ->
+					{reply, error, Modules};
+				{ok, UpdatedModules, NewModule} ->
 					%% New module added to cache
-					{reply, {ok, Module}, UpdatedCache}
+					{reply, {ok, NewModule}, UpdatedModules}
 			end;
 		{ModulePath, {Module,Date}} ->
 			case filelib:last_modified(ModulePath) of
 				0 ->
 					%% Module file has been deleted
-					case remove(Cache, Module, ModulePath) of
+					case remove(Modules, Module, ModulePath) of
 						error ->
 							%% Cache has not been changed
-							{reply, error, Cache}
+							{reply, error, Modules}
 						{ok, UpdatedCache} ->
 							%% Module removed from cache
-							{Reply, error, UpdatedCache};
+							{Reply, error, UpdatedModules};
 					end;
 				Date ->
 					%% Module in cache is up to date
-					{reply, {ok, Module}, Cache};
+					{reply, {ok, Module}, Modules};
 				NewDate ->
 					%% Module file has been changed since last cached
-					case update(Cache, Module ModulePath) of
+					case update(Modules, Module ModulePath) of
 						error ->
 							%% Cache could not be updated
-							{reply, error, Cache};
-						{ok, UpdatedCache, NewModule} ->
+							{reply, error, Modules};
+						{ok, UpdatedModules, NewModule} ->
 							%% Updated cache with new module
-							{reply, {ok, NewModule}, UpdatedCache}
+							{reply, {ok, NewModule}, UpdatedModules}
 					end
 			end
 	end.
@@ -78,6 +78,14 @@ terminate(_Reason, _State) ->
 code_change(_OldVersion, State, _Extra) ->
 	{ok, State}.
 
+%% ----------------------------------------------------------------------------
+% get_module helper function
+%% ----------------------------------------------------------------------------
+
+%% ----------------------------------------------------------------------------
+% @spec add({Cache, DeathRow}, ModulePath) -> error | 
+% @doc Add module to cache
+%% ----------------------------------------------------------------------------
 add({Cache, DeathRow}, ModulePath) ->
 	case install_module(ModulePath) of
 		error ->
@@ -85,39 +93,49 @@ add({Cache, DeathRow}, ModulePath) ->
 			error;
 		{ok, {Module,Date}} ->
 			%% Add module to cache
-			{ok, Module, {[{ModulePath, {Module,Date}} | Cache], DeathRow}}
+			UpdatedCache = [{ModulePath, {Module,Date}} | Cache],
+			{ok, {UpdatedCache, DeathRow}, Module}
 	end.
 
 %% ----------------------------------------------------------------------------
-% get_module helper function
+% @spec purge_module(DeathRow) -> UpdatedDeathRow
+% @doc Purge all lingering modules from memory
 %% ----------------------------------------------------------------------------
 update({Cache, DeathRow}, Module, ModulePath) ->
 	case install_module(ModulePath) of
 		error ->
 			%% Module could not be compiled
 			error;
-		{ok, {Module,Date}} ->
+		{ok, {NewModule,Date}} ->
 			%% Update cache with new module
-			NewModule = {ModulePath, {Module,Date}},
-			UpdatedCache = lists:keyreplace(ModulePath,1, Cache, NewModule),
+			NewEntry = {ModulePath, {NewModule,Date}},
+			UpdatedCache = lists:keyreplace(ModulePath,1, Cache, NewEntry),
 			
-			{ok, {{UpdatedCache, DeathRow}, Module}
+			%% Purge modules lingering in memory
+			code:delete(Module),
+			UpdatedDeathRow = purge_module([Module | DeathRow]),
+			
+			{ok, {UpdatedCache, UpdatedDeathRow}, Module}
 	end.
-	
-remove({Cache, DeathRow}, Module, ModulePath) ->
-	case 
 
+%% ----------------------------------------------------------------------------
+% @spec purge_module(DeathRow) -> UpdatedDeathRow
+% @doc Purge all lingering modules from memory
+%% ----------------------------------------------------------------------------
+remove({Cache, DeathRow}, Module, ModulePath) ->
 	%% Block processes from executing old code
 	case code:delete(Module) of
 		false ->
-			%% 
+			%% Could not delete module, even older code not yet purged
+			error;
 		true ->
+			%% Remove module from cache
+			UpdatedCache = lists:keydelete(ModulePath,1, Cache),
+			
 			%% Purge modules lingering in memory
 			UpdatedDeathRow = purge_module([Module | DeathRow]),
 			
-			%% Remove module from cache
-			UpdatedCache = lists:keydelete(ModulePath,1, Cache),
-			{ok, {UpdatedCache, UpdatedDeathRow}
+			{ok, {UpdatedCache, UpdatedDeathRow}}
 	end.
 
 %% ----------------------------------------------------------------------------
@@ -126,10 +144,12 @@ remove({Cache, DeathRow}, Module, ModulePath) ->
 %% ----------------------------------------------------------------------------
 purge_module(DeathRow) ->
 	purge_module(DeathRow, []).
+
 purge_module([Module | Rest], DeathRow) ->
 	case code:soft_purge(Module) of
 		false ->
 			%% Module still occupied by process
+			code:delete(Module),
 			purge_module(Rest, [Module | DeathRow]);
 		true ->
 			%% Module successfully purged from memory
@@ -140,7 +160,7 @@ purge_module([], DeathRow) ->
 	DeathRow.
 
 %% ----------------------------------------------------------------------------
-% @spec load_module(ModulePath) -> error | {ok, {Module, Date}}
+% @spec install_module(ModulePath) -> error | {ok, {Module, Date}}
 % @doc Compile and load module from file into memory
 %% ----------------------------------------------------------------------------
 install_module(ModulePath) ->
@@ -171,9 +191,6 @@ install_module(ModulePath) ->
 			end
 	end.
 
-
-
-	
 %% ----------------------------------------------------------------------------
 % @spec start() ->
 % @doc Start the web application file cache manager
@@ -187,5 +204,3 @@ start_link() ->
 %% ----------------------------------------------------------------------------
 get_module(ProgramPath) ->
 	gen_server:call(?MODULE, {get_module, ModulePath}).
-
-
