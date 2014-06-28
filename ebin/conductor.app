@@ -17,7 +17,7 @@
 	]},
 	{registered, [
 		conductor_cache,
-		conductor_log
+		conductor_log,
 		conductor_settings,
 		conductor_supervisor,
 		conductor_system_supervisor,
