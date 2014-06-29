@@ -74,7 +74,7 @@ make_module(ModulePath, ModuleForms) ->
 		{ok, Module, ModuleBinary, Warnings} ->
 			%% Report erlang syntax compilation errors
 			conductor_log:add(ModulePath, Warnings),
-			{ok, Module, ModuleBinarys};
+			{ok, Module, ModuleBinary};
 		{ok, Module, ModuleBinary} ->
 			%% Return compiled module 
 			{ok, Module, ModuleBinary}
@@ -137,10 +137,10 @@ add_view(ModulePath) ->
 							conductor_log:add(ModulePath, Errors),
 						
 							%% Return empty function
-							add_view_get_function(Compiler, [])
+							add_view_get_function(Compiler, []);
 						{ok, ViewAST} ->
 							%% Return template as function
-							add_view_get_function(Compiler, ViewAST)
+							add_view_get_function(Compiler, ViewAST);
 						_ ->
 							%% Make function does not comply to API
 							conductor_log:add(atom_to_list(Compiler),

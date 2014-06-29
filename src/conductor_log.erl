@@ -13,7 +13,6 @@
 -export([
 	start_link/0,
 	
-	add/1,
 	add/2
 ]).
 init(_Arguments) ->
@@ -24,7 +23,7 @@ init(_Arguments) ->
 	{ok, LogPath}.
 
 handle_call({add, Source, Message}, _From, LogPath) ->
-	file:write_file(LogPath, Source++":\n"Message, append);
+	file:write_file(LogPath, Source++ ":\n\t" ++Message, append);
 
 handle_call(_Event, _From, State) ->
 	{stop, State}.
@@ -48,6 +47,6 @@ code_change(_OldVersion, State, _Extra) ->
 start_link() ->
 	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
-add(File, Message) ->
+add(Source, Message) ->
 	gen_server:call(?MODULE, {add, Source, Message}).
 	
