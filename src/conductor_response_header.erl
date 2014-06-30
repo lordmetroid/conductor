@@ -15,8 +15,8 @@
 ]).
 
 -export([
-	create_file/1,
-	create_program/1,
+	create_file/0,
+	create_program/0,
 	destroy/1,
 	
 	set_status_code/2,
@@ -126,12 +126,12 @@ program(_Event, _From, {StatusCode,MimeType}) ->
 	{reply, error, program, {StatusCode,MimeType}}.
 	
 %% ----------------------------------------------------------------------------
-create_file(Header) ->
-	gen_fsm:start(?MODULE, [], []),
+create_file() ->
+	Header = gen_fsm:start(?MODULE, [], []),
 	gen_fsm:sync_send_event(Header, create_file).
 
-create_program(Header) ->
-	gen_fsm:start(?MODULE, [], []),
+create_program() ->
+	Header = gen_fsm:start(?MODULE, [], []),
 	gen_fsm:sync_send_event(Header, create_program).
 
 destroy(Header) -> 
