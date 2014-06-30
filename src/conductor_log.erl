@@ -23,6 +23,7 @@ init(_Arguments) ->
 	{ok, LogPath}.
 
 handle_call({add, Source, Message}, _From, LogPath) ->
+	%% TODO: Add date
 	file:write_file(LogPath, Source++ ":\n\t" ++Message, append);
 
 handle_call(_Event, _From, State) ->
