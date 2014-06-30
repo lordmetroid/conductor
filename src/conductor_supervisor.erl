@@ -46,7 +46,7 @@ start_supervisors() ->
 			%% Webmachine
 			{conductor_server_supervisor,
 				{?MODULE, start_server, []},
-				permanent, infinity, supervisor, [?MODULE]
+			permanent, infinity, supervisor, [?MODULE]
 			}
 		]
 	}).
@@ -91,7 +91,7 @@ start_server() ->
 		%% Server settings
 		{ip, conductor_settings:get(ip)},
 		{port, conductor_settings:get(port)},
-		{log_root, conductor_settings:get(log_root)},
+		{log_dir, conductor_settings:get(log_root)},
 
 		%% Resource dispatcher
 		{dispatch, [
@@ -108,3 +108,4 @@ start_server() ->
 			}
 		]
 	}).
+
