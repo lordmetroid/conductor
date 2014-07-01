@@ -50,7 +50,7 @@ handle_call({get_module, ModulePath}, _From, Modules) ->
 				Date ->
 					%% Module in cache is up to date
 					{reply, {ok, Module}, Modules};
-				NewDate ->
+				_NewDate ->
 					%% Module file has been changed since last cached
 					case update(Modules, Module, ModulePath) of
 						error ->
