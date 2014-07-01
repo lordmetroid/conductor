@@ -289,12 +289,14 @@ add_file(ModulePath) ->
 			File = unicode:characters_to_list(Binary, utf8),
 			case erl_scan:string(File) of
 				{error, ErrorInfo, ErrorLocation} ->
-					%% TODO add log
+					%%  Report error
+					conductor_log:add(ModulePath,
+						"scanning failed:\n\t"++ErrorInfo),
 
 					%% Nothing to return
 					[];
 				{ok, FileAST, _EndLocation} ->
-					erl_syntax:revert(FileAST)
+					
 			end
 	end.
 
