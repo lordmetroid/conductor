@@ -113,7 +113,7 @@ create_file() ->
 	gen_fsm:sync_send_event(Body, create_file),
 	Body.
 
-create_program(Body) ->
+create_program() ->
 	{ok, Body} = gen_fsm:start(?MODULE, [], []),
 	gen_fsm:sync_send_event(Body, create_program),
 	Body.
