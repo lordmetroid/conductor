@@ -113,7 +113,7 @@ update({Cache, DeathRow}, Module, ModulePath) ->
 			
 			%% Purge modules lingering in memory
 			code:delete(Module),
-			UpdatedDeathRow = purge_module([Module | DeathRow]),
+			UpdatedDeathRow = uninstall_module([Module | DeathRow]),
 			
 			{ok, {UpdatedCache, UpdatedDeathRow}, Module}
 	end.
