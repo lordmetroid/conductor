@@ -33,22 +33,22 @@ init(_Arguments) ->
 %% ----------------------------------------------------------------------------
 handle_call(create_file, {Client,_}, Responses) ->
 	%% Create a file response
-	{ok, Header} = conductor_response_header:create_file(),
-	{ok, Body} =  conductor_response_body:create_file(),
+	Header = conductor_response_header:create_file(),
+	Body =  conductor_response_body:create_file(),
 	
 	%% Add the response to the manager
 	{reply, Client, [{Client, {Header,Body}} | Responses]};
 
 handle_call(create_program, {Client,_}, Responses) ->
 	%% Create a program response
-	{ok, Header} = conductor_response_header:create_program(),
-	{ok, Body} =  conductor_response_body:create_program(),
+	Header = conductor_response_header:create_program(),
+	Body =  conductor_response_body:create_program(),
 	
 	%% Add the response to the manager
 	{reply, Client, [{Client, {Header,Body}} | Responses]};
 
 handle_call(destroy, {Client,_}, Responses) ->
-	case lists:keyfind(Client, 1, Responses) of
+	case lists:keyfind(Client,1, Responses) of
 		false ->
 			%% Response does not exist
 			%% TODO: Write to log

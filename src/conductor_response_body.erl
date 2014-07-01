@@ -15,8 +15,8 @@
 ]).
 
 -export([
-	create_file/1,
-	create_program/1,
+	create_file/0,
+	create_program/0,
 	destroy/1,
 
 	add_content/2,
@@ -108,13 +108,15 @@ program(_Event, _From, Content) ->
 %% ----------------------------------------------------------------------------
 % Response body control functions
 %% ----------------------------------------------------------------------------
-create_file(Body) ->
-	gen_fsm:start(?MODULE, [], []),
-	gen_fsm:sync_send_event(Body, create_file).
+create_file() ->
+	{ok, Body} = gen_fsm:start(?MODULE, [], []),
+	gen_fsm:sync_send_event(Body, create_file),
+	Body.
 
 create_program(Body) ->
-	gen_fsm:start(?MODULE, [], []),
-	gen_fsm:sync_send_event(Body, create_program).
+	{ok, Body} = gen_fsm:start(?MODULE, [], []),
+	gen_fsm:sync_send_event(Body, create_program),
+	Body.
 
 destroy(Body) ->
 	gen_fsm:sync_send_event(Body, destroy).

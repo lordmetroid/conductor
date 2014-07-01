@@ -127,12 +127,14 @@ program(_Event, _From, {StatusCode,MimeType}) ->
 	
 %% ----------------------------------------------------------------------------
 create_file() ->
-	Header = gen_fsm:start(?MODULE, [], []),
-	gen_fsm:sync_send_event(Header, create_file).
+	{ok, Header} = gen_fsm:start(?MODULE, [], []),
+	gen_fsm:sync_send_event(Header, create_file),
+	Header.
 
 create_program() ->
-	Header = gen_fsm:start(?MODULE, [], []),
-	gen_fsm:sync_send_event(Header, create_program).
+	{ok, Header} = gen_fsm:start(?MODULE, [], []),
+	gen_fsm:sync_send_event(Header, create_program),
+	Header.
 
 destroy(Header) -> 
 	gen_fsm:sync_send_event(Header, destroy).
