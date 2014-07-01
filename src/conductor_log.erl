@@ -24,7 +24,8 @@ init(_Arguments) ->
 
 handle_call({add, Source, Message}, _From, LogPath) ->
 	%% TODO: Add date
-	file:write_file(LogPath, Source++ ":\n\t" ++Message, append);
+	file:write_file(LogPath, Source++ ":\n\t" ++Message++"\n", [append]),
+	{reply, ok, LogPath};
 
 handle_call(_Event, _From, State) ->
 	{stop, State}.
