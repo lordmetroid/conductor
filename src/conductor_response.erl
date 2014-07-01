@@ -121,7 +121,7 @@ handle_call({add_content, Content}, {Client,_}, Responses) ->
 		{Client, {_Header,Body}} ->
 			%% Add content to response body
 			case conductor_response_body:add_content(Body, Content) of
-				{error, Reason} ->
+				{error, Errors} ->
 					%% TODO: Write error reason to log
 					{reply, error, Responses};
 				ok ->

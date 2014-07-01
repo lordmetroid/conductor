@@ -24,7 +24,8 @@ init(_Arguments) ->
 	{ok, {[],[]}}.
 
 handle_call({get_module, ModulePath}, _From, Modules) ->
-	case lists:keyfind(ModulePath,1, Modules) of
+	{Cache, _DeathRow} = Modules,
+	case lists:keyfind(ModulePath,1, Cache) of
 		false ->
 			%% Module does not exist in cache
 			case add(Modules, ModulePath) of
