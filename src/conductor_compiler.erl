@@ -216,21 +216,7 @@ add_file(ModulePath) ->
 			[];
 		{ok, Binary} ->
 			File = unicode:characters_to_list(Binary, utf8),
-			case dynamic_compile:forms_from_string(File) of
-				
-			end
-			
-			case erl_scan:string(File) of
-				{error, ErrorInfo, ErrorLocation} ->
-					%%  Report error
-					conductor_log:add(ModulePath,
-						"scanning failed:\n\t"++ErrorInfo),
-
-					%% Nothing to return
-					[];
-				{ok, Tokens, _EndLocation} ->
-					
-			end
+			dynamic_compile:forms_from_string(File)
 	end.
 
 %% ----------------------------------------------------------------------------
