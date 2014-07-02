@@ -21,39 +21,39 @@ make(ModulePath) ->
 	case ModuleRoot of
 		ProgramRoot ->
 			%% Compile a program
-			ModuleForms = [
+			ModuleForms = lists:flatten([
 				add_module_attribute(),
 				add_webmachine_lib_attribute(),
 				add_file(ModulePath),
 				add_run_function()
-			],
+			]),
 			make_module(ModulePath, ModuleForms);
 		ModelRoot ->
 			%% Compile a model
-			ModuleForms = [
+			ModuleForms = lists:flatten([
 				add_module_attribute(),
 				add_webmachine_lib_attribute(),
 				add_file(ModulePath)
-			],
+			]),
 			make_module(ModulePath, ModuleForms);
 		ViewRoot ->
 			%% Compile a view
-			ModuleForms = [
+			ModuleForms = lists:flatten([
 				add_module_attribute(),
 				add_view_export_attribute(),
 				add_view(ModulePath)
-			],
+			]),
 			make_module(ModulePath, ModuleForms);
 		ControllerRoot ->
 			%% Compile a controller
-			ModuleForms = [
+			ModuleForms = lists:flatten([
 				add_module_attribute(),
 				add_webmachine_lib_attribute(),
 				add_file(ModulePath),
 				add_run_function(),
 				add_get_function(),
 				add_render_function()
-			],
+			]),
 			make_module(ModulePath, ModuleForms)
 	end.
 
