@@ -179,7 +179,7 @@ install_module(ModulePath) ->
 					error;
 				{ok, Module, ModuleBinary} ->
 					%% Load compiled module
-					case code:load_module(Module, ModuleBinary) of
+					case code:load_binary(Module, Module, ModuleBinary) of
 						{error, Errors} ->
 							%% Module could not be loaded
 							conductor_log:add(ModulePath,

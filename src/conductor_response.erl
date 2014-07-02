@@ -200,7 +200,7 @@ set_mime_type(MimeType) ->
 	gen_server:call(?MODULE, {set_mime_type, MimeType}).
 
 get_mime_type() ->
-	gen_server:call(?MODULE, get_mime_tyoe).
+	gen_server:call(?MODULE, get_mime_type).
 
 %% ----------------------------------------------------------------------------
 % Response body functions
