@@ -48,7 +48,7 @@ handle_call(create_program, {Client,_}, Responses) ->
 	%% Add the response to the manager
 	{reply, Client, [{Client, {Header,Body}} | Responses]};
 
-handle_call(destroy, {Client,_}, Responses) ->
+handle_call(destroy_response, {Client,_}, Responses) ->
 	case lists:keyfind(Client,1, Responses) of
 		false ->
 			%% Response does not exist

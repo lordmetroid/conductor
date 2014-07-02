@@ -92,7 +92,7 @@ file(get_mime_type, _From, {StatusCode,MimeType}) ->
 			end
 	end;
 
-file(destroy, _From, {StatusCode,MimeType}) ->
+file(destroy_header, _From, {StatusCode,MimeType}) ->
 	%% Destroy response
 	{stop, ok, {StatusCode,MimeType}};
 
@@ -118,7 +118,7 @@ program(get_mime_type, _From, {StatusCode,MimeType}) ->
 	%% Get program mime type
 	{reply, MimeType, program, {StatusCode,MimeType}};
 
-program(destroy, _From, {StatusCode,MimeType}) ->
+program(destroy_header, _From, {StatusCode,MimeType}) ->
 	%% Destroy response
 	{stop, ok, {StatusCode,MimeType}};
 
@@ -137,7 +137,7 @@ create_program() ->
 	Header.
 
 destroy(Header) -> 
-	gen_fsm:sync_send_event(Header, destroy).
+	gen_fsm:sync_send_event(Header, destroy_header).
 	
 %% ----------------------------------------------------------------------------
 set_status_code(Header, NewStatusCode) ->
