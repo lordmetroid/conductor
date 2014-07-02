@@ -81,6 +81,10 @@ make_module(ModulePath, ModuleForms) ->
 	end.
 
 %% ----------------------------------------------------------------------------
+% General module code
+%% ----------------------------------------------------------------------------
+	
+%% ----------------------------------------------------------------------------
 % @spec add_module_attribute() -> syntaxTree()
 % @doc Add an Erlang module attribute to the compilation
 %% ----------------------------------------------------------------------------
@@ -91,6 +95,11 @@ add_module_attribute() ->
 			erl_syntax:atom(uuid:uuid_to_string(uuid:get_v4()))
 		])
 	).
+
+%% ----------------------------------------------------------------------------
+% View module code
+%% ----------------------------------------------------------------------------
+
 %% ----------------------------------------------------------------------------
 % @spec add_view_export_attribute() -> syntaxTree()
 % @doc Add the export attribute for rending views
@@ -177,6 +186,11 @@ add_view_get_function(Compiler, Template) ->
 			])
 		])
 	).
+
+%% ----------------------------------------------------------------------------
+% Program, Model and Controller module code
+%% ----------------------------------------------------------------------------
+
 %% ----------------------------------------------------------------------------
 % @spec add_webmachine_lib_attribute() -> syntaxTree()
 % @doc Add the Webmachine API library
@@ -188,6 +202,36 @@ add_webmachine_lib_attribute() ->
 			erl_syntax:string("webmachine/include/webmachine.hrl")
 		])
 	).
+
+%% ----------------------------------------------------------------------------
+% @spec add_file() -> syntaxTree()
+% @doc Add an Erlang File to the compilation
+%% ----------------------------------------------------------------------------
+add_file(ModulePath) ->
+	case file:read_file(ModulePath) of
+		{error, Errors} ->
+			conductor_log:add(ModulePath, "Could not read file"),
+
+			%% Return nothing
+			[];
+		{ok, Binary} ->
+			File = unicode:characters_to_list(Binary, utf8),
+			case dynamic_compile:forms_from_string(File) of
+				
+			end
+			
+			case erl_scan:string(File) of
+				{error, ErrorInfo, ErrorLocation} ->
+					%%  Report error
+					conductor_log:add(ModulePath,
+						"scanning failed:\n\t"++ErrorInfo),
+
+					%% Nothing to return
+					[];
+				{ok, Tokens, _EndLocation} ->
+					
+			end
+	end.
 
 %% ----------------------------------------------------------------------------
 % @spec add_get_function() -> syntaxTree()
@@ -274,29 +318,4 @@ add_run_function() ->
 		])
 	).
 
-%% ----------------------------------------------------------------------------
-% @spec add_file() -> syntaxTree()
-% @doc Add an Erlang File to the compilation
-%% ----------------------------------------------------------------------------
-add_file(ModulePath) ->
-	case file:read_file(ModulePath) of
-		{error, Errors} ->
-			conductor_log:add(ModulePath, "Could not read file"),
-
-			%% Return nothing
-			[];
-		{ok, Binary} ->
-			File = unicode:characters_to_list(Binary, utf8),
-			case erl_scan:string(File) of
-				{error, ErrorInfo, ErrorLocation} ->
-					%%  Report error
-					conductor_log:add(ModulePath,
-						"scanning failed:\n\t"++ErrorInfo),
-
-					%% Nothing to return
-					[];
-				{ok, FileAST, _EndLocation} ->
-					
-			end
-	end.
 
