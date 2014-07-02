@@ -141,7 +141,7 @@ handle_call(purge_content, {Client,_}, Responses) ->
 			{reply, ok, Responses}
 	end;
 
-handle_call({get_content}, {Client,_}, Responses) ->
+handle_call(get_content, {Client,_}, Responses) ->
 	case lists:keyfind(Client,1, Responses) of
 		false ->
 			%% Session does not exist
