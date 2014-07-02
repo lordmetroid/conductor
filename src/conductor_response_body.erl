@@ -77,8 +77,8 @@ file(get_content, _From, Content) ->
 	{reply, Content, file, Content};
 
 file(destroy_body, _From, Content) ->
-	%% Destroy response
-	{stop, ok, Content};
+	%% Destroy response body
+	{stop, normal, ok, Content};
 
 file(_Event, _From, Content) ->
 	{reply, error, file, Content}.
@@ -98,9 +98,9 @@ program(get_content, _From, Content) ->
 	%% Get and reset content
 	{reply, lists:reverse(Content), program, Content};
 
-program(destroy_body, _From, FilePath) ->
-	%% Destroy response
-	{stop, ok, FilePath};
+program(destroy_body, _From, Content) ->
+	%% Destroy response body
+	{stop, normal, ok, Content};
 
 program(_Event, _From, Content) ->
 	{reply, error, program, Content}.

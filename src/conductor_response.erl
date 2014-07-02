@@ -60,7 +60,7 @@ handle_call(destroy_response, {Client,_}, Responses) ->
 			conductor_response_body:destroy(Body),
 
 			%% Remove response from manager
-			UpdatedResponses = lists:keydelete(Client, Responses),
+			UpdatedResponses = lists:keydelete(Client,1, Responses),
 			{reply, ok, UpdatedResponses}
 	end;
 

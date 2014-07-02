@@ -93,8 +93,8 @@ file(get_mime_type, _From, {StatusCode,MimeType}) ->
 	end;
 
 file(destroy_header, _From, {StatusCode,MimeType}) ->
-	%% Destroy response
-	{stop, ok, {StatusCode,MimeType}};
+	%% Destroy response header
+	{stop, normal, ok, {StatusCode,MimeType}};
 
 file(_Event, _From, {StatusCode,MimeType}) ->
 	{reply, error, file, {StatusCode,MimeType}}.
@@ -119,8 +119,8 @@ program(get_mime_type, _From, {StatusCode,MimeType}) ->
 	{reply, MimeType, program, {StatusCode,MimeType}};
 
 program(destroy_header, _From, {StatusCode,MimeType}) ->
-	%% Destroy response
-	{stop, ok, {StatusCode,MimeType}};
+	%% Destroy response header
+	{stop, normal, ok, {StatusCode,MimeType}};
 
 program(_Event, _From, {StatusCode,MimeType}) ->
 	{reply, error, program, {StatusCode,MimeType}}.
