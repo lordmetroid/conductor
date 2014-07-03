@@ -13,8 +13,8 @@
 -export([
 	start_link/0,
 
-	create_file/0,
-	create_program/0,
+	create_file/1,
+	create_program/1,
 	destroy/0,
 
 	set_status_code/1,
