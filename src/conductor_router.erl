@@ -90,7 +90,7 @@ execute_error(Request) ->
 % @spec execute_model(ModelFile, Function, Arguments, Parameters, Log)
 % @doc Execute a model file during runtime
 %% ----------------------------------------------------------------------------
-execute_model(ModelFile,Function, Arguments, Request) ->
+execute_model(ModelFile, Function, Arguments, Request) ->
 	%% Get the model module from cache
 	ModelRoot = conductor_settings:get(model_root),
 	ModelPath = filename:join([ModelRoot, ModelFile]),
@@ -182,7 +182,7 @@ execute_view(ViewFile, Arguments) ->
 % @spec execute_controller(ControllerFile,Function, Arguments, Request)
 % @doc Execute a controller file during runtime
 %% ----------------------------------------------------------------------------
-execute_controller(ControllerFile,Function, Arguments,Request)  ->
+execute_controller(ControllerFile, Function, Arguments, Request)  ->
 	%% Get the controller module from cache
 	ControllerRoot = conductor_settings:get(controller_root),
 	ControllerPath = filename:join([ControllerRoot, ControllerFile]),
