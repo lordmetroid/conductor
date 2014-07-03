@@ -2,9 +2,9 @@
 
 -export([
 	execute/1,
-	execute_model/4,
+	execute_model/3,
 	execute_view/2,
-	execute_controller/4
+	execute_controller/3
 ]).
 
 -include_lib("webmachine/include/webmachine.hrl").
