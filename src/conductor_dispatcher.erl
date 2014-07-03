@@ -20,7 +20,7 @@ service_available(Request,Context) ->
 	conductor_router:execute(Request),
 
 	%% Check HTTP Status Code
-	case conductor_response:get_status_code() of
+	case conductor_session:get_status_code() of
 		500 ->
 			%% "500 Internal Server Error"
 			{{error, []}, Request,Context};
@@ -33,7 +33,7 @@ service_available(Request,Context) ->
 	end.
 
 resource_exists(Request,Context) ->
-	case conductor_response:get_status_code() of
+	case conductor_session:get_status_code() of
 		404 ->
 			%% "404 File Not Found" 
 			{false, Request,Context};
@@ -48,7 +48,7 @@ options(Request,Context) ->
 
 content_types_provided(Request,Context) ->
 	%% Set response mimetype
-	MimeType = conductor_response:get_mime_type(),
+	MimeType = conductor_session:get_mime_type(),
 	{[{MimeType, provide_content}], Request,Context}.
 
 %% ----------------------------------------------------------------------------
@@ -57,10 +57,10 @@ content_types_provided(Request,Context) ->
 %% ----------------------------------------------------------------------------
 provide_content(Request,Context) ->
 	%% Get response body content
-	Content = conductor_response:get_content(),
+	Content = conductor_session:get_content(),
 	
 	%% Cleanup current response session
-	conductor_response:destroy(),
+	conductor_session:destroy(),
 	
 	%% Publish content to client
 	{Content, Request,Context}.

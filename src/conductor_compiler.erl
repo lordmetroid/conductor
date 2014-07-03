@@ -225,16 +225,15 @@ add_file(ModulePath) ->
 %% ----------------------------------------------------------------------------
 add_get_function() ->
 	erl_syntax:revert(
-		%% get(ModelFile, Function, Arguments, Request) ->
+		%% get(ModelFile, Function, Arguments) ->
 		erl_syntax:function(erl_syntax:atom(get), [
 			erl_syntax:clause([
 				erl_syntax:variable("ModelFile"),
 				erl_syntax:variable("Function"),
-				erl_syntax:variable("Arguments"),
-				erl_syntax:variable("Request")
+				erl_syntax:variable("Arguments")
 			], none, [
 				%% conductor_router:execute_model(
-				%%		ModelFile, Function, Arguments, Request)
+				%%		ModelFile, Function, Arguments)
 				erl_syntax:application(
 					erl_syntax:module_qualifier(
 						erl_syntax:atom(conductor_router),
@@ -242,8 +241,7 @@ add_get_function() ->
 					), [
 					erl_syntax:variable("ModelFile"),
 					erl_syntax:variable("Function"),
-					erl_syntax:variable("Arguments"),
-					erl_syntax:variable("Request")
+					erl_syntax:variable("Arguments")
 				])
 			])
 		])
@@ -280,16 +278,15 @@ add_render_function() ->
 %% ----------------------------------------------------------------------------
 add_run_function() ->
 	erl_syntax:revert(
-		%% run(ControllerFile, Function, Arguments, Request) ->
+		%% run(ControllerFile, Function, Arguments) ->
 		erl_syntax:function(erl_syntax:atom(run), [
 			erl_syntax:clause([
 				erl_syntax:variable("ControllerFile"),
 				erl_syntax:variable("Function"),
-				erl_syntax:variable("Arguments"),
-				erl_syntax:variable("Request")
+				erl_syntax:variable("Arguments")
 			], none, [
 				%% conductor_router:execute_controller(
-				%% 		ControllerFile, Function, Arguments, Request)
+				%% 		ControllerFile, Function, Arguments)
 				erl_syntax:application(
 					erl_syntax:module_qualifier(
 						erl_syntax:atom(conductor_router),
@@ -297,8 +294,7 @@ add_run_function() ->
 					), [
 					erl_syntax:variable("ControllerFile"),
 					erl_syntax:variable("Function"),
-					erl_syntax:variable("Arguments"),
-					erl_syntax:variable("Request")
+					erl_syntax:variable("Arguments")
 				])
 			])
 		])

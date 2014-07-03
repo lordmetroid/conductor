@@ -1,4 +1,4 @@
--module(conductor_response).
+-module(conductor_session).
 
 -behavior(gen_server).
 -export([
@@ -30,126 +30,138 @@ init(_Arguments) ->
 	{ok, []}.
 
 %% ----------------------------------------------------------------------------
-% Response control functions
+% Session control functions
 %% ----------------------------------------------------------------------------
-handle_call(create_file, {Client,_}, Responses) ->
-	%% Create a file response
+handle_call({create_file, Request}, {Client,_}, Sessions) ->
+	%% Create a file session
 	Header = conductor_response_header:create_file(),
 	Body =  conductor_response_body:create_file(),
 	
-	%% Add the response to the manager
-	{reply, Client, [{Client, {Header,Body}} | Responses]};
+	%% Add the session to the manager
+	{reply, Client, [{Client, Request, {Header,Body}} | Sessions]};
 
-handle_call(create_program, {Client,_}, Responses) ->
-	%% Create a program response
+handle_call({create_program, Request},  {Client,_}, Sessions) ->
+	%% Create a program session
 	Header = conductor_response_header:create_program(),
 	Body =  conductor_response_body:create_program(),
 	
-	%% Add the response to the manager
-	{reply, Client, [{Client, {Header,Body}} | Responses]};
+	%% Add the session to the manager
+	{reply, Client, [{Client, Request, {Header,Body}} | Sessions]};
 
-handle_call(destroy_response, {Client,_}, Responses) ->
-	case lists:keyfind(Client,1, Responses) of
+handle_call(destroy_session, {Client,_}, Sessions) ->
+	case lists:keyfind(Client,1, Sessions) of
 		false ->
-			%% Response does not exist
+			%% Session does not exist
 			%% TODO: Write to log
-			{reply, error, Responses};
-		{Client, {Header,Body}} ->
+			{reply, error, Sessions};
+		{Client, Request, {Header,Body}} ->
 			%% Destroy response
 			conductor_response_header:destroy(Header),
 			conductor_response_body:destroy(Body),
 
-			%% Remove response from manager
-			UpdatedResponses = lists:keydelete(Client,1, Responses),
-			{reply, ok, UpdatedResponses}
+			%% Remove session from manager
+			UpdatedSessions = lists:keydelete(Client,1, Sessions),
+			{reply, ok, UpdatedSessions}
+	end;
+%% ----------------------------------------------------------------------------
+% Request control functions
+%% ----------------------------------------------------------------------------
+handle_call(get_request, {Client,_}, Sessions) ->
+	case lists:keyfind(Client,1, Sessions) of
+		false ->
+			%% Session does not exist
+			%% TODO: Write to log
+			{reply, error, Sessions};			
+		{Client, Request, {Header,Body}} ->
+			{reply, Request, Sessions}
 	end;
 
 %% ----------------------------------------------------------------------------
 % Response header functions
 %% ----------------------------------------------------------------------------
-handle_call({set_status_code, NewStatusCode}, {Client,_}, Responses) ->
-	case lists:keyfind(Client,1, Responses) of
+handle_call({set_status_code, NewStatusCode}, {Client,_}, Sessions) ->
+	case lists:keyfind(Client,1, Sessions) of
 		false ->
 			%% Session does not exist
 			%% TODO: Write to log
-			{reply, error, Responses};
-		{Client, {Header,_Body}} ->
+			{reply, error, Sessions};
+		{Client, Request, {Header,Body}} ->
 			%% Set new Status Code
 			conductor_response_header:set_status_code(Header, NewStatusCode),
-			{reply, ok, Responses}
+			{reply, ok, Sessions}
 	end;
 
-handle_call(get_status_code, {Client,_}, Responses) ->
-	case lists:keyfind(Client,1, Responses) of
+handle_call(get_status_code, {Client,_}, Sessions) ->
+	case lists:keyfind(Client,1, Sessions) of
 		false ->
 			%% Session does not exist
-			{reply, error, Responses};
-		{Client, {Header,_Body}} ->
+			{reply, error, Sessions};
+		{Client, Request, {Header,Body}} ->
 			%% Get current status code
 			StatusCode = conductor_response_header:get_status_code(Header),
-			{reply, StatusCode, Responses}
+			{reply, StatusCode, Sessions}
 	end;
 
-handle_call({set_mime_type, NewMimeType}, {Client,_}, Responses) ->
-	case lists:keyfind(Client,1, Responses) of
+handle_call({set_mime_type, NewMimeType}, {Client,_}, Sessions) ->
+	case lists:keyfind(Client,1, Sessions) of
 		false ->
 			%% Session does not exist
-			{reply, error, Responses};
-		{Client, {Header,_Body}} ->
+			{reply, error, Sessions};
+		{Client, Request, {Header,Body}} ->
 			conductor_response_header:set_mime_type(Header, NewMimeType),
-			{reply, ok, Responses}
+			{reply, ok, Sessions}
 	end;
 
-handle_call(get_mime_type, {Client,_}, Responses) ->
-	case lists:keyfind(Client,1, Responses) of
+handle_call(get_mime_type, {Client,_}, Sessions) ->
+	case lists:keyfind(Client,1, Sessions) of
 		false ->
 			%% Session does not exist
-			{reply, error, Responses};
-		{Client, {Header,_Body}} ->
+			{reply, error, Sessions};
+		{Client, Request, {Header,Body}} ->
 			MimeType = conductor_response_header:get_mime_type(Header),
-			{reply, MimeType, Responses}
+			{reply, MimeType, Sessions}
 	end;
 
 %% ----------------------------------------------------------------------------
 % Response body functions
 %% ----------------------------------------------------------------------------
-handle_call({add_content, Content}, {Client,_}, Responses) ->
-	case lists:keyfind(Client,1, Responses) of
+handle_call({add_content, Content}, {Client,_}, Sessions) ->
+	case lists:keyfind(Client,1, Sessions) of
 		false ->
 			%% Session does not exist
-			{reply, error, Responses};
+			{reply, error, Sessions};
 		{Client, {_Header,Body}} ->
 			%% Add content to response body
 			case conductor_response_body:add_content(Body, Content) of
 				{error, Errors} ->
 					%% TODO: Write error reason to log
-					{reply, error, Responses};
+					{reply, error, Sessions};
 				ok ->
 					%% Content added
-					{reply, ok, Responses}
+					{reply, ok, Sessions}
 			end
 	end;
 
-handle_call(purge_content, {Client,_}, Responses) ->
-	case lists:keyfind(Client,1, Responses) of
+handle_call(purge_content, {Client,_}, Sessions) ->
+	case lists:keyfind(Client,1, Sessions) of
 		false ->
 			%% Session does not exist
-			{reply, error, Responses};
+			{reply, error, Sessions};
 		{Client, {_Header,Body}} ->
-			%% Purge all content from response body
+			%% Purge all content from session body
 			conductor_response_body:purge_content(Body),
-			{reply, ok, Responses}
+			{reply, ok, Sessions}
 	end;
 
-handle_call(get_content, {Client,_}, Responses) ->
-	case lists:keyfind(Client,1, Responses) of
+handle_call(get_content, {Client,_}, Sessions) ->
+	case lists:keyfind(Client,1, Sessions) of
 		false ->
 			%% Session does not exist
-			{reply, error, Responses};
+			{reply, error, Sessions};
 		{Client, {_Header,Body}} ->
-			%% Get current response body content
+			%% Get current session body content
 			Content = conductor_response_body:get_content(Body),
-			{reply, Content, Responses}
+			{reply, Content, Sessions}
 	end;
 
 
@@ -170,23 +182,29 @@ code_change(_OldVersion, State, _Extra) ->
 
 %% ----------------------------------------------------------------------------
 % @spec start_link() -> {ok, Pid} | ignore | {error, Error}
-% @doc Start the response manager 
+% @doc Start the session manager 
 % -----------------------------------------------------------------------------
 start_link() ->
 	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 %% ----------------------------------------------------------------------------
-% Response control functions
+% Session control functions
 %% ----------------------------------------------------------------------------
-create_file() ->
-	gen_server:call(?MODULE, create_file).
+create_file(Request) ->
+	gen_server:call(?MODULE, {create_file, Request}).
 
-create_program() ->
-	gen_server:call(?MODULE, create_program).
+create_program(Request) ->
+	gen_server:call(?MODULE, {create_program, Request}).
 
 destroy() ->
-	gen_server:call(?MODULE, destroy_response).
+	gen_server:call(?MODULE, destroy_session).
 
+%% ----------------------------------------------------------------------------
+% Request control functions
+%% ----------------------------------------------------------------------------
+get_request() ->
+	gen_server:call(?MODULE, get_request).
+	
 %% ----------------------------------------------------------------------------
 % Response header functions
 %% ----------------------------------------------------------------------------
