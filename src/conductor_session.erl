@@ -16,6 +16,8 @@
 	create_file/1,
 	create_program/1,
 	destroy/0,
+	
+	get_request/0,
 
 	set_status_code/1,
 	get_status_code/0,
