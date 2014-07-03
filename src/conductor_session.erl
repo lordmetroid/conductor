@@ -54,7 +54,7 @@ handle_call(destroy_session, {Client,_}, Sessions) ->
 			%% Session does not exist
 			%% TODO: Write to log
 			{reply, error, Sessions};
-		{Client, Request, {Header,Body}} ->
+		{Client, _Request, {Header,Body}} ->
 			%% Destroy response
 			conductor_response_header:destroy(Header),
 			conductor_response_body:destroy(Body),
@@ -72,7 +72,7 @@ handle_call(get_request, {Client,_}, Sessions) ->
 			%% Session does not exist
 			%% TODO: Write to log
 			{reply, error, Sessions};			
-		{Client, Request, {Header,Body}} ->
+		{Client, Request, {_Header,_Body}} ->
 			{reply, Request, Sessions}
 	end;
 
@@ -85,7 +85,7 @@ handle_call({set_status_code, NewStatusCode}, {Client,_}, Sessions) ->
 			%% Session does not exist
 			%% TODO: Write to log
 			{reply, error, Sessions};
-		{Client, Request, {Header,Body}} ->
+		{Client, _Request, {Header,_Body}} ->
 			%% Set new Status Code
 			conductor_response_header:set_status_code(Header, NewStatusCode),
 			{reply, ok, Sessions}
@@ -96,7 +96,7 @@ handle_call(get_status_code, {Client,_}, Sessions) ->
 		false ->
 			%% Session does not exist
 			{reply, error, Sessions};
-		{Client, Request, {Header,Body}} ->
+		{Client, _Request, {Header,_Body}} ->
 			%% Get current status code
 			StatusCode = conductor_response_header:get_status_code(Header),
 			{reply, StatusCode, Sessions}
@@ -107,7 +107,7 @@ handle_call({set_mime_type, NewMimeType}, {Client,_}, Sessions) ->
 		false ->
 			%% Session does not exist
 			{reply, error, Sessions};
-		{Client, Request, {Header,Body}} ->
+		{Client, _Request, {Header,_Body}} ->
 			conductor_response_header:set_mime_type(Header, NewMimeType),
 			{reply, ok, Sessions}
 	end;
@@ -117,7 +117,7 @@ handle_call(get_mime_type, {Client,_}, Sessions) ->
 		false ->
 			%% Session does not exist
 			{reply, error, Sessions};
-		{Client, Request, {Header,Body}} ->
+		{Client, _Request, {Header,_Body}} ->
 			MimeType = conductor_response_header:get_mime_type(Header),
 			{reply, MimeType, Sessions}
 	end;
@@ -130,7 +130,7 @@ handle_call({add_content, Content}, {Client,_}, Sessions) ->
 		false ->
 			%% Session does not exist
 			{reply, error, Sessions};
-		{Client, {_Header,Body}} ->
+		{Client, _Request, {_Header,Body}} ->
 			%% Add content to response body
 			case conductor_response_body:add_content(Body, Content) of
 				{error, Errors} ->
@@ -147,7 +147,7 @@ handle_call(purge_content, {Client,_}, Sessions) ->
 		false ->
 			%% Session does not exist
 			{reply, error, Sessions};
-		{Client, {_Header,Body}} ->
+		{Client, _Request, {_Header,Body}} ->
 			%% Purge all content from session body
 			conductor_response_body:purge_content(Body),
 			{reply, ok, Sessions}
@@ -158,7 +158,7 @@ handle_call(get_content, {Client,_}, Sessions) ->
 		false ->
 			%% Session does not exist
 			{reply, error, Sessions};
-		{Client, {_Header,Body}} ->
+		{Client, _Request, {_Header,Body}} ->
 			%% Get current session body content
 			Content = conductor_response_body:get_content(Body),
 			{reply, Content, Sessions}
