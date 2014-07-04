@@ -66,7 +66,7 @@ handle_call({get, Parameter}, _From, {Settings, Filename, Date}) ->
 				{ok, UpdatedSettings} ->
 					%% Get value from updated configuration file
 					Value = get_value(UpdatedSettings, Parameter),
-					{reply, Value, {UpdatedSettings, Filename, Date}}
+					{reply, Value, {UpdatedSettings, Filename, NewDate}}
 			end
 	end;
 
