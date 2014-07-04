@@ -22,10 +22,11 @@ service_available(Request,Context) ->
 	%% Check HTTP Status Code
 	case conductor_session:get_status_code() of
 		500 ->
-			%% "500 Internal Server Error"
+			%% Set response header to "500 Internal Server Error"
+			%% TODO: Create response term instead of []
 			{{error, []}, Request,Context};
 		503 ->
-			%% "503 Service Unavailable"
+			%% Set response header to "503 Service Unavailable"
 			{false, Request,Context};
 		_ ->
 			%% Requested service is available
@@ -35,7 +36,7 @@ service_available(Request,Context) ->
 resource_exists(Request,Context) ->
 	case conductor_session:get_status_code() of
 		404 ->
-			%% "404 File Not Found" 
+			%% Set response header to "404 File Not Found" 
 			{false, Request,Context};
 		_ ->
 			%% Requested file was found
@@ -59,7 +60,7 @@ provide_content(Request,Context) ->
 	%% Get response body content
 	Content = conductor_session:get_content(),
 	
-	%% Cleanup current response session
+	%% Cleanup current session
 	conductor_session:destroy(),
 	
 	%% Publish content to client
