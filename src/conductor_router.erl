@@ -165,12 +165,15 @@ execute_view(ViewFile, Arguments) ->
 						true ->
 							%% Render template
 							case Compiler:render(Template, Arguments) of
-								{Content, Errors} ->
+								{error, Content, Errors} ->
 									%% Log errors from rendering
 									conductor_log:add(ViewFile, Errors),
 									
 									%% Add rendered content to response body
 									conductor_session:add_content(Content);
+								{ok, Content} ->
+									%% Add rendered content to response body
+									conductor_session:add_content(Content);									
 								_ ->
 									%% Render function does not comply to API
 									conductor_log:add(atom_to_list(Compiler),
