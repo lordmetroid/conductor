@@ -40,7 +40,7 @@ handle_call({get_module, ModulePath}, _From, Modules) ->
 			case filelib:last_modified(ModulePath) of
 				0 ->
 					%% Module file has been deleted
-					case remove(Modules, Module, ModulePath) of
+					case remove(Modules, ModulePath, Module) of
 						error ->
 							%% Cache has not been changed
 							{reply, error, Modules};
@@ -53,7 +53,7 @@ handle_call({get_module, ModulePath}, _From, Modules) ->
 					{reply, {ok, Module}, Modules};
 				_NewDate ->
 					%% Module file has been changed since last cached
-					case update(Modules, Module, ModulePath) of
+					case update(Modules, ModulePath, Module) of
 						error ->
 							%% Cache could not be updated
 							{reply, error, Modules};
@@ -102,7 +102,7 @@ add({Cache, DeathRow}, ModulePath) ->
 % @spec purge_module(DeathRow) -> UpdatedDeathRow
 % @doc Purge all lingering modules from memory
 %% ----------------------------------------------------------------------------
-update({Cache, DeathRow}, Module, ModulePath) ->
+update({Cache, DeathRow}, ModulePath, Module) ->
 	case install_module(ModulePath) of
 		error ->
 			%% Module could not be compiled
@@ -116,14 +116,14 @@ update({Cache, DeathRow}, Module, ModulePath) ->
 			code:delete(Module),
 			UpdatedDeathRow = uninstall_module([Module | DeathRow]),
 			
-			{ok, {UpdatedCache, UpdatedDeathRow}, Module}
+			{ok, {UpdatedCache, UpdatedDeathRow}, NewModule}
 	end.
 
 %% ----------------------------------------------------------------------------
 % @spec purge_module(DeathRow) -> UpdatedDeathRow
 % @doc Purge all lingering modules from memory
 %% ----------------------------------------------------------------------------
-remove({Cache, DeathRow}, Module, ModulePath) ->
+remove({Cache, DeathRow}, ModulePath, Module) ->
 	%% Block processes from executing old code
 	case code:delete(Module) of
 		false ->
