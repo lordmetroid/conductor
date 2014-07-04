@@ -24,7 +24,8 @@ init(_Arguments) ->
 	{ok, {[],[]}}.
 
 handle_call({get_module, ModulePath}, _From, Modules) ->
-	{Cache, _DeathRow} = Modules,
+	%% Search cache for module
+	{Cache, _Deathrow} = Modules,
 	case lists:keyfind(ModulePath,1, Cache) of
 		false ->
 			%% Module does not exist in cache
@@ -87,7 +88,7 @@ code_change(_OldVersion, State, _Extra) ->
 % @spec add({Cache, DeathRow}, ModulePath) -> error | 
 % @doc Add module to cache
 %% ----------------------------------------------------------------------------
-add({Cache, DeathRow}, ModulePath) ->
+add({Cache, Deathrow}, ModulePath) ->
 	case install_module(ModulePath) of
 		error ->
 			%% Module could not be compiled
@@ -95,14 +96,14 @@ add({Cache, DeathRow}, ModulePath) ->
 		{ok, {Module,Date}} ->
 			%% Add module to cache
 			UpdatedCache = [{ModulePath, {Module,Date}} | Cache],
-			{ok, {UpdatedCache, DeathRow}, Module}
+			{ok, {UpdatedCache, Deathrow}, Module}
 	end.
 
 %% ----------------------------------------------------------------------------
 % @spec purge_module(DeathRow) -> UpdatedDeathRow
 % @doc Purge all lingering modules from memory
 %% ----------------------------------------------------------------------------
-update({Cache, DeathRow}, ModulePath, Module) ->
+update({Cache, Deathrow}, ModulePath, Module) ->
 	case install_module(ModulePath) of
 		error ->
 			%% Module could not be compiled
@@ -114,16 +115,16 @@ update({Cache, DeathRow}, ModulePath, Module) ->
 			
 			%% Purge modules lingering in memory
 			code:delete(Module),
-			UpdatedDeathRow = uninstall_module([Module | DeathRow]),
+			UpdatedDeathrow = uninstall_module([Module | Deathrow]),
 			
-			{ok, {UpdatedCache, UpdatedDeathRow}, NewModule}
+			{ok, {UpdatedCache, UpdatedDeathrow}, NewModule}
 	end.
 
 %% ----------------------------------------------------------------------------
 % @spec purge_module(DeathRow) -> UpdatedDeathRow
 % @doc Purge all lingering modules from memory
 %% ----------------------------------------------------------------------------
-remove({Cache, DeathRow}, ModulePath, Module) ->
+remove({Cache, Deathrow}, ModulePath, Module) ->
 	%% Block processes from executing old code
 	case code:delete(Module) of
 		false ->
@@ -134,32 +135,31 @@ remove({Cache, DeathRow}, ModulePath, Module) ->
 			UpdatedCache = lists:keydelete(ModulePath,1, Cache),
 			
 			%% Purge modules lingering in memory
-			UpdatedDeathRow = uninstall_module(Module, DeathRow),
+			UpdatedDeathrow = uninstall_module([Module | Deathrow]),
 			
-			{ok, {UpdatedCache, UpdatedDeathRow}}
+			{ok, {UpdatedCache, UpdatedDeathrow}}
 	end.
 
 %% ----------------------------------------------------------------------------
 % @spec purge_module(DeathRow) -> UpdatedDeathRow
 % @doc Purge all lingering modules from memory
 %% ----------------------------------------------------------------------------
-uninstall_module(Module, DeathRow) ->
-	%% Add current module to deathrow
-	uninstall_module([Module | DeathRow], []).
+uninstall_module(NewDeathrow) ->
+	uninstall_module(NewDeathrow, []).
 
-uninstall_module([Module | Rest], NewDeathRow) ->
+uninstall_module([Module | Rest], UpdatedDeathrow) ->
 	case code:soft_purge(Module) of
 		false ->
 			%% Module still occupied by process
 			code:delete(Module),
-			uninstall_module(Rest, [Module | NewDeathRow]);
+			uninstall_module(Rest, [Module | UpdatedDeathrow]);
 		true ->
 			%% Module successfully purged from memory
-			uninstall_module(Rest, NewDeathRow)
+			uninstall_module(Rest, UpdatedDeathrow)
 	end;
-uninstall_module([], NewDeathRow) ->
+uninstall_module([], UpdatedDeathrow) ->
 	%% Return updated deathrow
-	NewDeathRow.
+	NewDeathrow.
 
 %% ----------------------------------------------------------------------------
 % @spec install_module(ModulePath) -> error | {ok, {Module, Date}}
