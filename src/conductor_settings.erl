@@ -67,21 +67,9 @@ handle_call({get, Parameter}, _From, {Settings, Filename, Date}) ->
 					%% Get value from updated configuration file
 					Value = get_value(UpdatedSettings, Parameter),
 					{reply, Value, {UpdatedSettings, Filename, Date}}
+			end
 	end;
 
-%% ----------------------------------------------------------------------------
-% @spec get_value() -> Value | undefined
-% @doc Get value specified in settings for parameter
-% -----------------------------------------------------------------------------
-get_value(Settings, Parameter) ->
-	case lists:keyfind(Parameter, 1, Settings) of
-		false ->
-			%% Parameter not found
-			undefined;
-		{Parameter, Value} ->
-			%% Return value
-			Value
-	end;
 
 handle_call(_Event, _From, State) ->
 	{stop, State}.
@@ -97,6 +85,20 @@ terminate(_Reason, _State) ->
 
 code_change(_OldVersion, State, _Extra) ->
 	{ok, State}.
+
+%% ----------------------------------------------------------------------------
+% @spec get_value() -> Value | undefined
+% @doc Get value specified in settings for parameter
+% -----------------------------------------------------------------------------
+get_value(Settings, Parameter) ->
+	case lists:keyfind(Parameter,1, Settings) of
+		false ->
+			%% Parameter not found
+			undefined;
+		{Parameter, Value} ->
+			%% Return value
+			Value
+	end.
 
 %% ----------------------------------------------------------------------------
 % @spec start_link() -> {ok, Pid} | ignore | {error, Error}
