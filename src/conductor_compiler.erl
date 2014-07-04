@@ -106,12 +106,12 @@ add_module_attribute() ->
 %% ----------------------------------------------------------------------------
 add_view_export_attribute() ->
 	erl_syntax:revert(
-		%% -export([get/1]).
+		%% -export([get/0]).
 		erl_syntax:attribute(erl_syntax:atom(export), [
 			erl_syntax:list([
 				erl_syntax:arity_qualifier(
 					erl_syntax:atom(get),
-					erl_syntax:integer(1)
+					erl_syntax:integer(0)
 				)
 			])
 		])
