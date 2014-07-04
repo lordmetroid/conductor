@@ -159,7 +159,7 @@ uninstall_module([Module | Rest], UpdatedDeathrow) ->
 	end;
 uninstall_module([], UpdatedDeathrow) ->
 	%% Return updated deathrow
-	NewDeathrow.
+	UpdatedDeathrow.
 
 %% ----------------------------------------------------------------------------
 % @spec install_module(ModulePath) -> error | {ok, {Module, Date}}
