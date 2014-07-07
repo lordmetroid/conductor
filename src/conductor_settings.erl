@@ -20,6 +20,9 @@
 %% ----------------------------------------------------------------------------
 init(_Arguments) ->
 	case init:get_argument(conf) of
+		error ->
+			%% -conf Filename was not specified at runtime
+			{ok, {[], [], []}};
 		{ok, [Filename]} ->
 			%% Check if configuration file exist
 			case filelib:last_modified(Filename) of
@@ -36,10 +39,7 @@ init(_Arguments) ->
 							%% Return settings and configuration file
 							{ok, {Settings, Filename, Date}}
 					end
-			end;
-		error ->
-			%% -conf Filename was not specified at runtime
-			{ok, {[], [], []}}
+			end
 	end.
 
 handle_call({get, Parameter}, _From, {Settings, Filename, Date}) ->
