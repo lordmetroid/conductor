@@ -51,7 +51,7 @@ make(ModulePath) ->
 				add_webmachine_lib_attribute(),
 				add_file(ModulePath),
 				add_run_function(),
-				add_get_function(),
+				add_data_function(),
 				add_render_function()
 			]),
 			make_module(ModulePath, ModuleForms)
@@ -164,7 +164,7 @@ add_view(ModulePath) ->
 						"No compiler specified in template"),
 
 					%% Return dummy function
-					add_view_get_function(error, [])
+					add_get_function(error, [])
 			end
 	end.
 
@@ -172,7 +172,7 @@ add_view(ModulePath) ->
 % @spec add_view_get_function(Compiler, Template) -> syntaxTree()
 % @doc Add the Webmachine API library
 %% ----------------------------------------------------------------------------
-add_view_get_function(Compiler, Template) ->
+add_get_function(Compiler, Template) ->
 	erl_syntax:revert(
 		%% get() ->
 		erl_syntax:function(erl_syntax:atom(get), [
@@ -220,13 +220,13 @@ add_file(ModulePath) ->
 	end.
 
 %% ----------------------------------------------------------------------------
-% @spec add_get_function() -> syntaxTree()
+% @spec add_data_function() -> syntaxTree()
 % @doc Add a data calling function to the compilation
 %% ----------------------------------------------------------------------------
-add_get_function() ->
+add_data_function() ->
 	erl_syntax:revert(
-		%% get(ModelFile, Function, Arguments) ->
-		erl_syntax:function(erl_syntax:atom(get), [
+		%% data(ModelFile, Function, Arguments) ->
+		erl_syntax:function(erl_syntax:atom(data), [
 			erl_syntax:clause([
 				erl_syntax:variable("ModelFile"),
 				erl_syntax:variable("Function"),
