@@ -224,80 +224,145 @@ add_file(ModulePath) ->
 % @doc Add a data calling function to the compilation
 %% ----------------------------------------------------------------------------
 add_data_function() ->
-	erl_syntax:revert(
-		%% data(ModelFile, Function, Arguments) ->
-		erl_syntax:function(erl_syntax:atom(data), [
-			erl_syntax:clause([
-				erl_syntax:variable("ModelFile"),
-				erl_syntax:variable("Function"),
-				erl_syntax:variable("Arguments")
-			], none, [
-				%% conductor_router:execute_model(
-				%%		ModelFile, Function, Arguments)
-				erl_syntax:application(
-					erl_syntax:module_qualifier(
-						erl_syntax:atom(conductor_router),
-						erl_syntax:atom(execute_model)
-					), [
+	[
+		erl_syntax:revert(
+			%% data(ModelFile, Function) ->
+			erl_syntax:function(erl_syntax:atom(data), [
+				erl_syntax:clause([
+					erl_syntax:variable("ModelFile"),
+					erl_syntax:variable("Function")
+				], none, [
+					%% conductor_router:execute_model(ModelFile, Function, [])
+					erl_syntax:application(
+						erl_syntax:module_qualifier(
+							erl_syntax:atom(conductor_router),
+							erl_syntax:atom(execute_model)
+						), [
+						erl_syntax:variable("ModelFile"),
+						erl_syntax:variable("Function"),
+						erl_syntax:list([])
+					])
+				])
+			])
+		),
+		erl_syntax:revert(
+			%% data(ModelFile, Function, Arguments) ->
+			erl_syntax:function(erl_syntax:atom(data), [
+				erl_syntax:clause([
 					erl_syntax:variable("ModelFile"),
 					erl_syntax:variable("Function"),
 					erl_syntax:variable("Arguments")
+				], none, [
+					%% conductor_router:execute_model(
+					%%		ModelFile, Function, Arguments)
+					erl_syntax:application(
+						erl_syntax:module_qualifier(
+							erl_syntax:atom(conductor_router),
+							erl_syntax:atom(execute_model)
+						), [
+						erl_syntax:variable("ModelFile"),
+						erl_syntax:variable("Function"),
+						erl_syntax:variable("Arguments")
+					])
 				])
 			])
-		])
-	).
+		)
+	].
 
 %% ----------------------------------------------------------------------------
 % @spec add_render_function() -> syntaxTree()
 % @doc Add a view render function to the compilation
 %% ----------------------------------------------------------------------------
 add_render_function() ->
-	erl_syntax:revert(
-		%% render(ViewFile, Arguments) ->
-		erl_syntax:function(erl_syntax:atom(render), [
-			erl_syntax:clause([
-				erl_syntax:variable("ViewFile"),
-				erl_syntax:variable("Arguments")
-			], none, [
-				%% conductor_router:execute_view(ViewFile, Arguments)
-				erl_syntax:application(
-					erl_syntax:module_qualifier(
-						erl_syntax:atom(conductor_router),
-						erl_syntax:atom(execute_view)
-					), [
-					erl_syntax:variable("ViewFile"),
-					erl_syntax:variable("Arguments")
+	[
+		erl_syntax:revert(
+			%% render(ViewFile) ->
+			erl_syntax:function(erl_syntax:atom(render), [
+				erl_syntax:clause([
+					erl_syntax:variable("ViewFile")
+				], none, [
+					%% conductor_router:execute_view(ViewFile, [])
+					erl_syntax:application(
+						erl_syntax:module_qualifier(
+							erl_syntax:atom(conductor_router),
+							erl_syntax:atom(execute_view)
+						), [
+						erl_syntax:variable("ViewFile"),
+						erl_syntax:list([])
+					])
 				])
 			])
-		])
-	).
+		),
+		erl_syntax:revert(
+			%% render(ViewFile, Arguments) ->
+			erl_syntax:function(erl_syntax:atom(render), [
+				erl_syntax:clause([
+					erl_syntax:variable("ViewFile"),
+					erl_syntax:variable("Arguments")
+				], none, [
+					%% conductor_router:execute_view(ViewFile, Arguments)
+					erl_syntax:application(
+						erl_syntax:module_qualifier(
+							erl_syntax:atom(conductor_router),
+							erl_syntax:atom(execute_view)
+						), [
+						erl_syntax:variable("ViewFile"),
+						erl_syntax:variable("Arguments")
+					])
+				])
+			])
+		)
+	].
 
 %% ----------------------------------------------------------------------------
 % @spec add_run_function() -> syntaxTree()
 % @doc Add a run calling function to the compilation
 %% ----------------------------------------------------------------------------
 add_run_function() ->
-	erl_syntax:revert(
-		%% run(ControllerFile, Function, Arguments) ->
-		erl_syntax:function(erl_syntax:atom(run), [
-			erl_syntax:clause([
-				erl_syntax:variable("ControllerFile"),
-				erl_syntax:variable("Function"),
-				erl_syntax:variable("Arguments")
-			], none, [
-				%% conductor_router:execute_controller(
-				%% 		ControllerFile, Function, Arguments)
-				erl_syntax:application(
-					erl_syntax:module_qualifier(
-						erl_syntax:atom(conductor_router),
-						erl_syntax:atom(execute_controller)
-					), [
+	[
+		erl_syntax:revert(
+			%% run(ControllerFile, Function) ->
+			erl_syntax:function(erl_syntax:atom(run), [
+				erl_syntax:clause([
+					erl_syntax:variable("ControllerFile"),
+					erl_syntax:variable("Function")
+				], none, [
+					%% conductor_router:execute_controller(
+					%% 		ControllerFile, Function, [])
+					erl_syntax:application(
+						erl_syntax:module_qualifier(
+							erl_syntax:atom(conductor_router),
+							erl_syntax:atom(execute_controller)
+						), [
+						erl_syntax:variable("ControllerFile"),
+						erl_syntax:variable("Function"),
+						erl_syntax:list([])
+					])
+				])
+			])
+		),
+		erl_syntax:revert(
+			%% run(ControllerFile, Function, Arguments) ->
+			erl_syntax:function(erl_syntax:atom(run), [
+				erl_syntax:clause([
 					erl_syntax:variable("ControllerFile"),
 					erl_syntax:variable("Function"),
 					erl_syntax:variable("Arguments")
+				], none, [
+					%% conductor_router:execute_controller(
+					%% 		ControllerFile, Function, Arguments)
+					erl_syntax:application(
+						erl_syntax:module_qualifier(
+							erl_syntax:atom(conductor_router),
+							erl_syntax:atom(execute_controller)
+						), [
+						erl_syntax:variable("ControllerFile"),
+						erl_syntax:variable("Function"),
+						erl_syntax:variable("Arguments")
+					])
 				])
 			])
-		])
-	).
+		)
+	].
 
 
