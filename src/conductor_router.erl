@@ -12,7 +12,7 @@
 execute(Request) ->
 	%% Find a matching response to the request
 	ProgramName = wrq:path(Request),
-	case lists:keyfind(ProgramName, 1, conductor_settings:get(programs)) of
+	case lists:keyfind(ProgramName,1, conductor_settings:get(programs)) of
 		false ->
 			%% Program not found
 			FileRoot = conductor_settings:get(file_root),
