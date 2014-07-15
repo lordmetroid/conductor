@@ -7,37 +7,43 @@
 ]).
 
 %% ----------------------------------------------------------------------------
-% @spec start(_, _) -> {ok, Pid} | {ok, Pid, State} | {error, Reason}
-% @doc Start the Conductor web application platform
+% Application callbacks
 %% ----------------------------------------------------------------------------
-start(_Type, _Arguments) ->
-	case start_applications([sasl, crypto, inets, mochiweb, webmachine]) of
+
+%% @doc Start Conductor web application platform application
+start(_Type, _StartArguments) ->
+	%% Start all application dependencies
+	case start_applications(application:get_key(applications)) of
+		{error, Errors} ->
+			%% Could not start depending application
+			{error, Errors};
 		ok ->
-			conductor_supervisor:start_link();
-		{error, Reason} ->
-			{error, Reason}
+			%% Start Conductor web application platform application
+			conductor_supervisor:start_link()
 	end.
-%% ----------------------------------------------------------------------------
-% @spec stop(_State) -> ok
-% @doc Stop the Conductor web application platform
-%% ----------------------------------------------------------------------------
+	
+%% @doc Stop Conductor web application platform application
 stop(_State) ->
-	ok.
+	stop.
+
 
 %% ----------------------------------------------------------------------------
-% @spec start_applications(Applications::[atom]) -> ok | {error, Reason}
-% @doc Start specified applications
-% @private
+% Internal Functions
 %% ----------------------------------------------------------------------------
+
+%% @doc Start dependent applications if they are not already started
 start_applications([]) ->
+	%% All applications started
 	ok;
 start_applications([Application | Rest]) ->
 	case application:start(Application) of
-		ok ->
-			start_applications(Rest);
 		{error, {already_started, Application}} ->
+			%% Application already started
 			start_applications(Rest);
-		{error, Reason} ->
-			{error, Reason}
+		{error, Errors} ->
+			%% Could not start application
+			{error, Errors}
+		ok ->
+			%% Application started
+			start_applications(Rest);
 	end.
-
