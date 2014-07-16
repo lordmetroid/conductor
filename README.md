@@ -1,4 +1,4 @@
-# Conductor
+# Conductor [![Build Status](https://travis-ci.org/lordmetroid/conductor.svg?branch=master)](https://travis-ci.org/lordmetroid/conductor)
 A Strict Web Application Server
 
 ## Configurating a web application
