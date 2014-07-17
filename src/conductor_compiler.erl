@@ -128,7 +128,7 @@ add_view(ModulePath) ->
 			conductor_log:add(ModulePath, "Could not read file"),
 
 			%% Return dummy function
-			add_view_get_function(error, []);
+			add_get_function(error, []);
 		{ok, Binary} ->
 			%% Convert binary to scannable string
 			
@@ -146,17 +146,17 @@ add_view(ModulePath) ->
 							conductor_log:add(ModulePath, Errors),
 						
 							%% Return empty function
-							add_view_get_function(Compiler, []);
+							add_get_function(Compiler, []);
 						{ok, ViewAST} ->
 							%% Return template as function
-							add_view_get_function(Compiler, ViewAST);
+							add_get_function(Compiler, ViewAST);
 						_ ->
 							%% Make function does not comply to API
 							conductor_log:add(atom_to_list(Compiler),
 								"Invalid value from function make"),
 
 							%% Return dummy function
-							add_view_get_function(Compiler, [])
+							add_get_function(Compiler, [])
 					end;
 				_ ->
 					%% No compiler defined in template file
