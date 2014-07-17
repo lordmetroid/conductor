@@ -42,8 +42,8 @@ start_applications([Application | Rest]) ->
 			start_applications(Rest);
 		{error, Errors} ->
 			%% Could not start application
-			{error, Errors}
+			{error, Errors};
 		ok ->
 			%% Application started
-			start_applications(Rest);
+			start_applications(Rest)
 	end.
