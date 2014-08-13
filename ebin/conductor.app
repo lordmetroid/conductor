@@ -24,15 +24,6 @@
 		conductor_system_supervisor,
 		conductor_server_supervisor
 	]},
-	{applications, [
-		kernel,
-		stdlib,
-		sasl,
-		crypto,
-		inets,
-		mochiweb,
-		webmachine
-	]},
 	{mod, {conductor_application, []}}
 ]}.
 

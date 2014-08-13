@@ -13,7 +13,7 @@
 %% @doc Start Conductor web application platform application
 start(_Type, _StartArguments) ->
 	%% Start all application dependencies
-	case start_applications(application:get_key(applications)) of
+	case start_applications([kernel, stdlib, sasl, crypto, inets, mochiweb, webmachine]) of
 		{error, Errors} ->
 			%% Could not start depending application
 			{error, Errors};
@@ -30,7 +30,6 @@ stop(_State) ->
 %% ----------------------------------------------------------------------------
 % Internal Functions
 %% ----------------------------------------------------------------------------
-
 %% @doc Start dependent applications if they are not already started
 start_applications([]) ->
 	%% All applications started
