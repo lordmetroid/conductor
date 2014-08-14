@@ -15,10 +15,8 @@ make(ModulePath) ->
 	ViewRoot = conductor_settings:get(view_root),
 	ControllerRoot = conductor_settings:get(controller_root),
 	
-	ModuleRoot = filename:dirname(ModulePath),
-	
 	%% Assemble module appropiately based on type
-	case ModuleRoot of
+	case filename:dirname(ModulePath) of
 		ProgramRoot ->
 			%% Compile a program
 			ModuleForms = lists:flatten([
@@ -141,7 +139,9 @@ add_view(ModulePath) ->
 			case lists:split(string:str(String, "\n")-1, String) of
 				{"#!" ++ CompilerName, Template} ->
 					%% Compile template
-					Compiler = list_to_atom(string:strip(CompilerName)),
+					Compiler = list_to_atom(
+						string:to_lower(string:strip(CompilerName))
+					),
 					case Compiler:make(Template) of
 						{error, Errors} ->
 							%% Template could not be compiled
