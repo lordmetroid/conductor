@@ -25,7 +25,9 @@ make(ModulePath) ->
 				add_module_attribute(),
 				add_webmachine_lib_attribute(),
 				add_file(ModulePath),
-				add_run_function()
+				add_run_function(),
+				add_data_function(),
+				add_render_function()
 			]),
 			make_module(ModulePath, ModuleForms);
 		ModelRoot ->
