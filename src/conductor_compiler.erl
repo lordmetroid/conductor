@@ -9,14 +9,21 @@
 % @doc Compile a module from specified file path
 %% ----------------------------------------------------------------------------
 make(ModulePath) ->
-	%% Get module location			
+	%% Get module locations
 	ProgramRoot = conductor_settings:get(program_root),
 	ModelRoot = conductor_settings:get(model_root),
 	ViewRoot = conductor_settings:get(view_root),
 	ControllerRoot = conductor_settings:get(controller_root),
-	
+
+	ModuleTypes = [
+		ProgramRoot,
+		ModelRoot,
+		ViewRoot,
+		ControllerRoot
+	],
+
 	%% Assemble module appropiately based on type
-	case filename:dirname(ModulePath) of
+	case discover_type(ModuleTypes, filename:dirname(ModulePath)) of
 		ProgramRoot ->
 			%% Compile a program
 			ModuleForms = lists:flatten([
@@ -55,6 +62,17 @@ make(ModulePath) ->
 				add_render_function()
 			]),
 			make_module(ModulePath, ModuleForms)
+	end.
+
+discover_type([Location | Rest], ModuleRoot) ->
+	%% Find module type based on location
+	case string:rstr(ModuleRoot, Location) of
+		0 ->
+			%% Location was no match
+			discover_type(Rest, ModuleRoot);
+		_Match ->
+			%% Location found
+			Location
 	end.
 
 %% ----------------------------------------------------------------------------
