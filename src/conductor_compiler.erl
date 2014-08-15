@@ -16,10 +16,10 @@ make(ModulePath) ->
 	ControllerRoot = conductor_settings:get(controller_root),
 
 	ModuleTypes = [
-		ProgramRoot,
 		ModelRoot,
 		ViewRoot,
-		ControllerRoot
+		ControllerRoot,
+		ProgramRoot
 	],
 
 	%% Assemble module appropiately based on type
