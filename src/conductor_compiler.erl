@@ -28,6 +28,7 @@ make(ModulePath) ->
 			%% Compile a program
 			ModuleForms = lists:flatten([
 				add_module_attribute(),
+				add_controller_export_attribute(),
 				add_webmachine_lib_attribute(),
 				add_file(ModulePath),
 				add_run_function(),
@@ -55,6 +56,7 @@ make(ModulePath) ->
 			%% Compile a controller
 			ModuleForms = lists:flatten([
 				add_module_attribute(),
+				add_controller_export_attribute(),
 				add_webmachine_lib_attribute(),
 				add_file(ModulePath),
 				add_run_function(),
@@ -113,7 +115,6 @@ add_module_attribute() ->
 			erl_syntax:atom(uuid:uuid_to_string(uuid:get_v4()))
 		])
 	).
-
 %% ----------------------------------------------------------------------------
 % View module code
 %% ----------------------------------------------------------------------------
@@ -210,6 +211,32 @@ add_get_function(Compiler, Template) ->
 %% ----------------------------------------------------------------------------
 % Program, Model and Controller module code
 %% ----------------------------------------------------------------------------
+
+%% ----------------------------------------------------------------------------
+% @spec add_controller_export_attribute() -> syntaxTree()
+% @doc Add the export attribute for model files
+%% ----------------------------------------------------------------------------
+add_controller_export_attribute() ->
+	erl_syntax:revert(
+		%% -export([data/3, render/2, run/3]).
+		erl_syntax:attribute(erl_syntax:atom(export), [
+			erl_syntax:list([
+				erl_syntax:arity_qualifier(
+					erl_syntax:atom(data),
+					erl_syntax:integer(3)
+				),
+				erl_syntax:arity_qualifier(
+					erl_syntax:atom(render),
+					erl_syntax:integer(2)
+				),
+				erl_syntax:arity_qualifier(
+					erl_syntax:atom(run),
+					erl_syntax:integer(3)
+				)
+			])
+		])
+	).
+
 
 %% ----------------------------------------------------------------------------
 % @spec add_webmachine_lib_attribute() -> syntaxTree()
