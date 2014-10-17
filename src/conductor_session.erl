@@ -27,6 +27,7 @@
 	purge_content/0,
 	get_content/0
 ]).
+
 init(_Arguments) ->
 	%% Initalize an empty session manager
 	{ok, []}.

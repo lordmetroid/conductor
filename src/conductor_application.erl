@@ -13,7 +13,8 @@
 %% @doc Start Conductor web application platform application
 start(_Type, _StartArguments) ->
 	%% Start all application dependencies
-	case start_applications([kernel, stdlib, sasl, crypto, inets, mochiweb, webmachine]) of
+	Applications = [kernel, stdlib, sasl, crypto, inets, mochiweb, webmachine],
+	case start_applications(Applications) of
 		{error, Errors} ->
 			%% Could not start depending application
 			{error, Errors};
