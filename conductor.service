@@ -1,5 +1,5 @@
 [Unit]
-Description=Conductor Web Application Server
+Description=Conductor Web Application Server for %I
 
 [Service]
 User=conductor
