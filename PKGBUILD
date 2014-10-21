@@ -7,4 +7,6 @@ url="http://www.monkeyfactory.org"
 license=('MIT')
 depends=('erlang-nox')
 makedepends=('git')
+install=conductor.install
 
+#Create 

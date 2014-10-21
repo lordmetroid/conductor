@@ -5,6 +5,6 @@ Description=Conductor Web Application Server
 User=conductor
 Type=forking
 ExecStart=
+	# Start one conductor program for each configured application
 ExecStop=
-
 
