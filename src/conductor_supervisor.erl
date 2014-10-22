@@ -86,8 +86,6 @@ start_conductor() ->
 % @doc Start the supervisor for Web-server
 %% ----------------------------------------------------------------------------
 start_server() ->
-	%% TODO: Get settings from server settings file provided as argument
-
 	%% Load the web-server settings
 	ServerSettings = [
 		%% Server settings
