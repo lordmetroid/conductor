@@ -32,25 +32,10 @@ start_link() ->
 	end.
 
 %% ----------------------------------------------------------------------------
-% @spec start_supervisors() -> ok 
+% @spec start_supervisors() ->
 % @doc Start the application supervisors under a main supervisor
 %% ----------------------------------------------------------------------------
 start_supervisors() ->
-	%% Get configuration files
-	case init:get_argument(conf) of
-		error ->
-			%% -conf was not specifed, using system default path
-			Servers = filelib:wildcard("/etc/conductor/apps-enabled"),
-			start_supervisors(Servers);
-		{ok, [FilePath]} ->
-			%% Getting server specifications from provided path
-			Servers = filelib:wildcard(FilePath),
-			start_supervisors(Servers)
-	end.
-
-start_supervisors([Server | Rest]) ->
-	%% TODO: Start a set for each server config file provided
-
 	supervisor:start_link({local, ?MODULE}, ?MODULE, {
 		{one_for_all, 10, 3600}, [
 			%% Conductor
@@ -64,12 +49,7 @@ start_supervisors([Server | Rest]) ->
 			permanent, infinity, supervisor, [?MODULE]
 			}
 		]
-	}),
-	?MODULE:start_supervisors(Rest);
-
-start_supervisors([]) ->
-	%% All servers started
-	ok.
+	}).
 
 %% ----------------------------------------------------------------------------
 % @spec start_conductor() ->

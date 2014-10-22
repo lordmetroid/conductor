@@ -19,20 +19,26 @@
 % @doc Read all settings
 %% ----------------------------------------------------------------------------
 init(Filename) ->
-	%% Check if configuration file exist
-	case filelib:last_modified(Filename) of
-		0 ->
-			%% Configuration file not found
+	case init:get_argument(conf) of
+		error ->
+			%% -conf Filename was not specifed at runtime
 			{ok, {[], [], []}};
-		Date ->
-			%% Get settings provided by a configuration file
-			case file:consult(Filename) of
-				{error, Errors} ->
-					%% Could not interpret configuration file
+		{ok, [Filename]} ->
+			%% Check if configuration file exist
+			case filelib:last_modified(Filename) of
+				0 ->
+					%% Configuration file not found
 					{ok, {[], [], []}};
-				{ok, Settings} ->
-					%% Return settings and configuration file
-					{ok, {Settings, Filename, Date}}
+				Date ->
+					%% Get settings provided by a configuration file
+					case file:consult(Filename) of
+						{error, Errors} ->
+							%% Could not interpret configuration file
+							{ok, {[], [], []}};
+						{ok, Settings} ->
+							%% Return settings and configuration file
+							{ok, {Settings, Filename, Date}}
+					end
 			end
 	end.
 	

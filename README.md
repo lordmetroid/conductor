@@ -123,9 +123,4 @@ function_1_name(Arguments, Response) ->
 ```
 
 ## Execution
-By default web application configuration files are read from
-/etc/conductor/apps-enabled it is also possible to specify a custom directory
-from where Conductor shall read the configuration files by using the -conf
-parameter
-
-> erl -pa ebin/ -run conductor [-conf /path/to/webapp-config-files]
+> erl -pa ebin/ -run conductor -conf /path/to/webapp-config-files
