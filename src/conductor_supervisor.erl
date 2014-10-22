@@ -32,10 +32,12 @@ start_link() ->
 	end.
 
 %% ----------------------------------------------------------------------------
-% @spec start_supervisors() -> 
+% @spec start_supervisors(ServerSettings::list()) -> ok 
 % @doc Start the application supervisors under a main supervisor
 %% ----------------------------------------------------------------------------
-start_supervisors() ->
+start_supervisors([Server | Rest]) ->
+	%% TODO: Start a set for each server config file provided
+
 	supervisor:start_link({local, ?MODULE}, ?MODULE, {
 		{one_for_all, 10, 3600}, [
 			%% Conductor
@@ -49,7 +51,12 @@ start_supervisors() ->
 			permanent, infinity, supervisor, [?MODULE]
 			}
 		]
-	}).
+	}),
+	?MODULE:start_supervisors(Rest);
+
+start_supervisors([]) ->
+	%% All servers started
+	ok.
 
 %% ----------------------------------------------------------------------------
 % @spec start_conductor() ->
@@ -86,6 +93,8 @@ start_conductor() ->
 % @doc Start the supervisor for Web-server
 %% ----------------------------------------------------------------------------
 start_server() ->
+	%% TODO: Get settings from server settings file provided as argument
+
 	%% Load the web-server settings
 	ServerSettings = [
 		%% Server settings

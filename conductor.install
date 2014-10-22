@@ -1,7 +1,6 @@
 post_install() {
 	id conductor &>/dev/null || \
-		useradd -r -c "Conductor daemon" -g daemin -d /var/lib/conductor -s /bin/false conductor
-	mkdir -p /var/run/conductor
+		useradd -r -c "Conductor daemon" -g daemon -d /var/lib/conductor -s /bin/false conductor
 	chown -R conductor.daemon /etc/conductor
 	chown -R conductor.daemon /var/{lib,log,run}/conductor
 }
