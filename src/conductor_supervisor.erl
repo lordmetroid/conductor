@@ -42,9 +42,9 @@ start_supervisors() ->
 			%% -conf was not specifed, using system default path
 			Servers = filelib:wildcard("/etc/conductor/apps-enabled"),
 			start_supervisors(Servers);
-		{ok, [Filepath]} ->
+		{ok, [FilePath]} ->
 			%% Getting server specifications from provided path
-			Servers = filelib:wildcard(Filepath),
+			Servers = filelib:wildcard(FilePath),
 			start_supervisors(Servers)
 	end.
 
