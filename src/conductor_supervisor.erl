@@ -40,7 +40,7 @@ start_supervisors() ->
 	case init:get_argument(conf) of
 		error ->
 			%% -conf was not specifed, using system default path
-			Servers = filelib:wildcard("/etc/conductor/sites-enabled"),
+			Servers = filelib:wildcard("/etc/conductor/apps-enabled"),
 			start_supervisors(Servers);
 		{ok, [Filepath]} ->
 			%% Getting server specifications from provided path
