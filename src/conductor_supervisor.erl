@@ -32,9 +32,22 @@ start_link() ->
 	end.
 
 %% ----------------------------------------------------------------------------
-% @spec start_supervisors(ServerSettings::list()) -> ok 
+% @spec start_supervisors() -> ok 
 % @doc Start the application supervisors under a main supervisor
 %% ----------------------------------------------------------------------------
+start_supervisors() ->
+	%% Get configuration files
+	case init:get_argument(conf) of
+		error ->
+			%% -conf was not specifed, using system default path
+			Servers = filelib:wildcard("/etc/conductor/sites-enabled"),
+			start_supervisors(Servers);
+		{ok, [Filepath]} ->
+			%% Getting server specifications from provided path
+			Servers = filelib:wildcard(Filepath),
+			start_supervisors(Servers)
+	end.
+
 start_supervisors([Server | Rest]) ->
 	%% TODO: Start a set for each server config file provided
 
