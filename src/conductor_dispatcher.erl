@@ -20,7 +20,7 @@ service_available(Request,Context) ->
 	conductor_router:execute(Request),
 
 	%% Check HTTP Status Code
-	case conductor_session:get_status_code() of
+	case conductor_response:get_status_code() of
 		500 ->
 			%% Set response header to "500 Internal Server Error"
 			%% TODO: Create response term instead of []
@@ -34,7 +34,7 @@ service_available(Request,Context) ->
 	end.
 
 resource_exists(Request,Context) ->
-	case conductor_session:get_status_code() of
+	case conductor_response:get_status_code() of
 		404 ->
 			%% Set response header to "404 File Not Found" 
 			{false, Request,Context};
@@ -49,7 +49,7 @@ options(Request,Context) ->
 
 content_types_provided(Request,Context) ->
 	%% Set response mimetype
-	MimeType = conductor_session:get_mime_type(),
+	MimeType = conductor_response:get_mime_type(),
 	{[{MimeType, provide_content}], Request,Context}.
 
 %% ----------------------------------------------------------------------------
@@ -58,10 +58,10 @@ content_types_provided(Request,Context) ->
 %% ----------------------------------------------------------------------------
 provide_content(Request,Context) ->
 	%% Get response body content
-	Content = conductor_session:get_content(),
+	Content = conductor_response:get_content(),
 	
-	%% Cleanup current session
-	conductor_session:destroy(),
+	%% Terminate current response
+	conductor_response:terminate(),
 	
 	%% Publish content to client
 	{Content, Request,Context}.
