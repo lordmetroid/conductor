@@ -23,9 +23,10 @@
 	get_status_code/0,
 	set_mime_type/1,
 	get_mime_type/0,
+	
 	add_content/1,
-	purge_content/0,
-	get_content/0
+	get_content/0,
+	purge_content/0
 ]).
 
 init(_Arguments) ->
@@ -145,17 +146,6 @@ handle_call({add_content, Content}, {Client,_}, Responses) ->
 			end
 	end;
 
-handle_call(purge_content, {Client,_}, Responses) ->
-	case lists:keyfind(Client,1, Responses) of
-		false ->
-			%% Response does not exist
-			{reply, error, Responses};
-		{Client, _Request, {_Header,Body}} ->
-			%% Purge all content from response body
-			conductor_response_body:purge_content(Body),
-			{reply, ok, Responses}
-	end;
-
 handle_call(get_content, {Client,_}, Responses) ->
 	case lists:keyfind(Client,1, Responses) of
 		false ->
@@ -167,6 +157,16 @@ handle_call(get_content, {Client,_}, Responses) ->
 			{reply, Content, Responses}
 	end;
 
+handle_call(purge_content, {Client,_}, Responses) ->
+	case lists:keyfind(Client,1, Responses) of
+		false ->
+			%% Response does not exist
+			{reply, error, Responses};
+		{Client, _Request, {_Header,Body}} ->
+			%% Purge all content from response body
+			conductor_response_body:purge_content(Body),
+			{reply, ok, Responses}
+	end;
 
 handle_call(_Event, _From, State) ->
 	{stop, State}.
