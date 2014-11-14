@@ -22,18 +22,18 @@ execute(Request) ->
 			case filelib:is_regular(FilePath) of
 				false ->
 					%% Create "404 File not found" response
-					conductor_session:create_program(Request),
-					conductor_session:set_status_code(404),
+					conductor_response:create_program(Request),
+					conductor_response:set_status_code(404),
 					execute_error();
 				true ->
 					%% Create file response
-					conductor_session:create_file(Request),
-					conductor_session:add_content(FilePath),
-					conductor_session:set_mime_type(FilePath)
+					conductor_response:create_file(Request),
+					conductor_response:add_content(FilePath),
+					conductor_response:set_mime_type(FilePath)
 			end;
 		{ProgramName, ProgramFile} ->
 			%% Create program response
-			conductor_session:create_program(Request),
+			conductor_response:create_program(Request),
 			execute_program(ProgramFile)
 	end.
 
@@ -50,7 +50,7 @@ execute_program(ProgramFile) ->
 		error ->
 			%% Cache unable to provide program
 			%% Create "500 Internal Server Error" response
-			conductor_session:set_status_code(500);
+			conductor_response:set_status_code(500);
 			%% TODO: Create response term
 		{ok, Program} ->
 			case erlang:function_exported(Program, execute, 1) of
@@ -60,11 +60,11 @@ execute_program(ProgramFile) ->
 						"Function execute not found"),
 					
 					%% Create "500 Internal Server Error" response
-					conductor_session:set_status_code(500);
+					conductor_response:set_status_code(500);
 					%% TODO: Create response term
 				true ->
 					%% Execute program
-					Request = conductor_session:get_request(),
+					Request = conductor_response:get_request(),
 					Program:execute(Request)
 			end
 	end.
@@ -81,7 +81,7 @@ execute_error() ->
 				"error_program not specified"),
 			
 			%% Create "500 Internal Server Error" response
-			conductor_session:set_status_code(500);
+			conductor_response:set_status_code(500);
 			%% TODO: Create response term
 		{error_program, ProgramFile} ->
 			execute_program(ProgramFile)
@@ -100,7 +100,7 @@ execute_model(ModelFile, Function, Arguments) ->
 		error ->
 			%% Cache unable to provide model
 			%% Create "500 Internal Server Error" response
-			conductor_session:set_status_code(500);
+			conductor_response:set_status_code(500);
 			%% TODO: Create response term
 		{ok, Model} ->
 			case erlang:function_exported(Model, Function, 2) of
@@ -110,11 +110,11 @@ execute_model(ModelFile, Function, Arguments) ->
 						"Function " ++ atom_to_list(Function) ++ " not found"),
 						
 					%% Create "500 Internal Server Error" response
-					conductor_session:set_status_code(500);
+					conductor_response:set_status_code(500);
 					%% TODO: Create response term
 				true ->
 					%% Execute model
-					Request = conductor_session:get_request(),
+					Request = conductor_response:get_request(),
 					Model:Function(Request, Arguments)
 			end
 	end.
@@ -132,7 +132,7 @@ execute_view(ViewFile, Arguments) ->
 		error ->
 			%% Cache unable to provide view
 			%% Create "500 Internal Server Error" response
-			conductor_session:set_status_code(500);
+			conductor_response:set_status_code(500);
 			%% TODO: Create response term
 		{ok, View} ->
 			case erlang:function_exported(View, get, 0) of
@@ -142,7 +142,7 @@ execute_view(ViewFile, Arguments) ->
 						"Unable to execute uncompiled view"),
 					
 					%% Create "500 Internal Server Error" response
-					conductor_session:set_status_code(500);
+					conductor_response:set_status_code(500);
 					%% TODO: Create response term
 				true ->
 					%% Get view compiler and template
@@ -170,10 +170,10 @@ execute_view(ViewFile, Arguments) ->
 									conductor_log:add(ViewFile, Errors),
 									
 									%% Add rendered content to response body
-									conductor_session:add_content(Content);
+									conductor_response:add_content(Content);
 								{ok, Content} ->
 									%% Add rendered content to response body
-									conductor_session:add_content(Content);									
+									conductor_response:add_content(Content);									
 								_ ->
 									%% Render function does not comply to API
 									conductor_log:add(atom_to_list(Compiler),
@@ -196,7 +196,7 @@ execute_controller(ControllerFile, Function, Arguments)  ->
 		error ->
 			%% Cache unable to provide controller
 			%% Create "500 Internal Server Error" response
-			conductor_session:set_status_code(500);
+			conductor_response:set_status_code(500);
 			%% TODO: Create response term
 		{ok, Controller} ->
 			case erlang:function_exported(Controller, Function, 2) of
@@ -206,11 +206,11 @@ execute_controller(ControllerFile, Function, Arguments)  ->
 						"Function " ++ atom_to_list(Function) ++ " not found"),
 					
 					%% Create "500 Internal Server Error" response
-					conductor_session:set_status_code(500);
+					conductor_response:set_status_code(500);
 					%% TODO: Create response term
 				true ->
 					%% Execute controller
-					Request = conductor_session:get_request(),
+					Request = conductor_response:get_request(),
 					Controller:Function(Request, Arguments)
 			end
 	end.
