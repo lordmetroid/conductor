@@ -15,7 +15,7 @@
 
 	create_file/1,
 	create_program/1,
-	terminate/0,
+	destroy/0,
 	
 	get_request/0,
 
