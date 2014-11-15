@@ -52,7 +52,7 @@ handle_call({create_program, Request},  {Client,_}, Responses) ->
 	%% Add the response to the manager
 	{reply, Client, [{Client, Request, {Header,Body}} | Responses]};
 
-handle_call(terminate, {Client,_}, Responses) ->
+handle_call(destroy, {Client,_}, Responses) ->
 	case lists:keyfind(Client,1, Responses) of
 		false ->
 			%% response does not exist
@@ -199,8 +199,8 @@ create_file(Request) ->
 create_program(Request) ->
 	gen_server:call(?MODULE, {create_program, Request}).
 
-terminate() ->
-	gen_server:call(?MODULE, terminate).
+destroy() ->
+	gen_server:call(?MODULE, destroy).
 
 %% ----------------------------------------------------------------------------
 % Request control functions
