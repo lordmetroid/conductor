@@ -1,4 +1,4 @@
--module(director_supervisor_cache).
+-module(conductor_supervisor_cache).
 
 -behaviour(supervisor).
 -export([
