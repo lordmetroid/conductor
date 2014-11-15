@@ -61,7 +61,7 @@ provide_content(Request,Context) ->
 	Content = conductor_response:get_content(),
 	
 	%% Terminate current response
-	conductor_response:terminate(),
+	conductor_response:destroy(),
 	
 	%% Publish content to client
 	{Content, Request,Context}.
