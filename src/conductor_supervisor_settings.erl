@@ -1,4 +1,4 @@
--module(director_supervisor_settings).
+-module(conductor_supervisor_settings).
 
 -behaviour(supervisor).
 -export([
