@@ -10,6 +10,7 @@
 ]).
 
 init(_Arguments) ->
+	ok.
 
 start_link() ->
 	supervisor:start_link({local, ?MODULE}, ?MODULE, [], []).
