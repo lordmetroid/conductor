@@ -1,6 +1,6 @@
--module(conductor_supervisor_interface).
+-module(conductor_supervisor_system).
 
--behaviour(supervisor).
+-behavior(supervisor).
 -export([
 	init/1
 ]).
@@ -18,28 +18,31 @@
 % @doc Initialize a supervisor with the child specifications arguments
 %% ----------------------------------------------------------------------------
 init(_Arguments) ->
-	%% Load the web-server settings
-	ServerSettings = [
-		%% Server settings
-		{ip, conductor_settings:get(ip)},
-		{port, conductor_settings:get(port)},
-		{log_dir, conductor_settings:get(log_root)},
-
-		%% Resource dispatcher
-		{dispatch, [
-			{['*'], conductor_dispatcher, []}
-		]}
-	],
-
-	{ok, {one_for_one, 10, 3600}, [
-		{webmachine_mochiweb,
-			{webmachine_mochiweb, start, [ServerSettings]},
-			permanent, 5000, worker, dynamic
+	{ok, {one_for_all, 10, 3600}, [
+		%% Conductor settings manager
+		{conductor_settings,
+			{conductor_settings, start_link, []},
+			permanent, brutal_kill, worker, [conductor_settings]
+		},
+		%% Conductor logging manager
+		{conductor_log,
+			{conductor_log, start_link, []},
+			permanent, brutal_kill, worker, [conductor_log]
+		},
+		%% Conductor caching manager
+		{conductor_cache,
+			{conductor_cache, start_link, []},
+			permanent, brutal_kill, worker, [conductor_cache]
+		},
+		%% Conductor response manager
+		{conductor_response,
+			{conductor_response, start_link, []},
+			permanent, brutal_kill, worker, [conductor_response]
 		}
 	]}.
 
 %% ----------------------------------------------------------------------------
-% API 
+% API
 %% ----------------------------------------------------------------------------
 start_link() ->
 	case whereis(?MODULE) of

@@ -14,11 +14,8 @@
 		conductor_router,
 		conductor_settings,
 		conductor_supervisor,
-		conductor_supervisor_cache,
 		conductor_supervisor_interface,
-		conductor_supervisor_log,
-		conductor_supervisor_session,
-		conductor_supervisor_settings
+		conductor_supervisor_system
 	]},
 	{registered, [
 		conductor_cache,
@@ -26,11 +23,8 @@
 		conductor_response,
 		conductor_settings,
 		conductor_supervisor,
-		conductor_supervisor_cache,
 		conductor_supervisor_interface,
-		conductor_supervisor_log,
-		conductor_supervisor_session,
-		conductor_supervisor_settings
+		conductor_supervisor_system
 	]},
 	{mod, {conductor_application, []}}
 ]}.
