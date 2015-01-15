@@ -1,8 +1,13 @@
 {application, conductor, [
 	{description, "Conductor web application platform"},
-	{vsn, "0.1"},
+	{vsn, "2"},
+	(applications, [
+		kernel,
+		stdlib,
+		lager,
+		webmachine
+	]},
 	{modules, [
-		conductor,
 		conductor_application,
 		conductor_cache,
 		conductor_compiler,

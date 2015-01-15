@@ -6,38 +6,52 @@
 ]).
 
 -export([
-	start_link/0,
-	start_supervisors/0,
-	start_conductor/0,
-	start_server/0
+	start/0
 ]).
 
 %% ----------------------------------------------------------------------------
-% @spec init(Arguments) -> {ok, Arguments}
-% @doc Initialize a supervisor with the child specifications arguments
+% Supervisor callbacks
 %% ----------------------------------------------------------------------------
-init(Arguments) ->
-	{ok, Arguments}.
 
-%% ----------------------------------------------------------------------------
-% @spec start_link() -> Result | {error, Reason}
-% @doc Start the conductor application
-%% ----------------------------------------------------------------------------
-start_link() ->
-	case whereis(?MODULE) of
-		undefined ->
-			?MODULE:start_supervisors();
-		Pid ->
-			{error, {already_started, Pid}}
-	end.
+% @doc Initializes a supervisor 
+% @spec
+init(_Arguments) ->
+	initialize_supervisor().
 
-%% ----------------------------------------------------------------------------
-% @spec start_supervisors() ->
-% @doc Start the application supervisors under a main supervisor
-%% ----------------------------------------------------------------------------
-start_supervisors() ->
-	supervisor:start_link({local, ?MODULE}, ?MODULE, {
-		{one_for_all, 10, 3600}, [
+initialize_supervisor() ->
+	{
+		create_supervisor_settings(),
+		create_child_specifications()
+	}.
+
+create_supervisor_settings()
+	{
+		set_restart_strategy(),
+		set_max_restarts(),
+		set_max_restarts_reset_timer()
+	}.
+	
+set_restart_strategy() ->
+	one_for_one. %% Only restart the crashed child
+
+set_max_restarts() ->
+	10.
+
+set_max_restarts_reset_timer() ->
+	3600. %% Seconds
+
+create_child_specificaions() ->
+	[
+		create_conductor_systems_supervisor_child(),
+		create_web_interface_supervisor_child()
+	].
+
+create_conductor_systems_supervisor_child() ->
+
+create_web_interface_supervisor_child() ->
+
+
+
 			%% Conductor
 			{conductor_system_supervisor,
 				{?MODULE, start_conductor, []},
@@ -48,8 +62,56 @@ start_supervisors() ->
 				{?MODULE, start_server, []},
 			permanent, infinity, supervisor, [?MODULE]
 			}
-		]
-	}).
+
+%% ----------------------------------------------------------------------------
+% Module functions
+%% ----------------------------------------------------------------------------
+
+% @doc Start supervisor if it is not already running
+% @spec
+start() ->
+	Result = start_supervisor(),
+	handle_supervisor_start(Result).
+
+start_supervisor() ->
+	Registration = create_supervisor_local_name_registration_argument(),
+	Module = create_supervisor_module_argument(),
+	InitArguments = create_supervisor_init_arguments(),
+	supervisor:start_link(Registration, Module, InitArguments).
+
+create_supervisor_local_name_registration_argument() ->
+	{local, conductor_supervisor}.
+
+create_supervisor_module_argument() ->
+	conductor_supervisor.
+
+create_supervisor_init_arguments() ->
+	[].
+
+handle_supervisor_start({ok, Pid}) ->
+	log_info(conductor_supervisor, {started, Pid}),
+	{ok, Pid};
+handle_supervisor_start(ignore) ->
+	log_info(conductor_supervisor, ignore),
+	ignore;
+handle_supervisor_start({error, Error}) ->
+	log_error(conductor_supervisor, Error),
+	{error, Error}.
+
+log_info(Operation, Information) ->
+	lager: %% TODO
+
+log_error(Opereation, Information)
+	lager: %% TODO
+
+	
+
+
+%% ----------------------------------------------------------------------------
+% @spec start_supervisors() ->
+% @doc Start the application supervisors under a main supervisor
+%% ----------------------------------------------------------------------------
+start_supervisors() ->
 
 %% ----------------------------------------------------------------------------
 % @spec start_conductor() ->
