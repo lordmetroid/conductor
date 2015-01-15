@@ -1,6 +1,9 @@
 # Compiled source
 *.beam
 
+# Backups
+*.swp
+
 # Logs
 *.dump
 
