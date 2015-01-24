@@ -13,21 +13,25 @@
 % @doc Starts the application
 % @spec
 start(_Type, _StartArguments) ->
-	log_info(conductor_application, starting),
+	log_info("Starting Conductor application"),
 	start_application_supervisor().
 
 start_application_supervisor() ->
-	conductor_supervisor:start().
+	conductor_supervisor:start_link().
 
 % @doc Stops the application
 % @spec
 stop(_State) ->
-	log_info(application, stopping),
+	log_info("Stopping Conductor application"),
 	stop_application().
 
 stop_application() ->
 	stop.
 
-log_info(Operation, Information) ->
-	lager:
+%% ----------------------------------------------------------------------------
+% Logging functions
+%% ----------------------------------------------------------------------------
+
+log_info(Message) ->
+	lager:info(Message).
 

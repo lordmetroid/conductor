@@ -6,168 +6,193 @@
 ]).
 
 -export([
-	start/0
+	start_link/0
 ]).
 
 %% ----------------------------------------------------------------------------
 % Supervisor callbacks
 %% ----------------------------------------------------------------------------
 
-% @doc Initializes a supervisor 
-% @spec
+%% ----------------------------------------------------------------------------
+% @spec init(_Arguments) -> {ok, SupervisorSpecifications}
+% @doc Initialize a supervisor 
+%% ----------------------------------------------------------------------------
 init(_Arguments) ->
-	initialize_supervisor().
+	SupervisorSpecifications = create_supervisor_specifications(),
+	{ok, SupervisorSpecifications}.
 
-initialize_supervisor() ->
-	{
-		create_supervisor_settings(),
-		create_child_specifications()
-	}.
+create_supervisor_specifications() ->
+	SupervisorSettings = supervisor_settings(),
+	ChildSpecifications = supervisor_child_specifications(),
+	{SupervisorSettings, ChildSpecifications}.
 
-create_supervisor_settings()
-	{
-		set_restart_strategy(),
-		set_max_restarts(),
-		set_max_restarts_reset_timer()
-	}.
+supervisor_settings() ->
+	RestartStrategy = supervisor_restart_strategy(),
+	MaxRestarts = supervisor_max_restarts(),
+	MaxRestartsResetTimer = supervisor_max_restarts_reset_timer(),
+	{RestartStrategy, MaxRestarts, MaxRestartsResetTimer}.
 	
-set_restart_strategy() ->
-	one_for_one. %% Only restart the crashed child
-
-set_max_restarts() ->
+supervisor_restart_strategy() ->
+	one_for_all. %% Restart all children if one crashes
+supervisor_max_restarts() ->
 	10.
-
-set_max_restarts_reset_timer() ->
+supervisor_max_restarts_reset_timer() ->
 	3600. %% Seconds
 
-create_child_specificaions() ->
-	[
-		create_conductor_systems_supervisor_child(),
-		create_web_interface_supervisor_child()
-	].
 
-create_conductor_systems_supervisor_child() ->
+supervisor_child_specifications() ->
+	SettingsChild = conductor_settings_worker_child(),
+	CacheChild = conductor_cache_worker_child(),
+	ResponseChild = conductor_response_worker_child(),
+	[SettingsChild, CacheChild, ResponseChild].
 
-create_web_interface_supervisor_child() ->
+%% Conductor settings worker 
+conductor_settings_worker_child() ->
+	Id = conductor_settings_worker_id(),
+	Start = conductor_settings_worker_start(),
+	Restart = conductor_settings_worker_restart(),
+	ShutdownTimeout = conductor_settings_worker_shutdown_timeout(),
+	Type = conductor_settings_worker_type(),
+	CallbackModule = conductor_settings_worker_callback_module(),
+	{Id, Start, Restart, ShutdownTimeout, Type, CallbackModule}.
+
+conductor_settings_worker_id() ->
+	conductor_settings_worker.
+conductor_settings_worker_start() ->
+	StartModule = conductor_settings_worker_start_module(),
+	StartFunction = conductor_settings_worker_start_function(),
+	StartArguments = conductor_settings_worker_start_arguments(),
+	{StartModule, StartFunction, StartArguments}.
+
+conductor_settings_worker_start_module() ->
+	conductor_settings.
+conductor_settings_worker_start_function() ->
+	start_link.
+conductor_settings_worker_start_arguments() ->
+	[].
+
+conductor_settings_worker_restart() ->
+	permanent. %% Always restart child
+conductor_settings_worker_shutdown_timeout() ->
+	brutal_kill.
+conductor_settings_worker_type() ->
+	worker.
+conductor_settings_worker_callback_module() ->
+	[conductor_settings].
+
+%% Conductor cache worker 
+conductor_cache_worker_child() ->
+	Id = conductor_cache_worker_id(),
+	Start = conductor_cache_worker_start(),
+	Restart = conductor_cache_worker_restart(),
+	ShutdownTimeout = conductor_cache_worker_shutdown_timeout(),
+	Type = conductor_cache_worker_type(),
+	CallbackModule = conductor_cache_worker_callback_module(),
+	{Id, Start, Restart, ShutdownTimeout, Type, CallbackModule}.
+
+conductor_cache_worker_id() ->
+	conductor_cache_worker.
+conductor_cache_worker_start() ->
+	StartModule = conductor_cache_worker_start_module(),
+	StartFunction = conductor_cache_worker_start_function(),
+	StartArguments = conductor_cache_worker_start_arguments(),
+	{StartModule, StartFunction, StartArguments}.
+
+conductor_cache_worker_start_module() ->
+	conductor_cache.
+conductor_cache_worker_start_function() ->
+	start_link.
+conductor_cache_worker_start_arguments() ->
+	[].
+
+conductor_cache_worker_restart() ->
+	permanent. %% Always restart child
+conductor_cache_worker_shutdown_timeout() ->
+	brutal_kill.
+conductor_cache_worker_type() ->
+	worker.
+conductor_cache_worker_callback_module() ->
+	[conductor_cache].
+
+%% Conductor response worker 
+conductor_response_worker_child() ->
+	Id = conductor_response_worker_id(),
+	Start = conductor_response_worker_start(),
+	Restart = conductor_response_worker_restart(),
+	ShutdownTimeout = conductor_response_worker_shutdown_timeout(),
+	Type = conductor_response_worker_type(),
+	CallbackModule = conductor_response_worker_callback_module(),
+	{Id, Start, Restart, ShutdownTimeout, Type, CallbackModule}.
+
+conductor_response_worker_id() ->
+	conductor_response_worker.
+conductor_response_worker_start() ->
+	StartModule = conductor_response_worker_start_module(),
+	StartFunction = conductor_response_worker_start_function(),
+	StartArguments = conductor_response_worker_start_arguments(),
+	{StartModule, StartFunction, StartArguments}.
+
+conductor_response_worker_start_module() ->
+	conductor_response.
+conductor_response_worker_start_function() ->
+	start_link.
+conductor_response_worker_start_arguments() ->
+	[].
+
+conductor_response_worker_restart() ->
+	permanent. %% Always restart child
+conductor_response_worker_shutdown_timeout() ->
+	brutal_kill.
+conductor_response_worker_type() ->
+	worker.
+conductor_response_worker_callback_module() ->
+	[conductor_response].
 
 
-
-			%% Conductor
-			{conductor_system_supervisor,
-				{?MODULE, start_conductor, []},
-				permanent, infinity, supervisor, [?MODULE]
-			},
-			%% Webmachine
-			{conductor_server_supervisor,
-				{?MODULE, start_server, []},
-			permanent, infinity, supervisor, [?MODULE]
-			}
-
-	% ----------------------------------------------------------------------------
+%% ----------------------------------------------------------------------------
 % Module functions
 %% ----------------------------------------------------------------------------
 
 % @doc Start supervisor if it is not already running
 % @spec
-start() ->
-	Result = start_supervisor(),
+start_link() ->
+	Result = start_link_supervisor(),
 	handle_supervisor_start(Result).
 
-start_supervisor() ->
-	Registration = create_supervisor_local_name_registration_argument(),
-	Module = create_supervisor_module_argument(),
-	InitArguments = create_supervisor_init_arguments(),
-	supervisor:start_link(Registration, Module, InitArguments).
+	start_link_supervisor() ->
+	Name = supervisor_name_registration(),
+	Module = supervisor_module(),
+	InitArguments = supervisor_init_arguments(),
+	supervisor:start_link(Name, Module, InitArguments).
 
-create_supervisor_local_name_registration_argument() ->
+supervisor_name_registration() ->
 	{local, conductor_supervisor}.
-
-create_supervisor_module_argument() ->
+supervisor_module() ->
 	conductor_supervisor.
-
-create_supervisor_init_arguments() ->
+supervisor_init_arguments() ->
 	[].
 
 handle_supervisor_start({ok, Pid}) ->
-	log_info(conductor_supervisor, {started, Pid}),
+	log_info("Conductor supervisor started", Pid),
 	{ok, Pid};
 handle_supervisor_start(ignore) ->
-	log_info(conductor_supervisor, ignore),
+	log_info("Conductor supervisor returned ignore"),
 	ignore;
 handle_supervisor_start({error, Error}) ->
-	log_error(conductor_supervisor, Error),
+	log_error("ERROR: Can not start Conductor supervisor", Error),
 	{error, Error}.
 
-log_info(Operation, Information) ->
-	lager: %% TODO
-
-log_error(Opereation, Information)
-	lager: %% TODO
-
-	
-
-
 %% ----------------------------------------------------------------------------
-% @spec start_supervisors() ->
-% @doc Start the application supervisors under a main supervisor
+% Logging functions
 %% ----------------------------------------------------------------------------
-start_supervisors() ->
 
-%% ----------------------------------------------------------------------------
-% @spec start_conductor() ->
-% @doc Start the supervisor for the Conductor application processes
-%% ----------------------------------------------------------------------------
-start_conductor() ->
-	supervisor:start_link({local, conductor_system_supervisor}, ?MODULE, {
-		{one_for_one, 10, 3600}, [
-			%% Conductor settings
-			{conductor_settings,
-				{conductor_settings, start_link, []},
-				permanent, brutal_kill, worker, [conductor_settings]
-			},
-			%% Conductor cache
-			{conductor_cache,
-				{conductor_cache, start_link, []},
-				permanent, brutal_kill, worker, [conductor_cache]
-			},
-			%% Conductor session manager
-			{conductor_response,
-				{conductor_response, start_link, []},
-				permanent, brutal_kill, worker, [conductor_response]
-			},
-			%% Conductor logging manager
-			{conductor_log,
-				{conductor_log, start_link, []},
-				permanent, brutal_kill, worker, [conductor_log]
-			}
-		]
-	}).
+log_info(Message) ->
+	lager:info(Message).
+log_info(Message, Arguments) ->
+	lager:info(Message, Arguments).
 
-%% ----------------------------------------------------------------------------
-% @spec start_server->
-% @doc Start the supervisor for Web-server
-%% ----------------------------------------------------------------------------
-start_server() ->
-	%% Load the web-server settings
-	ServerSettings = [
-		%% Server settings
-		{ip, conductor_settings:get(ip)},
-		{port, conductor_settings:get(port)},
-		{log_dir, conductor_settings:get(log_root)},
+log_error(Message, Arguments) ->
+	lager:error(Message, Arguments). 
 
-		%% Resource dispatcher
-		{dispatch, [
-			{['*'], conductor_dispatcher, []}
-		]}
-	],
 
-	%% Start the web-server 
-	supervisor:start_link({local, conductor_server_supervisor}, ?MODULE, {
-		{one_for_one, 10, 3600}, [
-			{webmachine_mochiweb,
-				{webmachine_mochiweb, start, [ServerSettings]},
-				permanent, 5000, worker, dynamic
-			}
-		]
-	}).
 
