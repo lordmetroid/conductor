@@ -14,7 +14,11 @@
 % @spec
 start(_Type, _StartArguments) ->
 	log_info("Starting Conductor application"),
+	start_application_dependencies(),
 	start_application_supervisor().
+
+start_application_dependencies() ->
+	application:ensure_all_started(conductor).
 
 start_application_supervisor() ->
 	conductor_supervisor:start_link().

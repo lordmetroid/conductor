@@ -41,42 +41,42 @@ supervisor_max_restarts_reset_timer() ->
 
 
 supervisor_child_specifications() ->
-	SystemsSupervisorChild = conductor_systems_supervisor_child(),
+	ConductorSupervisorChild = conductor_supervisor_child(),
 	WebInterfaceSupervisorChild = conductor_web_interface_supervisor_child(),
-	[SystemsSupervisorChild, WebInterfaceSupervisorChild].
+	[ConductorSupervisorChild, WebInterfaceSupervisorChild].
 
 %% Conductor systems supervisor
-conductor_systems_supervisor_child() ->
-	Id = conductor_systems_supervisor_id(),
-	Start = conductor_systems_supervisor_start(),
-	Restart = conductor_systems_supervisor_restart(),
-	ShutdownTimeout = conductor_systems_supervisor_shutdown_timeout(),
-	Type = conductor_systems_supervisor_type(),
-	CallbackModule = conductor_systems_supervisor_callback_module(),
+conductor_supervisor_child() ->
+	Id = conductor_supervisor_id(),
+	Start = conductor_supervisor_start(),
+	Restart = conductor_supervisor_restart(),
+	ShutdownTimeout = conductor_supervisor_shutdown_timeout(),
+	Type = conductor_supervisor_type(),
+	CallbackModule = conductor_supervisor_callback_module(),
 	{Id, Start, Restart, ShutdownTimeout, Type, CallbackModule}.
 
-conductor_systems_supervisor_id() ->
-	conductor_systems_supervisor.
-conductor_systems_supervisor_start() ->
-	StartModule = conductor_systems_supervisor_start_module(),
-	StartFunction = conductor_systems_supervisor_start_function(),
-	StartArguments = conductor_systems_supervisor_start_arguments(),
+conductor_supervisor_id() ->
+	conductor_supervisor.
+conductor_supervisor_start() ->
+	StartModule = conductor_supervisor_start_module(),
+	StartFunction = conductor_supervisor_start_function(),
+	StartArguments = conductor_supervisor_start_arguments(),
 	{StartModule, StartFunction, StartArguments}.
 
-conductor_systems_supervisor_start_module() ->
+conductor_supervisor_start_module() ->
 	conductor_supervisor.
-conductor_systems_supervisor_start_function() ->
+conductor_supervisor_start_function() ->
 	start_link.
-conductor_systems_supervisor_start_arguments() ->
+conductor_supervisor_start_arguments() ->
 	[].
 
-conductor_systems_supervisor_restart() ->
+conductor_supervisor_restart() ->
 	permanent. %% Always restart child
-conductor_systems_supervisor_shutdown_timeout() ->
+conductor_supervisor_shutdown_timeout() ->
 	infinity.
-conductor_systems_supervisor_type() ->
+conductor_supervisor_type() ->
 	supervisor.
-conductor_systems_supervisor_callback_module() ->
+conductor_supervisor_callback_module() ->
 	[conductor_supervisor].
 
 %% Web interface supervisor
