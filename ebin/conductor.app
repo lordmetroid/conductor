@@ -3,6 +3,9 @@
 	{vsn,"1"},
 
 	{applications, [
+		kernel,
+		stdlib,
+
 		webmachine,
 		lager,
 		mimetypes,
@@ -26,8 +29,16 @@
 		conductor_web_interface_router,
 		conductor_web_interface_supervisor
 	]},
-
-	{registered,[]},
+	{registered, [
+		conductor_application_supervisor,
+		conductor_cache,
+		conductor_response,
+		conductor_response_body,
+		conductor_response_header,
+		conductor_settings,
+		conductor_supervisor,
+		conductor_web_interface_supervisor
+	]},
 
 	{mod, {conductor_application, []}}
 ]}.
