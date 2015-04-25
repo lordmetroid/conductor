@@ -1,4 +1,4 @@
--module(conductor_dispatcher).
+-module(conductor_web_interface).
 
 -export([
 	init/1,

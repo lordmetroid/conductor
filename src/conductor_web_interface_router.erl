@@ -1,4 +1,4 @@
--module(conductor_router).
+-module(conductor_web_interface_router).
 
 -export([
 	execute/1,

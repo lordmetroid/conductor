@@ -9,6 +9,7 @@
 
 # Configuration files
 *.conf
+.rebar/
 
 # Dependencies
 /deps

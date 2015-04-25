@@ -1,4 +1,4 @@
--module(conductor_compiler).
+-module(conductor_cache_compiler).
 
 -export([
 	make/1
