@@ -1,3 +1,5 @@
+%% -*- mode: Erlang; -*-
+
 {application, conductor, [
 	{description,"Conductor web application platform"},
 	{vsn,"1"},
@@ -11,7 +13,7 @@
 		mimetypes,
 		uuid,
 		dynamic_compile,
-
+		
 		symphony
 	]},
 
@@ -42,3 +44,4 @@
 
 	{mod, {conductor_application, []}}
 ]}.
+

@@ -23,6 +23,7 @@ start_application_dependencies() ->
 start_application_supervisor() ->
 	conductor_supervisor:start_link().
 
+
 % @doc Stops the application
 % @spec
 stop(_State) ->
