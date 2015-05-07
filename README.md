@@ -123,4 +123,4 @@ function_1_name(Arguments, Response) ->
 ```
 
 ## Execution
-> erl -pa ebin/ -run conductor -conf /path/to/webapp-config-files
+> ./_rel/conductor/bin/conductor
