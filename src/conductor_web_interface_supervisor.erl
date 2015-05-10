@@ -21,9 +21,8 @@ init(_Arguments) ->
 	%% Load the web-server settings
 	ServerSettings = [
 		%% Server settings
-		{ip, conductor_settings:get(ip)},
-		{port, conductor_settings:get(port)},
-		{log_dir, conductor_settings:get(log_root)},
+		{ip, "127.0.0.1"},
+		{port, 8000}, 
 
 		%% Resource dispatcher
 		{dispatch, [

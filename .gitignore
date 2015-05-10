@@ -1,5 +1,6 @@
 # Compiled source
 *.beam
+_rel/
 
 # Backups
 *.swp
