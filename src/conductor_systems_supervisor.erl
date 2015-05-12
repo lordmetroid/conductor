@@ -16,7 +16,7 @@
 
 %% @doc Initialize a supervisor 
 init(_Arguments) ->
-	{ok, supervisor_configurations(), supervisor_child_specifications()}.
+	{ok, {supervisor_configurations(), supervisor_child_specifications()}}.
 
 supervisor_configurations() ->
 	RestartStrategy = one_for_one, %% Only restart the crashed child
