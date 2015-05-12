@@ -18,30 +18,34 @@
 	]},
 
 	{modules,[
-		conductor_application,
+		conductor,
+		conductor_supervisor,
+
 		conductor_application_supervisor,
+		conductor_settings,
 		conductor_cache,
 		conductor_cache_compiler,
 		conductor_response,
 		conductor_response_body,
 		conductor_response_header,
-		conductor_settings,
-		conductor_supervisor,
-		conductor_web_interface,
-		conductor_web_interface_router,
-		conductor_web_interface_supervisor
+
+		conductor_interface_supervisor,
+		conductor_router_interface,
+		conductor_router
 	]},
 	{registered, [
+		conductor_supervisor,
 		conductor_application_supervisor,
+
+		conductor_settings,
 		conductor_cache,
 		conductor_response,
 		conductor_response_body,
 		conductor_response_header,
-		conductor_settings,
-		conductor_supervisor,
-		conductor_web_interface_supervisor
+
+		conductor_interface_supervisor
 	]},
 
-	{mod, {conductor_application, []}}
+	{mod, {conductor, []}}
 ]}.
 

@@ -22,7 +22,7 @@ supervisor_configurations() ->
 	RestartStrategy = one_for_all,
 	MaxRestarts = 10,
 	MaxRestartsResetTimer = 3600, %% Seconds
-	{RestartStrategy, MaxRestarts, MaxRestartResetTimer}.
+	{RestartStrategy, MaxRestarts, MaxRestartsResetTimer}.
 
 supervisor_child_specifications() ->
 	[
@@ -71,7 +71,7 @@ start_link() ->
 %% ============================================================================
 
 log_supervisor_init({ok, Pid}) ->
-	lager:info("Started Conductor supervisor: ~s", [Pid});
+	lager:info("Started Conductor supervisor: ~s", [Pid]);
 log_supervisor_init(ignore) ->
 	lager:info("Conductor supervisor returned ignore");
 log_supervisor_init({error, Reason}) ->

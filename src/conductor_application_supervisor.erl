@@ -15,15 +15,13 @@
 
 %% @doc Initialize a supervisor 
 init(_Arguments) ->
-	{ok, supervisor_configurations(), supervisor_child_specification()}.
+	{ok, supervisor_configurations(), supervisor_child_specifications()}.
 
 supervisor_configurations() ->
 	RestartStrategy = one_for_one, %% Only restart the crashed child
 	MaxRestarts = 10,
 	MaxRestartsResetTimer = 3600, %% Seconds
 	{RestartStrategy, MaxRestarts, MaxRestartsResetTimer}.
-
-
 
 supervisor_child_specifications() ->
 	[

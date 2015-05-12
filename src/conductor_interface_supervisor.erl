@@ -1,4 +1,4 @@
--module(conductor_web_interface_supervisor).
+-module(conductor_interface_supervisor).
 
 -behaviour(supervisor).
 -export([
