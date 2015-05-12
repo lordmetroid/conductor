@@ -1,4 +1,4 @@
--module(conductor_application_supervisor).
+-module(conductor_systems_supervisor).
 -compile({parser_transform, lager_transform}).
 
 -behavior(supervisor).
@@ -71,8 +71,8 @@ conductor_response_worker() ->
 
 %% @doc
 start_link() ->
-	Name = {local, conductor_application_supervisor},
-	Module = conductor_application_supervisor,
+	Name = {local, conductor_systems_supervisor},
+	Module = conductor_systems_supervisor,
 	Arguments = [],
 
 	Result = supervisor:start_link(Name, Module, Arguments),
@@ -84,9 +84,9 @@ start_link() ->
 %% ============================================================================
 
 log_supervisor_init({ok, Pid}) ->
-	lager:info("Started Conductor application supervisor: ~s", [Pid]);
+	lager:info("Started Conductor systems supervisor: ~s", [Pid]);
 log_supervisor_init(ignore) ->
-	lager:info("Conductor application supervisor returned ignore");
+	lager:warning("Conductor systems supervisor returned ignore");
 log_supervisor_init({error, Reason}) ->
-	lager:error("Could not start Conductor application supervisor: ~s", [Reason]).
+	lager:error("Could not start Conductor systems supervisor: ~s", [Reason]).
 

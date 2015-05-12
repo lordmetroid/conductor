@@ -13,6 +13,7 @@
 
 % @doc Starts the application
 start(_Type, _StartArguments) ->
+lager:info("STARTING"),
 	conductor_supervisor:start_link().
 
 

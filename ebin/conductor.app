@@ -1,5 +1,4 @@
 %% -*- mode: Erlang; -*-
-
 {application, conductor, [
 	{description,"Conductor web application platform"},
 	{vsn,"1"},
@@ -21,7 +20,7 @@
 		conductor,
 		conductor_supervisor,
 
-		conductor_application_supervisor,
+		conductor_systems_supervisor,
 		conductor_settings,
 		conductor_cache,
 		conductor_cache_compiler,
@@ -35,14 +34,12 @@
 	]},
 	{registered, [
 		conductor_supervisor,
-		conductor_application_supervisor,
-
+		conductor_systems_supervisor,
 		conductor_settings,
 		conductor_cache,
 		conductor_response,
 		conductor_response_body,
 		conductor_response_header,
-
 		conductor_interface_supervisor
 	]},
 
