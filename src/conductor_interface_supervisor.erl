@@ -33,7 +33,7 @@ conductor_interface() ->
 	Id = conductor_interface,
 	Module = webmachine_mochiweb,
 	Function = start,
-	Arguments = [conductor_interface_configurations()},
+	Arguments = [conductor_interface_configurations()],
 	Restart = permanent,
 	Timeout = 7200, %% Seconds
 	Type = worker,
@@ -50,11 +50,11 @@ conductor_interface_configurations() ->
 		{dispatch, [
 			{['*'], conductor_router_interface, []}
 		]}
-	],
+	].
 
-%% ----------------------------------------------------------------------------
-% API 
-%% ----------------------------------------------------------------------------
+%% ============================================================================
+%  Module functions
+%% ============================================================================
 start_link() ->
 	Name = {local, conductor_interface_supervisor},
 	Module = conductor_interface_supervisor,

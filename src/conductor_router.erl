@@ -1,4 +1,4 @@
--module(conductor_outer).
+-module(conductor_router).
 
 -export([
 	execute/1,
