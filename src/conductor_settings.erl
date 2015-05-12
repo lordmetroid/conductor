@@ -1,4 +1,5 @@
 -module(conductor_settings).
+-compile({parse_transform, lager_transform}).
 
 -behavior(gen_server).
 -export([
@@ -15,33 +16,40 @@
 	get/1
 ]).
 
-%% ----------------------------------------------------------------------------
-% @doc Read all settings
-%% ----------------------------------------------------------------------------
-init(Filename) ->
+%% ============================================================================
+%  Generic Server callback functions
+%% ============================================================================
+init(_Arguments) ->
 	case init:get_argument(conf) of
 		error ->
-			%% -conf Filename was not specifed at runtime
-			{ok, {[], [], []}};
-		{ok, [Filename]} ->
-			%% Check if configuration file exist
-			case filelib:last_modified(Filename) of
-				0 ->
-					%% Configuration file not found
-					{ok, {[], [], []}};
-				Date ->
-					%% Get settings provided by a configuration file
-					case file:consult(Filename) of
-						{error, Errors} ->
-							%% Could not interpret configuration file
-							{ok, {[], [], []}};
-						{ok, Settings} ->
-							%% Return settings and configuration file
-							{ok, {Settings, Filename, Date}}
-					end
-			end
+			log_conf_not_set_error(),
+			init:stop();
+		{ok, [[FileName]]} ->
+			read_config_file(FileName)
 	end.
-	
+
+read_config_file(FileName) ->
+	case get_file_modified_date(FileName) of
+		not_found ->
+			log_file_not_found_error(FileName),
+			init:stop();
+		Date ->
+			store_configurations(Date, FileName)
+	end.
+
+store_configurations(Date, FileName) ->
+	case file:consult(FileName) of
+		{error, Reason} ->
+			log_file_interpret_error(Reason),
+			init:stop();
+		{ok, Settings} ->
+			{ok, {Settings, Date, FileName}}
+	end.
+
+
+%% ============================================================================
+%% @doc Get 
+%% @spec
 handle_call({get, Parameter}, _From, {Settings, Filename, Date}) ->
 	%% Check if file has been updated
 	case filelib:last_modified(Filename) of
@@ -86,10 +94,31 @@ terminate(_Reason, _State) ->
 code_change(_OldVersion, State, _Extra) ->
 	{ok, State}.
 
-%% ----------------------------------------------------------------------------
-% @spec get_value() -> Value | undefined
-% @doc Get value specified in settings for parameter
-% -----------------------------------------------------------------------------
+
+
+%% ============================================================================
+%  Module functions
+%% ============================================================================
+start_link() ->
+	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+
+get(Parameter) ->
+	gen_server:call(?MODULE, {get, Parameter}).
+
+%% ============================================================================
+%  Helper functions
+%% ============================================================================
+
+%% @doc
+get_file_modified_date(FileName) ->
+	case filelib:last_modified(FileName) of
+		0 ->
+			log_file_not_found_error(FileName),
+			not_found;
+		Date ->
+			Date
+	end.
+
 get_value(Settings, Parameter) ->
 	case lists:keyfind(Parameter,1, Settings) of
 		false ->
@@ -100,12 +129,18 @@ get_value(Settings, Parameter) ->
 			Value
 	end.
 
-%% ----------------------------------------------------------------------------
-% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
-% @doc Start the settings manager 
-% -----------------------------------------------------------------------------
-start_link() ->
-	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+%% ============================================================================
+%  Logging functions
+%% ============================================================================
 
-get(Parameter) ->
-	gen_server:call(?MODULE, {get, Parameter}).
+log_conf_not_set_error() ->
+	lager:error("Could not start Conductor: -conf $CONFIG_FILE not specified").
+
+log_file_not_found_error(FileName) ->
+	lager:warning("Could not find configuration file: ~s", [FileName]).
+
+log_file_interpret_error(Reason) when is_atom(Reason) ->
+	lager:error("Could not interpret configuration file: ~s", [Reason]);
+log_file_interpret_error(Reason) ->
+	Error = file:format_error(Reason),
+	lager:error("Could not interpret configuration file: ~s", [Error]).

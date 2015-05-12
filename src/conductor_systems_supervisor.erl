@@ -1,5 +1,5 @@
 -module(conductor_systems_supervisor).
--compile({parser_transform, lager_transform}).
+-compile({parse_transform, lager_transform}).
 
 -behavior(supervisor).
 -export([
@@ -84,7 +84,7 @@ start_link() ->
 %% ============================================================================
 
 log_supervisor_init({ok, Pid}) ->
-	lager:info("Started Conductor systems supervisor: ~s", [Pid]);
+	lager:info("Started Conductor systems supervisor: ~p", [Pid]);
 log_supervisor_init(ignore) ->
 	lager:warning("Conductor systems supervisor returned ignore");
 log_supervisor_init({error, Reason}) ->
