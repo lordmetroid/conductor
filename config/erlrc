@@ -1,5 +1,0 @@
-# Run the program without shell
--noshell
-
-# For remote access and debugging
--name conductor@127.0.0.1

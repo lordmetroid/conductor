@@ -1,4 +1,5 @@
 -module(conductor_application_supervisor).
+-compile({parser_transform, lager_transform}).
 
 -behavior(supervisor).
 -export([
