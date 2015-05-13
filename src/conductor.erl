@@ -12,10 +12,8 @@
 %% ============================================================================
 
 % @doc Starts the application
-start(_Type, _StartArguments) ->
-lager:info("STARTING"),
+start(_Type, _Arguments) ->
 	conductor_supervisor:start_link().
-
 
 % @doc Stops the application
 stop(_State) ->

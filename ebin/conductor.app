@@ -7,13 +7,10 @@
 		kernel,
 		stdlib,
 
-		webmachine,
 		lager,
-		mimetypes,
-		uuid,
-		dynamic_compile,
-		
-		symphony
+		webmachine,
+
+		mimetypes
 	]},
 
 	{modules,[
