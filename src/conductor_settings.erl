@@ -20,6 +20,19 @@
 %  Generic Server callback functions
 %% ============================================================================
 init(_Arguments) ->
+	ConfigDirectory = get_config_directory(),
+	FileNames = get_config_files(ConfigDirectory),
+
+	case read_config_files(FileNames, []) of
+		[] ->
+			log_no_configurations_error(ConfigDirectory),
+			init:stop();
+		Settings ->
+			{ok, Settings}
+	end.
+
+
+get_config_directory() ->
 	case init:get_argument(conf) of
 		error ->
 			log_conf_not_set_error(),
@@ -31,43 +44,45 @@ init(_Arguments) ->
 check_is_directory(DirectoryName) ->
 	case filelib:is_dir(DirectoryName) of
 		false ->
-			log_conf_not_set_error(),
+			log_conf_not_directory_error(DirectoryName),
 			init:stop();
 		true ->
 			DirectoryName
 	end.
 
 get_config_files(ConfigDirectory) ->
-	case 
-
-
-
-check_config_file(FileName) ->
-	case get_file_modified_date(FileName) of
-		not_found ->
-			log_file_not_found_error(FileName),
-			init:stop();
-		Date ->
-			read_config_file(FileName, Date)
-	end.
-
-read_config_file(FileName, Date) ->
-	case file:consult(FileName) of
+	case file:list_dir_all(ConfigDirectory) of
 		{error, Reason} ->
-			log_file_interpret_error(Reason),
+			log_directory_error(ConfigDirectory, Reason),
 			init:stop();
-		{ok, Settings} ->
-			{ok, {Settings, Date, FileName}}
+		{ok, FileNames} ->
+			FileNames	
 	end.
+
+read_config_files([], Settings) ->
+	Settings;
+read_config_files([FileName | Rest], Settings) ->
+	Configurations = file:consult(FileName),
+	Date = filelib:last_modified(FileName),
+
+	NewSettings = create_settings(FileName, Date, Configurations),
+	read_config_files(Rest, NewSettings ++ Settings).
+
+create_settings(FileName, 0, _Configurations) ->
+	log_file_not_found_error(FileName),
+	[];
+create_settings(FileName, _Date, {error, Reason}) ->
+	log_file_interpret_error(FileName, Reason),
+	[];
+create_settings(FileName, Date, {ok, {Domain, Configurations}}) ->
+	[{Domain, Configurations, FileName, Date}].
+
 
 
 %% ============================================================================
 %% @doc Get a settings value
 %% @spec
-handle_call({get, Parameter}, _From, {Settings, FileName, Date}) ->
-	case 
-
-
+handle_call({get, Parameter}, _From, {Settings, Filename, Date}) ->
 	%% Check if file has been updated
 	case filelib:last_modified(Filename) of
 		0 ->
@@ -126,16 +141,6 @@ get(Parameter) ->
 %  Helper functions
 %% ============================================================================
 
-%% @doc
-get_file_modified_date(FileName) ->
-	case filelib:last_modified(FileName) of
-		0 ->
-			log_file_not_found_error(FileName),
-			not_found;
-		Date ->
-			Date
-	end.
-
 get_value(Settings, Parameter) ->
 	case lists:keyfind(Parameter,1, Settings) of
 		false ->
@@ -153,11 +158,20 @@ get_value(Settings, Parameter) ->
 log_conf_not_set_error() ->
 	lager:error("Could not start Conductor: -conf $CONFIG_DIR not specified").
 
+log_conf_not_directory_error(DirectoryName) ->
+	lager:error("Could not start Conductor: -conf ~s does not specify a directory", [DirectoryName]).
+
+log_no_configurations_error(DirectoryName) ->
+	lager:error("Could not start Conductor: no valid configuration files in ~s", [DirectoryName]).
+
+log_directory_error(ConfigDirectory, Reason) ->
+	lager:error("Could not start Conductor: ~s ~s", [Reason, ConfigDirectory]).
+
 log_file_not_found_error(FileName) ->
 	lager:warning("Could not find configuration file: ~s", [FileName]).
 
-log_file_interpret_error(Reason) when is_atom(Reason) ->
-	lager:error("Could not interpret configuration file: ~s", [Reason]);
-log_file_interpret_error(Reason) ->
+log_file_interpret_error(FileName, Reason) when is_atom(Reason) ->
+	lager:warning("Could not interpret ~s: ~s", [FileName, Reason]);
+log_file_interpret_error(FileName, Reason) ->
 	Error = file:format_error(Reason),
-	lager:error("Could not interpret configuration file: ~s", [Error]).
+	lager:warning("Could not interpret ~s: ~s", [FileName, Error]).
