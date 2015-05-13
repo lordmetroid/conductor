@@ -1,4 +1,4 @@
-%% -*- mode: Erlang; -*-
+%% -*- mode: erlang; -*-
 {application, conductor, [
 	{description,"Conductor web application platform"},
 	{vsn,"1"},

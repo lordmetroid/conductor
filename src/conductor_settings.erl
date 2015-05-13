@@ -24,20 +24,34 @@ init(_Arguments) ->
 		error ->
 			log_conf_not_set_error(),
 			init:stop();
-		{ok, [[FileName]]} ->
-			read_config_file(FileName)
+		{ok, [[DirectoryName]]} ->
+			check_is_directory(DirectoryName)
 	end.
 
-read_config_file(FileName) ->
+check_is_directory(DirectoryName) ->
+	case filelib:is_dir(DirectoryName) of
+		false ->
+			log_conf_not_set_error(),
+			init:stop();
+		true ->
+			DirectoryName
+	end.
+
+get_config_files(ConfigDirectory) ->
+	case 
+
+
+
+check_config_file(FileName) ->
 	case get_file_modified_date(FileName) of
 		not_found ->
 			log_file_not_found_error(FileName),
 			init:stop();
 		Date ->
-			store_configurations(Date, FileName)
+			read_config_file(FileName, Date)
 	end.
 
-store_configurations(Date, FileName) ->
+read_config_file(FileName, Date) ->
 	case file:consult(FileName) of
 		{error, Reason} ->
 			log_file_interpret_error(Reason),
@@ -48,9 +62,12 @@ store_configurations(Date, FileName) ->
 
 
 %% ============================================================================
-%% @doc Get 
+%% @doc Get a settings value
 %% @spec
-handle_call({get, Parameter}, _From, {Settings, Filename, Date}) ->
+handle_call({get, Parameter}, _From, {Settings, FileName, Date}) ->
+	case 
+
+
 	%% Check if file has been updated
 	case filelib:last_modified(Filename) of
 		0 ->
@@ -134,7 +151,7 @@ get_value(Settings, Parameter) ->
 %% ============================================================================
 
 log_conf_not_set_error() ->
-	lager:error("Could not start Conductor: -conf $CONFIG_FILE not specified").
+	lager:error("Could not start Conductor: -conf $CONFIG_DIR not specified").
 
 log_file_not_found_error(FileName) ->
 	lager:warning("Could not find configuration file: ~s", [FileName]).
