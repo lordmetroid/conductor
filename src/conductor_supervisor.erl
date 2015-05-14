@@ -72,8 +72,8 @@ start_link() ->
 %  Logging functions
 %% ============================================================================
 
-log_supervisor_init({ok, Pid}) ->
-	lager:info("Started Conductor supervisor: ~p", [Pid]);
+log_supervisor_init({ok, _Pid}) ->
+	lager:info("Started Conductor supervisor");
 log_supervisor_init(ignore) ->
 	lager:warning("Conductor supervisor returned ignore");
 log_supervisor_init({error, Reason}) ->

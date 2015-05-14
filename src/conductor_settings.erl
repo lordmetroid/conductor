@@ -19,6 +19,8 @@
 %% ============================================================================
 %  Generic Server callback functions
 %% ============================================================================
+
+%% @doc Initial loading of all configurations
 init(_Arguments) ->
 	ConfigDirectory = get_config_directory(),
 	FileNames = get_config_files(ConfigDirectory),
@@ -26,35 +28,19 @@ init(_Arguments) ->
 	case read_config_files(FileNames, []) of
 		[] ->
 			log_no_configurations_error(ConfigDirectory),
-			init:stop();
+			{ok, []};
 		Settings ->
 			{ok, Settings}
 	end.
 
-
 get_config_directory() ->
-	case init:get_argument(conf) of
-		error ->
-			log_conf_not_set_error(),
-			init:stop();
-		{ok, [[DirectoryName]]} ->
-			check_is_directory(DirectoryName)
-	end.
-
-check_is_directory(DirectoryName) ->
-	case filelib:is_dir(DirectoryName) of
-		false ->
-			log_conf_not_directory_error(DirectoryName),
-			init:stop();
-		true ->
-			DirectoryName
-	end.
+	{ok, [[DirectoryName]]} = init:get_argument(conf),
+	DirectoryName.
 
 get_config_files(ConfigDirectory) ->
 	case file:list_dir_all(ConfigDirectory) of
 		{error, Reason} ->
-			log_directory_error(ConfigDirectory, Reason),
-			init:stop();
+			log_directory_error(ConfigDirectory, Reason);
 		{ok, FileNames} ->
 			FileNames	
 	end.
@@ -74,7 +60,7 @@ create_settings(FileName, 0, _Configurations) ->
 create_settings(FileName, _Date, {error, Reason}) ->
 	log_file_interpret_error(FileName, Reason),
 	[];
-create_settings(FileName, Date, {ok, {Domain, Configurations}}) ->
+create_settings(FileName, Date, {ok, [{Domain, Configurations}]}) ->
 	[{Domain, Configurations, FileName, Date}].
 
 
@@ -155,17 +141,11 @@ get_value(Settings, Parameter) ->
 %  Logging functions
 %% ============================================================================
 
-log_conf_not_set_error() ->
-	lager:error("Could not start Conductor: -conf $CONFIG_DIR not specified").
-
-log_conf_not_directory_error(DirectoryName) ->
-	lager:error("Could not start Conductor: -conf ~s does not specify a directory", [DirectoryName]).
-
 log_no_configurations_error(DirectoryName) ->
-	lager:error("Could not start Conductor: no valid configuration files in ~s", [DirectoryName]).
+	lager:warning("Could not find configuration files in ~s", [DirectoryName]).
 
 log_directory_error(ConfigDirectory, Reason) ->
-	lager:error("Could not start Conductor: ~s ~s", [Reason, ConfigDirectory]).
+	lager:waning("Could not access configuration files: ~p ~s", [Reason, ConfigDirectory]).
 
 log_file_not_found_error(FileName) ->
 	lager:warning("Could not find configuration file: ~s", [FileName]).
