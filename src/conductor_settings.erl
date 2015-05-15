@@ -13,7 +13,8 @@
 
 -export([
 	start_link/0,
-	get/1
+	add_file/1,
+	get/2
 ]).
 
 %% ============================================================================
@@ -22,54 +23,113 @@
 
 %% @doc Initial loading of all configurations
 init(_Arguments) ->
-	ConfigDirectory = get_config_directory(),
-	FileNames = get_config_files(ConfigDirectory),
+	settings_init().
 
-	case read_config_files(FileNames, []) of
-		[] ->
-			log_no_configurations_error(ConfigDirectory),
-			{ok, []};
-		Settings ->
-			{ok, Settings}
-	end.
+handle_call({get, Domain, Parameter}, _From, Settings) ->
+	setting_get(Domain, Parameter, Settings);
 
-get_config_directory() ->
-	{ok, [[DirectoryName]]} = init:get_argument(conf),
-	DirectoryName.
+handle_call({add_file, FilePath}, _From, Settings) ->
+	settings_add_file(FilePath, Settings);
 
-get_config_files(ConfigDirectory) ->
-	case file:list_dir_all(ConfigDirectory) of
-		{error, Reason} ->
-			log_directory_error(ConfigDirectory, Reason);
-		{ok, FileNames} ->
-			FileNames	
-	end.
+handle_call(_Event, _From, State) ->
+	{stop, State}.
 
-read_config_files([], Settings) ->
-	Settings;
-read_config_files([FileName | Rest], Settings) ->
-	Configurations = file:consult(FileName),
-	Date = filelib:last_modified(FileName),
+handle_cast(_Event, State) ->
+	{stop, State}.
 
-	NewSettings = create_settings(FileName, Date, Configurations),
-	read_config_files(Rest, NewSettings ++ Settings).
+handle_info(_Information, State) ->
+	{stop, State}.
 
-create_settings(FileName, 0, _Configurations) ->
-	log_file_not_found_error(FileName),
-	[];
-create_settings(FileName, _Date, {error, Reason}) ->
-	log_file_interpret_error(FileName, Reason),
-	[];
-create_settings(FileName, Date, {ok, [{Domain, Configurations}]}) ->
-	[{Domain, Configurations, FileName, Date}].
+terminate(_Reason, _State) ->
+	ok.
 
-
+code_change(_OldVersion, State, _Extra) ->
+	{ok, State}.
 
 %% ============================================================================
-%% @doc Get a settings value
+%  Business functions
+%% ============================================================================
+
+%% @doc Read and use the initial settings 
+%% @spec settings_init() -> {ok, Settings}
+settings_init() ->
+	get_config_directory().
+
+get_config_directory() ->
+	case init:get_argument(conf) of
+		error ->
+			log_conf_not_set_error(),
+			{ok, []};
+		{ok, [[DirectoryPath]]} ->
+			check_conf_is_directory(DirectoryPath)
+	end.
+
+check_conf_is_directory(DirectoryPath) ->
+	case filelib:is_dir(DirectoryPath) of
+		false ->
+			log_conf_not_directory_error(DirectoryPath),
+			{ok, []};
+		true ->
+			get_config_files(DirectoryPath)
+	end.
+
+get_config_files(DirectoryPath) ->
+	case file:list_dir_all(DirectoryPath) of
+		{error, Reason} ->
+			log_directory_error(DirectoryPath, Reason),
+			{ok, []};
+		{ok, FileNames} ->
+			read_config_files(DirectoryPath, FileNames, [])
+	end.
+
+read_config_files(DirectoryPath, [], []) ->
+	log_no_configurations_error(DirectoryPath),
+	{ok, {DirectoryPath, []}};
+read_config_files(DirectoryPath, [], Settings) ->
+	{ok, {DirectoryPath, Settings}};
+read_config_files(DirectoryPath, [FileName | Rest], Settings) ->
+	FilePath = filename:join(DirectoryPath, FileName),
+
+	Configurations = file:consult(FilePath),
+	Date = filelib:last_modified(FilePath),
+
+	NewSettings = create_settings(FilePath, Date, Configurations),
+	read_config_files(DirectoryPath, Rest, NewSettings ++ Settings).
+
+
+create_settings(FilePath, 0, _Configurations) ->
+	log_file_not_found_error(FilePath),
+	[];
+create_settings(FilePath, _Date, {error, Reason}) ->
+	log_file_interpret_error(FilePath, Reason),
+	[];
+create_settings(FilePath, Date, {ok, [{Domain, Configurations}]}) ->
+	[{Domain, Configurations, FilePath, Date}].
+
+%% ============================================================================
+%% @doc
 %% @spec
-handle_call({get, Parameter}, _From, {Settings, Filename, Date}) ->
-	%% Check if file has been updated
+settings_get(Domain, Parameter, {DirectoryPath, Settings}) ->
+  	case lists:keyfind(Domain, 1, Settings) of
+		false ->
+			get_config_files(DirectoryPath);
+
+		{Domain, Configurations, FilePath, Date} ->
+			check_settings_updates(Domain, Configurations, FilePath, Date)
+	end.
+
+check_settings_updates(Domain, Configurations, FilePath, Date) ->
+	case filelib:last_modified(FilePath) of
+		0 ->
+			
+		Date ->
+
+		NewDate ->
+	end.
+
+
+
+
 	case filelib:last_modified(Filename) of
 		0 ->
 			%% File not found, continue to use old settings
@@ -96,37 +156,6 @@ handle_call({get, Parameter}, _From, {Settings, Filename, Date}) ->
 			end
 	end;
 
-
-handle_call(_Event, _From, State) ->
-	{stop, State}.
-
-handle_cast(_Event, State) ->
-	{stop, State}.
-
-handle_info(_Information, State) ->
-	{stop, State}.
-
-terminate(_Reason, _State) ->
-	ok.
-
-code_change(_OldVersion, State, _Extra) ->
-	{ok, State}.
-
-
-
-%% ============================================================================
-%  Module functions
-%% ============================================================================
-start_link() ->
-	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
-
-get(Parameter) ->
-	gen_server:call(?MODULE, {get, Parameter}).
-
-%% ============================================================================
-%  Helper functions
-%% ============================================================================
-
 get_value(Settings, Parameter) ->
 	case lists:keyfind(Parameter,1, Settings) of
 		false ->
@@ -137,21 +166,43 @@ get_value(Settings, Parameter) ->
 			Value
 	end.
 
+
+%% ============================================================================
+%  Module functions
+%% ============================================================================
+
+%% @doc Start the settings server and read the intial settings
+start_link() ->
+	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+
+%% @doc Hot plug a configuration file
+add_file(FilePath) ->
+	gen_server:call(?MODULE, {add_file, FilePath}).
+
+%% @doc Get a settings parameter
+get(Domain, Parameter) ->
+	gen_server:call(?MODULE, {get, Parameter}).
+
 %% ============================================================================
 %  Logging functions
 %% ============================================================================
+log_conf_not_set_error() ->
+	lager:warning("-conf $CONFIG_DIRECTORY not specified").
 
-log_no_configurations_error(DirectoryName) ->
-	lager:warning("Could not find configuration files in ~s", [DirectoryName]).
+log_conf_not_directory_error(DirectoryPath) ->
+	lager:warning("-conf ~s does not specify a directory", [DirectoryPath]).
 
-log_directory_error(ConfigDirectory, Reason) ->
-	lager:waning("Could not access configuration files: ~p ~s", [Reason, ConfigDirectory]).
+log_no_configurations_error(DirectoryPath) ->
+	lager:warning("Found no configuration files in ~s", [DirectoryPath]).
 
-log_file_not_found_error(FileName) ->
-	lager:warning("Could not find configuration file: ~s", [FileName]).
+log_directory_error(DirectoryPath, Reason) ->
+	lager:waning("Could not access ~s: ~s", [DirectoryPath, Reason]).
 
-log_file_interpret_error(FileName, Reason) when is_atom(Reason) ->
-	lager:warning("Could not interpret ~s: ~s", [FileName, Reason]);
-log_file_interpret_error(FileName, Reason) ->
+log_file_not_found_error(FilePath) ->
+	lager:warning("Could not find configuration file: ~s", [FilePath]).
+
+log_file_interpret_error(_FilePath, Reason) when is_atom(Reason) ->
+	no_log;
+log_file_interpret_error(FilePath, Reason) ->
 	Error = file:format_error(Reason),
-	lager:warning("Could not interpret ~s: ~s", [FileName, Error]).
+	lager:warning("Could not interpret ~s: ~s", [FilePath, Error]).

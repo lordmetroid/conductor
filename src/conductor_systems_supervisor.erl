@@ -75,18 +75,5 @@ start_link() ->
 	Module = conductor_systems_supervisor,
 	Arguments = [],
 
-	Result = supervisor:start_link(Name, Module, Arguments),
-	log_supervisor_init(Result),
-	Result.
-
-%% ============================================================================
-%  Logging functions
-%% ============================================================================
-
-log_supervisor_init({ok, _Pid}) ->
-	lager:info("Started Conductor systems supervisor");
-log_supervisor_init(ignore) ->
-	lager:warning("Conductor systems supervisor returned ignore");
-log_supervisor_init({error, Reason}) ->
-	lager:error("Could not start Conductor systems supervisor: ~s", [Reason]).
+	supervisor:start_link(Name, Module, Arguments).
 
