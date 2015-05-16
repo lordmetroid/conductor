@@ -127,20 +127,35 @@ get(Domain, Parameter) ->
 settings_get(Domain, Parameter, {DirectoryPath, Settings}) ->
   	case lists:keyfind(Domain, 1, Settings) of
 		false ->
-
-		 Configurations ->
-			get_config_updates(Paramter, Configurations, DirectoryPath)
+			
+		 {Domain, Values, FilePath, Date} ->
+			get_config_updates(Paramter, Values, )
 	end.
 
-get_config_updates(Parameter, Configurations, DirectoryPath) ->
+get_config_updates(Parameter, Values, ) ->
 	case filelib:last_modified(FilePath) of
 		0 ->
-		Date ->
 			
+		Date ->
+			get_value(Parameter, Values, FilePath);
 		NewDate ->
+			get_new_configurations(FilePath)
+
 	end.
 
+get_new_configurations(FilePath) ->
+	case file:consult(FilePath) of
 
+
+
+get_value(Parameter, Values, FilePath) ->
+	case lists:keyfind(Parameter, 1, Configurations) of
+		false ->
+			log_no_value(Parameter, FilePath),
+			undefined;
+		{Parameter, Value} ->
+			Value;
+	end.
 
 
 
@@ -167,3 +182,7 @@ log_file_interpret_error(_FilePath, Reason) when is_atom(Reason) ->
 log_file_interpret_error(FilePath, Reason) ->
 	Error = file:format_error(Reason),
 	lager:warning("Could not interpret ~s: ~s", [FilePath, Error]).
+
+log_no_value(Parameter, FilePath) ->
+	lager:warning("Parameter ~s is not defined in ~s", [Parameter, FilePath]).
+	
