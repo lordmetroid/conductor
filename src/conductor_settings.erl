@@ -46,9 +46,16 @@ terminate(_Reason, _State) ->
 code_change(_OldVersion, State, _Extra) ->
 	{ok, State}.
 
+
+
+
 %% ============================================================================
-%  Business functions
+%  Module functions
 %% ============================================================================
+
+%% @doc Start the settings server and read the intial settings
+start_link() ->
+	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 %% @doc Read and use the initial settings 
 %% @spec settings_init() -> {ok, Settings}
@@ -106,75 +113,6 @@ create_settings(FilePath, _Date, {error, Reason}) ->
 create_settings(FilePath, Date, {ok, [{Domain, Configurations}]}) ->
 	[{Domain, Configurations, FilePath, Date}].
 
-%% ============================================================================
-%% @doc
-%% @spec
-settings_get(Domain, Parameter, {DirectoryPath, Settings}) ->
-  	case lists:keyfind(Domain, 1, Settings) of
-		false ->
-			get_config_files(DirectoryPath);
-
-		{Domain, Configurations, FilePath, Date} ->
-			check_settings_updates(Domain, Configurations, FilePath, Date)
-	end.
-
-check_settings_updates(Domain, Configurations, FilePath, Date) ->
-	case filelib:last_modified(FilePath) of
-		0 ->
-			
-		Date ->
-
-		NewDate ->
-	end.
-
-
-
-
-	case filelib:last_modified(Filename) of
-		0 ->
-			%% File not found, continue to use old settings
-			Value = get_value(Settings, Parameter),
-			{reply, Value, {Settings, Filename, Date}};			
-		Date ->
-			%% Configuration file is not changed, get value from settings
-			Value = get_value(Settings, Parameter),
-			{reply, Value, {Settings, Filename, Date}};
-		NewDate ->
-			%% Configuration file has been updated
-			case file:consult(Filename) of
-				{error, Errors} ->
-					%% Could not interpret updated configuration file
-					conductor_log:add(Filename, "Could not be interpreted"),
-					
-					%% Use old settings until configuration file is corrected
-					Value = get_value(Settings, Parameter),
-					{reply, Value, {Settings, Filename, NewDate}};		
-				{ok, UpdatedSettings} ->
-					%% Get value from updated configuration file
-					Value = get_value(UpdatedSettings, Parameter),
-					{reply, Value, {UpdatedSettings, Filename, NewDate}}
-			end
-	end;
-
-get_value(Settings, Parameter) ->
-	case lists:keyfind(Parameter,1, Settings) of
-		false ->
-			%% Parameter not found
-			undefined;
-		{Parameter, Value} ->
-			%% Return value
-			Value
-	end.
-
-
-%% ============================================================================
-%  Module functions
-%% ============================================================================
-
-%% @doc Start the settings server and read the intial settings
-start_link() ->
-	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
-
 %% @doc Hot plug a configuration file
 add_file(FilePath) ->
 	gen_server:call(?MODULE, {add_file, FilePath}).
@@ -182,6 +120,29 @@ add_file(FilePath) ->
 %% @doc Get a settings parameter
 get(Domain, Parameter) ->
 	gen_server:call(?MODULE, {get, Parameter}).
+
+%% ============================================================================
+%% @doc
+%% @spec
+settings_get(Domain, Parameter, {DirectoryPath, Settings}) ->
+  	case lists:keyfind(Domain, 1, Settings) of
+		false ->
+
+		 Configurations ->
+			get_config_updates(Paramter, Configurations, DirectoryPath)
+	end.
+
+get_config_updates(Parameter, Configurations, DirectoryPath) ->
+	case filelib:last_modified(FilePath) of
+		0 ->
+		Date ->
+			
+		NewDate ->
+	end.
+
+
+
+
 
 %% ============================================================================
 %  Logging functions
