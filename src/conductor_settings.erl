@@ -31,8 +31,8 @@ handle_call({set_directory, Path}, _From, Settings) ->
 	{reply, ok, NewSettings};
 
 handle_call({get, Domain, Argument}, _From, Settings) ->
-	Value = settings_get(Domain, Argument, Settings),
-	{reply, Value, Settings};
+	{NewSettings, Value} = settings_get(Domain, Argument, Settings),
+	{reply, Value, NewSettings};
 
 handle_call(_Event, _From, State) ->
 	{stop, State}.
@@ -104,25 +104,8 @@ get_config_files(Path) ->
 			log_directory_error(Path, Reason),
 			[];
 		{ok, FileNames} ->
-			read_config_files(Path, FileNames, [])
+			read_config_files(Path, FileNames, [], [])
 	end.
-
-read_config_files(Path, [], []) ->
-	log_no_configurations_error(Path),
-	[];
-read_config_files(Path, [], Settings) ->
-	ets:insert(conductor_settings, {conf, Path}),
-	Settings;
-read_config_files(Path, [FileName | Rest], Settings) ->
-	FilePath = filename:join(Path, FileName),
-
-	FileContent = file:consult(FilePath),
-	Date = filelib:last_modified(FilePath),
-
-	Setting = create_setting(FilePath, Date, FileContent),
-
-	read_config_files(Path, Rest, Setting ++ Settings).
-
 
 
 %% ============================================================================
@@ -146,16 +129,84 @@ get_new_config_files(Path, Settings) ->
 			log_directory_error(Path, Reason),
 			Settings;
 		{ok, FileNames} ->
-			read_new_config_files(Path, FileNames, Settings, [])
+			read_config_files(Path, FileNames, Settings, [])
 	end.
 
-read_new_config_files(Path, [], Settings, []) ->
+
+%% ============================================================================
+%% @doc Get a settings parameter
+%% @spec get(Domain::string(), Argument::atom()) -> Value::term() | undefined
+get(Domain, Argument) ->
+	gen_server:call(?MODULE, {get, Domain, Argument}).
+
+settings_get(Domain, Argument, Settings) ->
+	case get_domain_configurations(Domain, Settings) of
+		{NewSettings, undefined} ->
+			log_undefined_domain(Domain),
+			{NewSettings, undefined};
+		{NewSettings, Values} ->
+			Value = get_value(Argument, Values),
+			{NewSettings, Value}
+	end.
+
+get_domain_configurations(Domain, Settings) ->
+	case lists:keyfind(Domain, 1, Settings) of
+		false ->
+			update_configurations(Settings, undefined);
+		Setting ->
+			check_config_file_updates(Setting, Settings)
+	end.
+
+check_config_file_updates({_Domain, Values, FilePath, Date}, Settings) ->
+	case filelib:last_modified(FilePath) of
+		0 ->
+			update_configurations(Settings, Values);
+		Date ->
+			{Settings, Values};
+		_NewDate ->
+			update_configurations(Settings, Values)
+	end.
+
+
+update_configurations(Settings, Values) ->
+	case ets:lookup(conductor_settings, conf) of
+		[] ->
+			log_conf_not_set_error(),
+			{Settings, Values};	
+		[{conf, Path}] ->
+			get_updated_config_files(Path, Settings, Values)
+	end.
+
+get_updated_config_files(Path, Settings, Values) ->
+	case file:list_dir_all(Path) of
+		{error, Reason} ->
+			log_directory_error(Path, Reason),
+			{Settings, Values};
+		{ok, FileNames} ->
+			NewSettings = read_config_files(Path, FileNames, Settings, []),
+			{NewSettings, Values}
+	end.
+
+get_value(Argument, Values) ->
+	case lists:keyfind(Argument, 1, Values) of
+		false ->
+			log_undefined_value(Argument),
+			undefined;
+		Value ->
+			Value
+	end.
+
+%% ============================================================================
+%  Helper functions
+%% ============================================================================
+
+read_config_files(Path, [], Settings, []) ->
 	log_no_configurations_error(Path),
 	Settings;
-read_new_config_files(Path, [], _Settings, NewSettings) ->
+read_config_files(Path, [], _Settings, NewSettings) ->
 	ets:insert(conductor_settings, {conf, Path}),
 	NewSettings;
-read_new_config_files(Path, [FileName | Rest], _Settings, NewSettings) ->
+read_config_files(Path, [FileName | Rest], Settings, NewSettings) ->
 	FilePath = filename:join(Path, FileName),
 
 	FileContent = file:consult(FilePath),
@@ -163,22 +214,7 @@ read_new_config_files(Path, [FileName | Rest], _Settings, NewSettings) ->
 
 	Setting = create_setting(FilePath, Date, FileContent),
 
-	read_config_files(Path, Rest, Setting ++ NewSettings).
-
-
-
-%% ============================================================================
-%% @doc Get a settings parameter
-%% @spec get(Domain::string(), Parameter::atom) -> Value::term() | undefined
-get(Domain, Parameter) ->
-	gen_server:call(?MODULE, {get, Domain, Parameter}).
-
-settings_get(Domain, Parameter, {Path, Settings}) ->
-	ok.
-
-%% ============================================================================
-%  Helper functions
-%% ============================================================================
+	read_config_files(Path, Rest, Settings, Setting ++ NewSettings).
 
 create_setting(FilePath, 0, _FileContent) ->
 	log_file_not_found_error(FilePath),
@@ -216,6 +252,8 @@ log_file_interpret_error(FilePath, Reason) ->
 	Error = file:format_error(Reason),
 	lager:warning("Could not interpret ~s: ~s", [FilePath, Error]).
 
-log_no_value(Parameter, FilePath) ->
-	lager:warning("Parameter ~s is not defined in ~s", [Parameter, FilePath]).
-	
+log_undefined_domain(Domain) ->
+	lager:warning("Could not find any configuration file for ~s", [Domain]).
+
+log_undefined_value(Argument) ->
+	lager:warning("Could not find any value for ~s", [Argument]).
