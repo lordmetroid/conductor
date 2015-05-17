@@ -13,7 +13,7 @@
 
 -export([
 	start_link/0,
-	add_file/1,
+	set_directory/1,
 	get/2
 ]).
 
@@ -23,13 +23,16 @@
 
 %% @doc Initial loading of all configurations
 init(_Arguments) ->
-	settings_init().
+	Settings = settings_init(),
+	{ok, Settings}.
 
-handle_call({get, Domain, Parameter}, _From, Settings) ->
-	setting_get(Domain, Parameter, Settings);
+handle_call({set_directory, Path}, _From, Settings) ->
+	NewSettings = settings_set_directory(Path, Settings),
+	{reply, ok, NewSettings};
 
-handle_call({add_file, FilePath}, _From, Settings) ->
-	settings_add_file(FilePath, Settings);
+handle_call({get, Domain, Argument}, _From, Settings) ->
+	Value = settings_get(Domain, Argument, Settings),
+	{reply, Value, Settings};
 
 handle_call(_Event, _From, State) ->
 	{stop, State}.
@@ -60,104 +63,131 @@ start_link() ->
 %% @doc Read and use the initial settings 
 %% @spec settings_init() -> {ok, Settings}
 settings_init() ->
-	get_config_directory().
+	case ets:info(condcutor_settings) of
+		undefined ->
+			ets:new(conductor_settings, [set, named_table]),
+			get_conf_argument();
+		_Exists ->
+			get_conf_argument()
+	end.
 
-get_config_directory() ->
+
+get_conf_argument() ->
+	case ets:lookup(conductor_settings, conf) of
+		[] ->
+			add_conf_argument();
+		[{conf, Path}] ->
+			check_conf_is_directory(Path)
+	end.
+				
+add_conf_argument() ->
 	case init:get_argument(conf) of
 		error ->
 			log_conf_not_set_error(),
-			{ok, []};
-		{ok, [[DirectoryPath]]} ->
-			check_conf_is_directory(DirectoryPath)
+			[];
+		{ok, [[Path]]} ->
+			check_conf_is_directory(Path)
 	end.
 
-check_conf_is_directory(DirectoryPath) ->
-	case filelib:is_dir(DirectoryPath) of
+check_conf_is_directory(Path) ->
+	case filelib:is_dir(Path) of
 		false ->
-			log_conf_not_directory_error(DirectoryPath),
-			{ok, []};
+			log_conf_not_directory_error(Path),
+			[];		
 		true ->
-			get_config_files(DirectoryPath)
+			get_config_files(Path)
 	end.
 
-get_config_files(DirectoryPath) ->
-	case file:list_dir_all(DirectoryPath) of
+get_config_files(Path) ->
+	case file:list_dir_all(Path) of
 		{error, Reason} ->
-			log_directory_error(DirectoryPath, Reason),
-			{ok, []};
+			log_directory_error(Path, Reason),
+			[];
 		{ok, FileNames} ->
-			read_config_files(DirectoryPath, FileNames, [])
+			read_config_files(Path, FileNames, [])
 	end.
 
-read_config_files(DirectoryPath, [], []) ->
-	log_no_configurations_error(DirectoryPath),
-	{ok, {DirectoryPath, []}};
-read_config_files(DirectoryPath, [], Settings) ->
-	{ok, {DirectoryPath, Settings}};
-read_config_files(DirectoryPath, [FileName | Rest], Settings) ->
-	FilePath = filename:join(DirectoryPath, FileName),
+read_config_files(Path, [], []) ->
+	log_no_configurations_error(Path),
+	[];
+read_config_files(Path, [], Settings) ->
+	ets:insert(conductor_settings, {conf, Path}),
+	Settings;
+read_config_files(Path, [FileName | Rest], Settings) ->
+	FilePath = filename:join(Path, FileName),
 
-	Configurations = file:consult(FilePath),
+	FileContent = file:consult(FilePath),
 	Date = filelib:last_modified(FilePath),
 
-	NewSettings = create_settings(FilePath, Date, Configurations),
-	read_config_files(DirectoryPath, Rest, NewSettings ++ Settings).
+	Setting = create_setting(FilePath, Date, FileContent),
+
+	read_config_files(Path, Rest, Setting ++ Settings).
 
 
-create_settings(FilePath, 0, _Configurations) ->
-	log_file_not_found_error(FilePath),
-	[];
-create_settings(FilePath, _Date, {error, Reason}) ->
-	log_file_interpret_error(FilePath, Reason),
-	[];
-create_settings(FilePath, Date, {ok, [{Domain, Configurations}]}) ->
-	[{Domain, Configurations, FilePath, Date}].
-
-%% @doc Hot plug a configuration file
-add_file(FilePath) ->
-	gen_server:call(?MODULE, {add_file, FilePath}).
-
-%% @doc Get a settings parameter
-get(Domain, Parameter) ->
-	gen_server:call(?MODULE, {get, Parameter}).
 
 %% ============================================================================
-%% @doc
-%% @spec
-settings_get(Domain, Parameter, {DirectoryPath, Settings}) ->
-  	case lists:keyfind(Domain, 1, Settings) of
+%% @doc Set and use a new configuration directory
+%% @spec set_directory(NewPath::string()) -> Settings
+set_directory(Path) ->
+	gen_server:call(?MODULE, {set_directory, Path}).
+
+settings_set_directory(Path, Settings) ->
+	case filelib:is_dir(Path) of
 		false ->
-			
-		 {Domain, Values, FilePath, Date} ->
-			get_config_updates(Paramter, Values, )
+			log_not_a_directory_error(Path),
+			Settings;
+		true ->
+			get_new_config_files(Path, Settings)
 	end.
 
-get_config_updates(Parameter, Values, ) ->
-	case filelib:last_modified(FilePath) of
-		0 ->
-			
-		Date ->
-			get_value(Parameter, Values, FilePath);
-		NewDate ->
-			get_new_configurations(FilePath)
-
+get_new_config_files(Path, Settings) ->
+	case file:list_dir_all(Path) of
+		{error, Reason} ->
+			log_directory_error(Path, Reason),
+			Settings;
+		{ok, FileNames} ->
+			read_new_config_files(Path, FileNames, Settings, [])
 	end.
 
-get_new_configurations(FilePath) ->
-	case file:consult(FilePath) of
+read_new_config_files(Path, [], Settings, []) ->
+	log_no_configurations_error(Path),
+	Settings;
+read_new_config_files(Path, [], _Settings, NewSettings) ->
+	ets:insert(conductor_settings, {conf, Path}),
+	NewSettings;
+read_new_config_files(Path, [FileName | Rest], _Settings, NewSettings) ->
+	FilePath = filename:join(Path, FileName),
+
+	FileContent = file:consult(FilePath),
+	Date = filelib:last_modified(FilePath),
+
+	Setting = create_setting(FilePath, Date, FileContent),
+
+	read_config_files(Path, Rest, Setting ++ NewSettings).
 
 
 
-get_value(Parameter, Values, FilePath) ->
-	case lists:keyfind(Parameter, 1, Configurations) of
-		false ->
-			log_no_value(Parameter, FilePath),
-			undefined;
-		{Parameter, Value} ->
-			Value;
-	end.
+%% ============================================================================
+%% @doc Get a settings parameter
+%% @spec get(Domain::string(), Parameter::atom) -> Value::term() | undefined
+get(Domain, Parameter) ->
+	gen_server:call(?MODULE, {get, Domain, Parameter}).
 
+settings_get(Domain, Parameter, {Path, Settings}) ->
+	ok.
 
+%% ============================================================================
+%  Helper functions
+%% ============================================================================
+
+create_setting(FilePath, 0, _FileContent) ->
+	log_file_not_found_error(FilePath),
+	[];
+create_setting(FilePath, _Date, {error, Reason}) ->
+	log_file_interpret_error(FilePath, Reason),
+	[];
+create_setting(FilePath, Date, {ok, [{Domain, Values}]}) ->
+	[{Domain, Values, FilePath, Date}].
 
 %% ============================================================================
 %  Logging functions
@@ -165,14 +195,17 @@ get_value(Parameter, Values, FilePath) ->
 log_conf_not_set_error() ->
 	lager:warning("-conf $CONFIG_DIRECTORY not specified").
 
-log_conf_not_directory_error(DirectoryPath) ->
-	lager:warning("-conf ~s does not specify a directory", [DirectoryPath]).
+log_conf_not_directory_error(Path) ->
+	lager:warning("-conf ~s does not specify a directory", [Path]).
 
-log_no_configurations_error(DirectoryPath) ->
-	lager:warning("Found no configuration files in ~s", [DirectoryPath]).
+log_not_a_directory_error(Path) ->
+	lager:warning("~s does not specify a directory", [Path]).
 
-log_directory_error(DirectoryPath, Reason) ->
-	lager:waning("Could not access ~s: ~s", [DirectoryPath, Reason]).
+log_no_configurations_error(Path) ->
+	lager:warning("Found no valid configuration files in ~s", [Path]).
+
+log_directory_error(Path, Reason) ->
+	lager:waning("Could not access ~s: ~s", [Path, Reason]).
 
 log_file_not_found_error(FilePath) ->
 	lager:warning("Could not find configuration file: ~s", [FilePath]).
