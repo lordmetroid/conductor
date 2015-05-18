@@ -41,10 +41,7 @@ resource_exists(Request,Context) ->
 
 %% @doc Publish the results of an executed program or content of a file
 content_types_provided(Request, Context) ->
-	Domain = wrq:host_tokens(Request),
-	Path = wrq:path(Request),
-
-	MimeType = conductor_router:mime_type(Domain, Path),
+	MimeTypes = conductor_response:get_mime_type(),
 	ContentTypes = [
 		{MimeType, get_resource}
 	],

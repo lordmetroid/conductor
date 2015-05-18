@@ -30,8 +30,8 @@ handle_call({set_directory, Path}, _From, Settings) ->
 	NewSettings = settings_set_directory(Path, Settings),
 	{reply, ok, NewSettings};
 
-handle_call({get, Domain, Argument}, _From, Settings) ->
-	{NewSettings, Value} = settings_get(Domain, Argument, Settings),
+handle_call({get, DomainTokens, Argument}, _From, Settings) ->
+	{NewSettings, Value} = settings_get(DomainTokens, Argument, Settings),
 	{reply, Value, NewSettings};
 
 handle_call(_Event, _From, State) ->
@@ -136,10 +136,12 @@ get_new_config_files(Path, Settings) ->
 %% ============================================================================
 %% @doc Get a settings parameter
 %% @spec get(Domain::string(), Argument::atom()) -> Value::term() | undefined
-get(Domain, Argument) ->
-	gen_server:call(?MODULE, {get, Domain, Argument}).
+get(DomainTokens, Argument) ->
+	gen_server:call(?MODULE, {get, DomainTokens, Argument}).
 
-settings_get(Domain, Argument, Settings) ->
+settings_get(DomainTokens, Argument, Settings) ->
+	Domain = create_domain(DomainTokens),
+
 	case get_domain_configurations(Domain, Settings) of
 		{NewSettings, false} ->
 			log_undefined_domain(Domain),
@@ -150,12 +152,13 @@ settings_get(Domain, Argument, Settings) ->
 	end.
 
 get_domain_configurations(Domain, Settings) ->
-	case lists:keyfind(Domain, 1, Settings) of
+	case search_domain(Domain, Settings) of
 		false ->
 			update_configurations(Domain, Settings, false);
 		Setting ->
 			check_config_file_updates(Setting, Settings)
 	end.
+
 
 check_config_file_updates({Domain, Values, FilePath, Date}, Settings) ->
 	case filelib:last_modified(FilePath) of
@@ -168,7 +171,6 @@ check_config_file_updates({Domain, Values, FilePath, Date}, Settings) ->
 			%% File has been edited
 			update_configurations(Domain, Values, Settings)
 	end.
-
 
 update_configurations(Domain, Values, Settings) ->
 	case ets:lookup(conductor_settings, conf) of
@@ -191,10 +193,10 @@ get_updated_config_files(Domain, Values, Settings, Path) ->
 	end.
 
 get_domain_values(Domain, NewSettings) ->
-	case lists:keyfind(Domain, 1, NewSettings) of
+	case search_domain(Domain, NewSettings) of
 		false ->
 			false;
-		{Domain, Values, _FilePath, _Date} ->
+		{_Domains, Values, _FilePath, _Date} ->
 			Values
 	end.
 
@@ -211,6 +213,7 @@ get_value(Argument, Values) ->
 %  Helper functions
 %% ============================================================================
 
+%% @doc Read and create a lists of settings
 read_config_files(Path, [], Settings, []) ->
 	log_no_configuration_files_error(Path),
 	Settings;
@@ -224,17 +227,35 @@ read_config_files(Path, [FileName | Rest], Settings, NewSettings) ->
 	Date = filelib:last_modified(FilePath),
 
 	Setting = create_setting(FilePath, Date, FileContent),
-
 	read_config_files(Path, Rest, Settings, Setting ++ NewSettings).
 
+%% @doc Create a settings tuple
 create_setting(FilePath, 0, _FileContent) ->
 	log_file_not_found_error(FilePath),
 	[];
 create_setting(FilePath, _Date, {error, Reason}) ->
 	log_file_interpret_error(FilePath, Reason),
 	[];
-create_setting(FilePath, Date, {ok, [{Domain, Values}]}) ->
-	[{Domain, Values, FilePath, Date}].
+create_setting(FilePath, Date, {ok, [{Domains, Values}]}) ->
+	[{Domains, Values, FilePath, Date}].
+
+%% @doc Join domain tokens together
+create_domain([Token | Rest]) ->
+	lists:flatten([Token] ++ [ "." ++ X || X <- Rest]).
+
+%% @doc Search for a matching domain
+search_domain(Domain, []) ->
+	false;
+search_domain(Domain, [Setting | Rest]) ->
+	{Domains, _Values, _FilePath, _Date} = Setting,
+
+	case lists:any(fun(Entry) -> Entry == Domain end, Domains) of
+		false ->
+			search_domain(Domain, Rest);
+		true ->
+			Setting
+	end.
+
 
 %% ============================================================================
 %  Logging functions

@@ -15,6 +15,7 @@
 %% ============================================================================
 
 %% @doc Execute a client request
+%% @spec execute(Request::rd()) -> Content::iolist()
 execute(Request) ->
 	Path = wrq:path(Request),
 	Domain = wrq:host_tokens(Request),
@@ -22,106 +23,48 @@ execute(Request) ->
 
 	case lists:keyfind(Path, 1, Programs) of
 		false ->
-			publish_file(Domain, Path);
+			get_file(Domain, Path);
 		{Path, ProgramFile} ->
-			conductor_response:create_program(Request),
-			execute_program(ProgramFile).
+			get_program(Request, Domain, ProgramFile).
 	end.
 
-publish_file(Domain, Path) ->
+get_file(Domain, Path) ->
 	FileRoot = conductor_settings:get(Domain, file_root),
 	FilePath = filename:join([FileRoot, Path]),
 
 	case filelib:is_regular(FilePath) of
 		false ->
-
+			%% TODO
 		true ->
 			conductor_response:create_file(),
 			conductor_response:add_file_content(FilePath)
 	end.
 
-
-
-
-	case lists:keyfind(ProgramName,1, conductor_settings:get(programs)) of
-		false ->
-			%% Program not found
-			FileRoot = conductor_settings:get(file_root),
-			FilePath = filename:join([FileRoot, ProgramName]),
-
-			%% Check if request is a regular file
-			case filelib:is_regular(FilePath) of
-				false ->
-					%% Create "404 File not found" response
-					conductor_response:create_program(Request),
-					conductor_response:set_status_code(404),
-					execute_error();
-				true ->
-					%% Create file response
-					conductor_response:create_file(Request),
-					conductor_response:add_content(FilePath),
-					conductor_response:set_mime_type(FilePath)
-			end;
-		{ProgramName, ProgramFile} ->
-			%% Create program response
-			conductor_response:create_program(Request),
-			execute_program(ProgramFile)
-	end.
-
-%% ----------------------------------------------------------------------------
-% @spec execute_program(ProgramFile, Parameters) -> ok
-% @doc Execute a program file during runtime
-%% ----------------------------------------------------------------------------
-execute_program(ProgramFile) ->
+get_program(Request, Domain ProgramFile) ->
 	%% Get the program module from cache
-	ProgramRoot = conductor_settings:get(program_root),
+	ProgramRoot = conductor_settings:get(Domain, program_root),
 	ProgramPath = filename:join([ProgramRoot, ProgramFile]),
 
 	case conductor_cache:get_module(ProgramPath) of
-		error ->
-			%% Cache unable to provide program
-			%% Create "500 Internal Server Error" response
-			conductor_response:set_status_code(500);
-			%% TODO: Create response term
-		{ok, Program} ->
-			case erlang:function_exported(Program, execute, 1) of
-				false ->
-					%% Program file is missing the execute function
-					conductor_log:add(ProgramPath, 
-						"Function execute not found"),
-					
-					%% Create "500 Internal Server Error" response
-					conductor_response:set_status_code(500);
-					%% TODO: Create response term
-				true ->
-					%% Execute program
-					Request = conductor_response:get_request(),
-					Program:execute(Request)
-			end
-	end.
-
-%% ----------------------------------------------------------------------------
-% @spec execute_program(ProgramFile, Parameters) -> ok
-% @doc Execute an error program during runtime
-%% ----------------------------------------------------------------------------
-execute_error() ->
-	case lists:keyfind(error_program, 1, conductor_settings:get(programs)) of
 		false ->
-			%% 'error_program' is not specified in configuration 
-			conductor_log:add("Server configuration file",
-				"error_program not specified"),
-			
-			%% Create "500 Internal Server Error" response
-			conductor_response:set_status_code(500);
-			%% TODO: Create response term
-		{error_program, ProgramFile} ->
-			execute_program(ProgramFile)
+			%% TODO
+		Program ->
+			execute_program(Request, Program)
 	end.
 
-%% ----------------------------------------------------------------------------
-% @spec execute_model(ModelFile, Function, Arguments, Parameters, Log)
-% @doc Execute a model file during runtime
-%% ----------------------------------------------------------------------------
+execute_program(Request, Program)
+	case erlang:function_exported(Program, execute, 1) of
+		false ->
+			%% TODO
+		true ->
+			%% Execute program
+			conductor_response:create_program(Request),
+			Program:execute(Request)
+	end.
+
+%% ============================================================================
+% @doc Execute a model file during the execution of a program
+% @spec
 execute_model(ModelFile, Function, Arguments) ->
 	%% Get the model module from cache
 	ModelRoot = conductor_settings:get(model_root),
@@ -150,10 +93,9 @@ execute_model(ModelFile, Function, Arguments) ->
 			end
 	end.
 
-%% ----------------------------------------------------------------------------
-% @spec execute_view(ViewFile, Arguments)
-% @doc Render a view file
-%% ----------------------------------------------------------------------------
+%% ============================================================================
+% @doc Render a view file during the execution of a program
+% @spec
 execute_view(ViewFile, Arguments) ->
 	%% Get the view module from cache
 	ViewRoot = conductor_settings:get(view_root),
