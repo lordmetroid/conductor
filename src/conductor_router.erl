@@ -1,6 +1,9 @@
 -module(conductor_router).
+-compile({parse_transform, lager_transform}).
 
 -export([
+	exists/2,
+
 	execute/1,
 	execute_model/3,
 	execute_view/2,
@@ -9,9 +12,55 @@
 
 -include_lib("webmachine/include/webmachine.hrl").
 
+%% ============================================================================
+%% Module functions
+%% ============================================================================
+
+%% @doc Check if request matches a program or file
+%% @spec exists(Domain::string(), Path::string()) -> true | false
+exists(Domain, Path) ->
+	Programs = conductor_settings:get(Domain, programs),
+
+	FileRoot = conductor_settings:get(Domain, file_root),
+	FilePath = filename:join([FileRoot, Path]),
+
+	case lists:keyfind(Path, 1, Programs) of
+		false ->
+			filelib:is_regular(FilePath);
+		{Path, _ProgramFile} ->
+			true;
+	end.
+%% ============================================================================
+%% @doc Get content mime type
+mime_type(Domain, Path) ->
+	
+
+%% ============================================================================
+%% @doc Execute a client request
 execute(Request) ->
-	%% Find a matching response to the request
-	ProgramName = wrq:path(Request),
+	Domain = wrq:host_tokens(Request),
+	Path = wrq:path(Request),
+	Programs = conductor_settings:get(Domain, programs),
+
+	case lists:keyfind(Path, 1, Programs) of
+		false ->
+			get_requested_file(Request, Domain, Path);
+		{ProgramName, ProgramFile} ->
+
+	end.
+
+get_requested_file(Request, Domain, Path) ->
+	FileRoot = conductor_settings:get(Domain, file_root),
+	FilePath = filename:join([FileRoot, Path]),
+
+	case filelib:is_regular(FilePath) of
+		false ->
+			%% Request can not be found
+		true ->
+	end
+
+
+
 	case lists:keyfind(ProgramName,1, conductor_settings:get(programs)) of
 		false ->
 			%% Program not found

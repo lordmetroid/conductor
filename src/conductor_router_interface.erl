@@ -1,4 +1,5 @@
 -module(conductor_router_interface).
+-compile({parse_transform, lager_transform}).
 
 -export([
 	init/1,
@@ -11,29 +12,54 @@
 
 -include_lib("webmachine/include/webmachine.hrl").
 
-init(_Configurations) ->
-	%% No context
+init(_Arguments) ->
 	{ok, []}.
 
-service_available(Request,Context) ->
-	%% Exceute request
-	conductor_router:execute(Request),
-
-	%% Check HTTP Status Code
-	case conductor_response:get_status_code() of
-		500 ->
-			%% Set response header to "500 Internal Server Error"
-			%% TODO: Create response term instead of []
-			{{error, []}, Request,Context};
-		503 ->
-			%% Set response header to "503 Service Unavailable"
-			{false, Request,Context};
-		_ ->
-			%% Requested service is available
-			{true, Request,Context}
-	end.
+allowed_methods(Request, Context) ->
+	Methods = [
+		'HEAD',
+		'GET',
+		'PUT',
+		'POST',
+	],
 
 resource_exists(Request,Context) ->
+	Domain = wrq:host_tokens(Request),
+	Path = wrq:path(Request),
+
+	IsResource = conductor_router:exists(Domain, Path),
+	{IsResource, Request, Context}.
+
+%% ============================================================================
+%% GET functions
+%% ============================================================================
+
+%% @doc Publish the results of an executed program or content of a file
+content_types_provided(Request, Context) ->
+	Domain = wrq:host_tokens(Request),
+	Path = wrq:path(Request),
+
+	MimeType = conductor_router:mime_type(Domain, Path),
+	ContentTypes = [
+		{MimeType, get_resource}
+	],
+	{ContentType, Request, Context}.
+
+get_resource(Request, Context) ->
+	Domain = wrq:host_tokens(Request),
+	Path = wrq:path(Request),
+
+	Content = conductor_router:execute(Domain, Path),
+	{Content, Request, Context}.
+
+%% ============================================================================
+%% POST functions
+%% ============================================================================
+
+
+
+
+
 	case conductor_response:get_status_code() of
 		404 ->
 			%% Set response header to "404 File Not Found" 
