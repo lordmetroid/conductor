@@ -141,7 +141,7 @@ get(Domain, Argument) ->
 
 settings_get(Domain, Argument, Settings) ->
 	case get_domain_configurations(Domain, Settings) of
-		{NewSettings, undefined} ->
+		{NewSettings, false} ->
 			log_undefined_domain(Domain),
 			{NewSettings, undefined};
 		{NewSettings, Values} ->
@@ -152,39 +152,42 @@ settings_get(Domain, Argument, Settings) ->
 get_domain_configurations(Domain, Settings) ->
 	case lists:keyfind(Domain, 1, Settings) of
 		false ->
-			update_configurations(Settings, undefined);
+			update_configurations(Domain, Settings, false);
 		Setting ->
 			check_config_file_updates(Setting, Settings)
 	end.
 
-check_config_file_updates({_Domain, Values, FilePath, Date}, Settings) ->
+check_config_file_updates({Domain, Values, FilePath, Date}, Settings) ->
 	case filelib:last_modified(FilePath) of
 		0 ->
-			update_configurations(Settings, Values);
+			%% File has been deleted
+			update_configurations(Domain, Values, Settings);
 		Date ->
 			{Settings, Values};
 		_NewDate ->
-			update_configurations(Settings, Values)
+			%% File has been edited
+			update_configurations(Domain, Values, Settings)
 	end.
 
 
-update_configurations(Settings, Values) ->
+update_configurations(Domain, Values, Settings) ->
 	case ets:lookup(conductor_settings, conf) of
 		[] ->
 			log_conf_not_set_error(),
 			{Settings, Values};	
 		[{conf, Path}] ->
-			get_updated_config_files(Path, Settings, Values)
+			get_updated_config_files(Domain, Values, Settings, Path)
 	end.
 
-get_updated_config_files(Path, Settings, Values) ->
+get_updated_config_files(Domain, Values, Settings, Path) ->
 	case file:list_dir_all(Path) of
 		{error, Reason} ->
 			log_directory_error(Path, Reason),
 			{Settings, Values};
 		{ok, FileNames} ->
 			NewSettings = read_config_files(Path, FileNames, Settings, []),
-			{NewSettings, Values}
+			NewValues = lists:keyfind(Domain, 1, NewSettings),
+			{NewSettings, NewValues}
 	end.
 
 get_value(Argument, Values) ->
