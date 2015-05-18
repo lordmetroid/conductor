@@ -4,10 +4,11 @@
 -export([
 	init/1,
 	service_available/2,
+	allowed_methods/2,
 	resource_exists/2,
-	options/2,
+
 	content_types_provided/2,
-	provide_content/2
+	get_resource/2
 ]).
 
 -include_lib("webmachine/include/webmachine.hrl").
@@ -15,19 +16,23 @@
 init(_Arguments) ->
 	{ok, []}.
 
+service_available(Request, Context) ->
+	%% Execute the request to create a response
+	conductor_router:execute(Request),
+	{true, Request, Context}.
+
 allowed_methods(Request, Context) ->
 	Methods = [
 		'HEAD',
 		'GET',
 		'PUT',
 		'POST',
+		'DELETE'
 	],
+	{Methods, Request, Context}.
 
 resource_exists(Request,Context) ->
-	Domain = wrq:host_tokens(Request),
-	Path = wrq:path(Request),
-
-	IsResource = conductor_router:exists(Domain, Path),
+	IsResource = conductor_response:exists(),
 	{IsResource, Request, Context}.
 
 %% ============================================================================

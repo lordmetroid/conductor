@@ -2,8 +2,6 @@
 -compile({parse_transform, lager_transform}).
 
 -export([
-	exists/2,
-
 	execute/1,
 	execute_model/3,
 	execute_view/2,
@@ -16,48 +14,32 @@
 %% Module functions
 %% ============================================================================
 
-%% @doc Check if request matches a program or file
-%% @spec exists(Domain::string(), Path::string()) -> true | false
-exists(Domain, Path) ->
-	Programs = conductor_settings:get(Domain, programs),
-
-	FileRoot = conductor_settings:get(Domain, file_root),
-	FilePath = filename:join([FileRoot, Path]),
-
-	case lists:keyfind(Path, 1, Programs) of
-		false ->
-			filelib:is_regular(FilePath);
-		{Path, _ProgramFile} ->
-			true;
-	end.
-%% ============================================================================
-%% @doc Get content mime type
-mime_type(Domain, Path) ->
-	
-
-%% ============================================================================
 %% @doc Execute a client request
 execute(Request) ->
-	Domain = wrq:host_tokens(Request),
 	Path = wrq:path(Request),
+	Domain = wrq:host_tokens(Request),
 	Programs = conductor_settings:get(Domain, programs),
 
 	case lists:keyfind(Path, 1, Programs) of
 		false ->
-			get_requested_file(Request, Domain, Path);
-		{ProgramName, ProgramFile} ->
-
+			publish_file(Domain, Path);
+		{Path, ProgramFile} ->
+			conductor_response:create_program(Request),
+			execute_program(ProgramFile).
 	end.
 
-get_requested_file(Request, Domain, Path) ->
+publish_file(Domain, Path) ->
 	FileRoot = conductor_settings:get(Domain, file_root),
 	FilePath = filename:join([FileRoot, Path]),
 
 	case filelib:is_regular(FilePath) of
 		false ->
-			%% Request can not be found
+
 		true ->
-	end
+			conductor_response:create_file(),
+			conductor_response:add_file_content(FilePath)
+	end.
+
 
 
 
