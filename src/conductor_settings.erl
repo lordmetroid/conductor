@@ -186,8 +186,16 @@ get_updated_config_files(Domain, Values, Settings, Path) ->
 			{Settings, Values};
 		{ok, FileNames} ->
 			NewSettings = read_config_files(Path, FileNames, Settings, []),
-			NewValues = lists:keyfind(Domain, 1, NewSettings),
+			NewValues = get_domain_values(Domain, NewSettings), 
 			{NewSettings, NewValues}
+	end.
+
+get_domain_values(Domain, NewSettings) ->
+	case lists:keyfind(Domain, 1, NewSettings) of
+		false ->
+			false;
+		{Domain, Values, _FilePath, _Date} ->
+			Values
 	end.
 
 get_value(Argument, Values) ->
@@ -204,7 +212,7 @@ get_value(Argument, Values) ->
 %% ============================================================================
 
 read_config_files(Path, [], Settings, []) ->
-	log_no_configurations_error(Path),
+	log_no_configuration_files_error(Path),
 	Settings;
 read_config_files(Path, [], _Settings, NewSettings) ->
 	ets:insert(conductor_settings, {conf, Path}),
@@ -240,7 +248,7 @@ log_conf_not_directory_error(Path) ->
 log_not_a_directory_error(Path) ->
 	lager:warning("~s does not specify a directory", [Path]).
 
-log_no_configurations_error(Path) ->
+log_no_configuration_files_error(Path) ->
 	lager:warning("Found no valid configuration files in ~s", [Path]).
 
 log_directory_error(Path, Reason) ->
