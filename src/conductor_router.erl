@@ -34,7 +34,7 @@ publish_file(Domain, Path) ->
 
 	case filelib:is_regular(FilePath) of
 		false ->
-			false;
+			false; %% 404 Not Found
 		true ->
 			conductor_response:create_file(),
 			conductor_response:add_file_content(FilePath)
