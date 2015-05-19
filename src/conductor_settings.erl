@@ -30,8 +30,8 @@ handle_call({set_directory, Path}, _From, Settings) ->
 	NewSettings = settings_set_directory(Path, Settings),
 	{reply, ok, NewSettings};
 
-handle_call({get, DomainTokens, Argument}, _From, Settings) ->
-	{NewSettings, Value} = settings_get(DomainTokens, Argument, Settings),
+handle_call({get, Domain, Argument}, _From, Settings) ->
+	{NewSettings, Value} = settings_get(Domain, Argument, Settings),
 	{reply, Value, NewSettings};
 
 handle_call(_Event, _From, State) ->
@@ -136,11 +136,11 @@ get_new_config_files(Path, Settings) ->
 %% ============================================================================
 %% @doc Get a settings parameter
 %% @spec get(Domain::string(), Argument::atom()) -> Value::term() | undefined
-get(DomainTokens, Argument) ->
-	gen_server:call(?MODULE, {get, DomainTokens, Argument}).
+get(Domain, Argument) ->
+	gen_server:call(?MODULE, {get, Domain, Argument}).
 
-settings_get(DomainTokens, Argument, Settings) ->
-	Domain = create_domain(DomainTokens),
+settings_get(Domain, Argument, Settings) ->
+	Domain = create_domain(Domain),
 
 	case get_domain_configurations(Domain, Settings) of
 		{NewSettings, false} ->
