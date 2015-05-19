@@ -25,7 +25,7 @@ execute(Request) ->
 		false ->
 			publish_file(Domain, Path);
 		{Path, ProgramFile} ->
-			get_program(Request, Domain, ProgramFile).
+			get_program(Request, Domain, ProgramFile)
 	end.
 
 publish_file(Domain, Path) ->
@@ -34,30 +34,28 @@ publish_file(Domain, Path) ->
 
 	case filelib:is_regular(FilePath) of
 		false ->
-			%% TODO
+			false;
 		true ->
 			conductor_response:create_file(),
 			conductor_response:add_file_content(FilePath)
 	end.
 
-get_program(Request, Domain ProgramFile) ->
-	%% Get the program module from cache
+get_program(Request, Domain, ProgramFile) ->
 	ProgramRoot = conductor_settings:get(Domain, program_root),
 	ProgramPath = filename:join([ProgramRoot, ProgramFile]),
 
 	case conductor_cache:get_module(ProgramPath) of
 		false ->
-			%% TODO
+			log_module_not_found_error(ProgramPath);
 		Program ->
 			execute_program_module(Request, Program)
 	end.
 
-execute_program_module(Request, Program)
+execute_program_module(Request, Program) ->
 	case erlang:function_exported(Program, execute, 1) of
 		false ->
-			%% TODO
+			log_function_not_exported_error(execute, 1);
 		true ->
-			%% Execute program
 			conductor_response:create_program(Request),
 			Program:execute(Request)
 	end.
@@ -74,7 +72,7 @@ execute_model(ModelFile, Function, Arguments) ->
 	
 	case conductor_cache:get_module(ModelPath) of
 		false ->
-			%% TODO
+			log_module_not_found_error(ModelPath);
 		Model ->
 			execute_model_module(Request, Model, Function, Arguments)
 	end.
@@ -82,7 +80,7 @@ execute_model(ModelFile, Function, Arguments) ->
 execute_model_module(Request, Model, Function, Arguments) ->
 	case erlang:function_exported(Model, Function, 2) of
 		false ->
-			%% TODO
+			log_function_not_exported_error(Function, 2);
 		true ->
 			Model:Function(Request, Arguments)
 	end.
@@ -91,7 +89,7 @@ execute_model_module(Request, Model, Function, Arguments) ->
 % @doc Render a view file during the execution of a program
 % @spec
 execute_view(ViewFile, Arguments) ->
-	Request = conductor_response:get_request(Request),
+	Request = conductor_response:get_request(),
 	Domain = wrq:domain_tokens(Request),
 
 	ViewRoot = conductor_settings:get(Domain, view_root),
@@ -99,7 +97,7 @@ execute_view(ViewFile, Arguments) ->
 	
 	case conductor_cache:get_module(ViewPath) of
 		false ->
-			%% TODO
+			log_module_not_found_error(ViewPath);
 		View ->
 			get_view_template(View, Arguments)
 	end.
@@ -107,9 +105,8 @@ execute_view(ViewFile, Arguments) ->
 get_view_template(View, Arguments) ->
 	case erlang:function_exported(View, get, 0) of
 		false ->
-			%% TODO
+			log_function_not_exported_error(get, 0);
 		true ->
-			%% Get view compiler and template
 			{Compiler, Template} = View:get(),
 			validate_template(Compiler, Template, Arguments)
 	end.
@@ -137,7 +134,7 @@ render_view_template(Compiler, Template, Arguments) ->
 %%  @doc Execute a controller file during the execution of a program
 %%
 execute_controller(ControllerFile, Function, Arguments)  ->
-	Request = conductor_response:get_request(Request),
+	Request = conductor_response:get_request(),
 	Domain = wrq:domain_tokens(Request),
 
 	ControllerRoot = conductor_settings:get(Domain, controller_root),
@@ -145,7 +142,7 @@ execute_controller(ControllerFile, Function, Arguments)  ->
 	
 	case conductor_cache:get_module(ControllerPath) of
 		false ->
-			%% TODO
+			log_module_not_found_error(ControllerPath);
 		Controller ->
 			execute_controller_module(Request, Controller, Function, Arguments)
 	end.
@@ -153,7 +150,7 @@ execute_controller(ControllerFile, Function, Arguments)  ->
 execute_controller_module(Request, Controller, Function, Arguments) ->
 	case erlang:function_exported(Controller, Function, 2) of
 		false ->
-			%% TODO
+			log_function_not_exported_error(Function, 2);
 		true ->
 			Controller:Function(Request, Arguments)
 	end.
@@ -161,6 +158,12 @@ execute_controller_module(Request, Controller, Function, Arguments) ->
 %% ============================================================================
 %% Logging functions
 %% ============================================================================
+
+log_module_not_found_error(Path) ->
+	lager:warning("Could not find ~s", [Path]).
+
+log_function_not_exported_error(Function, Arity) ->
+	lager:warning("Could not find ~s/~B", [Function, Arity]).
 
 log_compiler_error(error) ->
 	lager:warning("Compiler not specified in template");
