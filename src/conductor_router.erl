@@ -36,7 +36,7 @@ publish_file(Domain, Path) ->
 		false ->
 			false; %% 404 Not Found
 		true ->
-			conductor_response:create_file(),
+			conductor_response:create_file(Request),
 			conductor_response:add_file_content(FilePath)
 	end.
 

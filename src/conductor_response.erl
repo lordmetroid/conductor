@@ -13,7 +13,7 @@
 -export([
 	start_link/0,
 
-	create_file/1,
+	create_file/0,
 	create_program/1,
 	destroy/0,
 	
@@ -29,19 +29,16 @@
 	purge_content/0
 ]).
 
+%% ============================================================================
+%% Callback functions
+%% ============================================================================
+
 init(_Arguments) ->
 	%% Initalize an empty response manager
 	{ok, []}.
 
-%% ----------------------------------------------------------------------------
-% Response control functions
-%% ----------------------------------------------------------------------------
-handle_call({create_file, Request}, {Client,_}, Responses) ->
-	%% Create a file response
-	Header = conductor_response_header:create_file(),
-	Body =  conductor_response_body:create_file(),
-	
-	%% Add the response to the manager
+handle_call({create_file}, {Client,_}, Responses) ->
+	{Header, Body} = response_create_file();
 	{reply, Client, [{Client, Request, {Header,Body}} | Responses]};
 
 handle_call({create_program, Request},  {Client,_}, Responses) ->
@@ -183,18 +180,25 @@ terminate(_Reason, _State) ->
 code_change(_OldVersion, State, _Extra) ->
 	{ok, State}.
 
-%% ----------------------------------------------------------------------------
-% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
-% @doc Start the response manager 
-% -----------------------------------------------------------------------------
+%% ============================================================================
+%% Module functions
+%% ============================================================================
+
+%% @doc Start the response manager 
 start_link() ->
 	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
-%% ----------------------------------------------------------------------------
-% Response control functions
-%% ----------------------------------------------------------------------------
-create_file(Request) ->
-	gen_server:call(?MODULE, {create_file, Request}).
+%% ============================================================================
+%% @doc
+%% @spec
+create_file() ->
+	gen_server:call(?MODULE, create_file).
+
+response_create_file() ->
+	Header = conductor_response_header:create_file(),
+	Body =  conductor_response_body:create_file(),
+	{Header, Body}.
+	
 
 create_program(Request) ->
 	gen_server:call(?MODULE, {create_program, Request}).
