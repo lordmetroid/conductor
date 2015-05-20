@@ -42,11 +42,9 @@ handle_call({create_file}, {Client,_}, Responses) ->
 	{reply, Client, [{Client, Request, {Header,Body}} | Responses]};
 
 handle_call({create_program, Request},  {Client,_}, Responses) ->
-	%% Create a program response
-	Header = conductor_response_header:create_program(),
-	Body =  conductor_response_body:create_program(),
-	
-	%% Add the response to the manager
+	{Header, Body} = response_create_program()
+
+
 	{reply, Client, [{Client, Request, {Header,Body}} | Responses]};
 
 handle_call(destroy, {Client,_}, Responses) ->
@@ -199,9 +197,16 @@ response_create_file() ->
 	Body =  conductor_response_body:create_file(),
 	{Header, Body}.
 	
-
+%% ============================================================================
+%% @doc
+%% @spec
 create_program(Request) ->
 	gen_server:call(?MODULE, {create_program, Request}).
+
+response_create_program() ->
+	Header = conductor_response_header:create_program(),
+	Body =  conductor_response_body:create_program(),
+	{Header, Body}.
 
 destroy() ->
 	gen_server:call(?MODULE, destroy).

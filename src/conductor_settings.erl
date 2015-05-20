@@ -229,7 +229,7 @@ read_config_files(Path, [FileName | Rest], Settings, NewSettings) ->
 	Setting = create_setting(FilePath, Date, FileContent),
 	read_config_files(Path, Rest, Settings, Setting ++ NewSettings).
 
-%% @doc Create a settings tuple
+
 create_setting(FilePath, 0, _FileContent) ->
 	log_file_not_found_error(FilePath),
 	[];
@@ -239,10 +239,12 @@ create_setting(FilePath, _Date, {error, Reason}) ->
 create_setting(FilePath, Date, {ok, [{Domains, Values}]}) ->
 	[{Domains, Values, FilePath, Date}].
 
+%% ============================================================================ 
 %% @doc Join domain tokens together
 create_domain([Token | Rest]) ->
 	lists:flatten([Token] ++ [ "." ++ X || X <- Rest]).
 
+%% ============================================================================
 %% @doc Search for a matching domain
 search_domain(Domain, []) ->
 	false;
