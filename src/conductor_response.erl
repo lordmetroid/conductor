@@ -37,69 +37,21 @@ init(_Arguments) ->
 	%% Initalize an empty response manager
 	{ok, []}.
 
-handle_call({create_file}, {Client,_}, Responses) ->
+handle_call({create_file, Request}, {Client,_}, Responses) ->
 	{Header, Body} = response_create_file();
 	{reply, Client, [{Client, Request, {Header,Body}} | Responses]};
 
 handle_call({create_program, Request},  {Client,_}, Responses) ->
 	{Header, Body} = response_create_program()
-
-
 	{reply, Client, [{Client, Request, {Header,Body}} | Responses]};
 
 handle_call(destroy, {Client,_}, Responses) ->
-	case lists:keyfind(Client,1, Responses) of
-		false ->
-			%% response does not exist
-			%% TODO: Write to log
-			{reply, error, Responses};
-		{Client, _Request, {Header,Body}} ->
-			%% Destroy response
-			conductor_response_header:destroy(Header),
-			conductor_response_body:destroy(Body),
+	{Result, UpdatedResponse} = response_destroy(Client, Responses),
+	{reply, Result, UpdatedResponses};
 
-			%% Remove response from manager
-			UpdatedResponses = lists:keydelete(Client,1, Responses),
-			{reply, ok, UpdatedResponses}
-	end;
-%% ----------------------------------------------------------------------------
-% Request control functions
-%% ----------------------------------------------------------------------------
 handle_call(get_request, {Client,_}, Responses) ->
-	case lists:keyfind(Client,1, Responses) of
-		false ->
-			%% Response does not exist
-			%% TODO: Write to log
-			{reply, error, Responses};			
-		{Client, Request, {_Header,_Body}} ->
-			{reply, Request, Responses}
-	end;
-
-%% ----------------------------------------------------------------------------
-% Response header functions
-%% ----------------------------------------------------------------------------
-handle_call({set_status_code, NewStatusCode}, {Client,_}, Responses) ->
-	case lists:keyfind(Client,1, Responses) of
-		false ->
-			%% Response does not exist
-			%% TODO: Write to log
-			{reply, error, Responses};
-		{Client, _Request, {Header,_Body}} ->
-			%% Set new Status Code
-			conductor_response_header:set_status_code(Header, NewStatusCode),
-			{reply, ok, Responses}
-	end;
-
-handle_call(get_status_code, {Client,_}, Responses) ->
-	case lists:keyfind(Client,1, Responses) of
-		false ->
-			%% Response does not exist
-			{reply, error, Responses};
-		{Client, _Request, {Header,_Body}} ->
-			%% Get current status code
-			StatusCode = conductor_response_header:get_status_code(Header),
-			{reply, StatusCode, Responses}
-	end;
+	Request = response_get_request(Client, Responses),
+	{reply, Request, Responses};
 
 handle_call({set_mime_type, NewMimeType}, {Client,_}, Responses) ->
 	case lists:keyfind(Client,1, Responses) of
@@ -189,8 +141,8 @@ start_link() ->
 %% ============================================================================
 %% @doc
 %% @spec
-create_file() ->
-	gen_server:call(?MODULE, create_file).
+create_file(Request) ->
+	gen_server:call(?MODULE, {create_file, Request}).
 
 response_create_file() ->
 	Header = conductor_response_header:create_file(),
@@ -208,23 +160,37 @@ response_create_program() ->
 	Body =  conductor_response_body:create_program(),
 	{Header, Body}.
 
+%% ============================================================================
+%% @doc
+%% @spec
 destroy() ->
 	gen_server:call(?MODULE, destroy).
 
-%% ----------------------------------------------------------------------------
-% Request control functions
-%% ----------------------------------------------------------------------------
+response_destroy(Client, Responses) ->
+	case lists:keyfind(Client, 1, Responses) of
+		false ->
+			{{error, response_not_found}, Responses};
+		{Client, _Request, {Header,Body}} ->
+			conductor_response_header:destroy(Header),
+			conductor_response_body:destroy(Body),
+
+			UpdatedResponses = lists:keydelete(Client, 1, Responses),
+			{ok, UpdatedResponses}
+	end.
+
+%% ============================================================================
+%% @doc
+%% @spec
 get_request() ->
 	gen_server:call(?MODULE, get_request).
 	
-%% ----------------------------------------------------------------------------
-% Response header functions
-%% ----------------------------------------------------------------------------
-set_status_code(Status) ->
-	gen_server:call(?MODULE, {set_status_code, Status}).
-
-get_status_code() ->
-	gen_server:call(?MODULE, get_status_code).
+response_get_request(Client, Responses) ->
+	case lists:keyfind(Client, 1, Responses) of
+		false ->
+			false;
+		{Client, Request, {_Header,_Body}} ->
+			Request
+	end.
 
 set_mime_type(MimeType) ->
 	gen_server:call(?MODULE, {set_mime_type, MimeType}).
@@ -243,4 +209,8 @@ purge_content() ->
 
 get_content() ->
 	gen_server:call(?MODULE, get_content).
+
+%% ============================================================================
+%% Logging functions
+%% ============================================================================
 

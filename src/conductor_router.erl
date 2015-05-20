@@ -64,7 +64,14 @@ execute_program_module(Request, Program) ->
 % @doc Execute a model file during the execution of a program
 % @spec
 execute_model(ModelFile, Function, Arguments) ->
-	Request = conductor_response:get_request(),
+	case conductor_response:get_request() of
+		false ->
+			log_response_not_found_error();
+		Request ->
+			get_model_module(Request, ModelFile, Function, Arguments)
+	end.
+
+get_model_module(Request, ModelFile, Function, Arguments) ->
 	Domain = wrq:domain_tokens(Request),
 
 	ModelRoot = conductor_settings:get(Domain, model_root),
@@ -89,7 +96,14 @@ execute_model_module(Request, Model, Function, Arguments) ->
 % @doc Render a view file during the execution of a program
 % @spec
 execute_view(ViewFile, Arguments) ->
-	Request = conductor_response:get_request(),
+	case conductor_response:get_request() of
+		false ->
+			log_response_not_found_error();
+		Request ->
+			get_view_module(Request, ViewFile, Arguments)
+	end.
+
+get_view_module(Request, ViewFile, Arguments) ->
 	Domain = wrq:domain_tokens(Request),
 
 	ViewRoot = conductor_settings:get(Domain, view_root),
@@ -134,7 +148,14 @@ render_view_template(Compiler, Template, Arguments) ->
 %%  @doc Execute a controller file during the execution of a program
 %%
 execute_controller(ControllerFile, Function, Arguments)  ->
-	Request = conductor_response:get_request(),
+	case conductor_response:get_request() of
+		false ->
+			log_response_not_found_error();
+		Request ->
+			get_controller_module(Request, ControllerFile, Function, Arguments)
+	end.
+
+get_controller_module(Request, ControllerFile, Function, Arguments) ->
 	Domain = wrq:domain_tokens(Request),
 
 	ControllerRoot = conductor_settings:get(Domain, controller_root),
@@ -158,6 +179,8 @@ execute_controller_module(Request, Controller, Function, Arguments) ->
 %% ============================================================================
 %% Logging functions
 %% ============================================================================
+log_response_not_found_error() ->
+    lager:warning("Could not find a matching response to the request").
 
 log_module_not_found_error(Path) ->
 	lager:warning("Could not find ~s", [Path]).

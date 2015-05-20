@@ -66,7 +66,7 @@ settings_init() ->
 	case ets:info(condcutor_settings) of
 		undefined ->
 			ets:new(conductor_settings, [set, named_table]),
-			get_conf_argument();
+			add_conf_argument();
 		_Exists ->
 			get_conf_argument()
 	end.
