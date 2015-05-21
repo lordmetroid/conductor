@@ -64,9 +64,9 @@ execute_program_module(Request, Program) ->
 % @doc Execute a model file during the execution of a program
 % @spec
 execute_model(ModelFile, Function, Arguments) ->
-	case conductor_response:get_request() of
+	case conductor_response:request() of
 		false ->
-			log_response_not_found_error();
+			false;
 		Request ->
 			get_model_module(Request, ModelFile, Function, Arguments)
 	end.
@@ -96,9 +96,9 @@ execute_model_module(Request, Model, Function, Arguments) ->
 % @doc Render a view file during the execution of a program
 % @spec
 execute_view(ViewFile, Arguments) ->
-	case conductor_response:get_request() of
+	case conductor_response:request() of
 		false ->
-			log_response_not_found_error();
+			false;
 		Request ->
 			get_view_module(Request, ViewFile, Arguments)
 	end.
@@ -148,9 +148,9 @@ render_view_template(Compiler, Template, Arguments) ->
 %%  @doc Execute a controller file during the execution of a program
 %%
 execute_controller(ControllerFile, Function, Arguments)  ->
-	case conductor_response:get_request() of
+	case conductor_response:request() of
 		false ->
-			log_response_not_found_error();
+			false;
 		Request ->
 			get_controller_module(Request, ControllerFile, Function, Arguments)
 	end.
@@ -179,9 +179,6 @@ execute_controller_module(Request, Controller, Function, Arguments) ->
 %% ============================================================================
 %% Logging functions
 %% ============================================================================
-log_response_not_found_error() ->
-    lager:warning("Could not find a matching response to the request").
-
 log_module_not_found_error(Path) ->
 	lager:warning("Could not find ~s", [Path]).
 

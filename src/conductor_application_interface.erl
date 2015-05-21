@@ -35,13 +35,14 @@ resource_exists(Request,Context) ->
 	IsResource = conductor_response:exists(),
 	{IsResource, Request, Context}.
 
+
 %% ============================================================================
 %% GET functions
 %% ============================================================================
 
 %% @doc Publish the results of an executed program or content of a file
 content_types_provided(Request, Context) ->
-	MimeTypes = conductor_response:get_mime_type(),
+	MimeTypes = conductor_response:mime_type(),
 	ContentTypes = [
 		{MimeType, get_resource}
 	],
@@ -60,25 +61,6 @@ get_resource(Request, Context) ->
 
 
 
-
-
-	case conductor_response:get_status_code() of
-		404 ->
-			%% Set response header to "404 File Not Found" 
-			{false, Request,Context};
-		_ ->
-			%% Requested file was found
-			{true, Request,Context}
-	end.
-
-options(Request,Context) ->
-	%% Set custom response headers
-	{[], Request,Context}.
-
-content_types_provided(Request,Context) ->
-	%% Set response mimetype
-	MimeType = conductor_response:get_mime_type(),
-	{[{MimeType, provide_content}], Request,Context}.
 
 %% ----------------------------------------------------------------------------
 % @spec provide_content(Request,Context) -> {Body::iolist(), Request,Context}

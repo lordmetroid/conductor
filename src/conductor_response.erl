@@ -17,15 +17,13 @@
 	create_program/1,
 	destroy/0,
 	
-	get_request/0,
+	request/0,
 
-	set_status_code/1,
-	get_status_code/0,
 	set_mime_type/1,
-	get_mime_type/0,
+	mime_type/0,
 	
 	add_content/1,
-	get_content/0,
+	content/0,
 	purge_content/0
 ]).
 
@@ -38,82 +36,52 @@ init(_Arguments) ->
 	{ok, []}.
 
 handle_call({create_file, Request}, {Client,_}, Responses) ->
-	{Header, Body} = response_create_file();
-	{reply, Client, [{Client, Request, {Header,Body}} | Responses]};
+	{Result, Content} = response_create_file();
+	{reply, Result, [{Client, Request, Content}} | Responses]};
 
 handle_call({create_program, Request},  {Client,_}, Responses) ->
-	{Header, Body} = response_create_program()
-	{reply, Client, [{Client, Request, {Header,Body}} | Responses]};
+	{Result, Content} = response_create_program()
+	{reply, Result, [{Client, Request, Content} | Responses]};
 
 handle_call(destroy, {Client,_}, Responses) ->
-	{Result, UpdatedResponse} = response_destroy(Client, Responses),
+	Response = get_response(Client, Responses),
+	{Result, UpdatedResponse} = response_destroy(Responses, Response),
 	{reply, Result, UpdatedResponses};
 
-handle_call(get_request, {Client,_}, Responses) ->
-	Request = response_get_request(Client, Responses),
+handle_call(request, {Client,_}, Responses) ->
+	Response = get_response(Client, Responses),
+	Request = response_request(Response),
 	{reply, Request, Responses};
 
+handle_call(exists, {Client,_}, Responses) ->
+	Response = get_response(Client, Responses),
+	Exists = response_exists(Response),
+	{reply, Exists, Responses};
+
 handle_call({set_mime_type, NewMimeType}, {Client,_}, Responses) ->
-	case lists:keyfind(Client,1, Responses) of
-		false ->
-			%% Response does not exist
-			{reply, error, Responses};
-		{Client, _Request, {Header,_Body}} ->
-			conductor_response_header:set_mime_type(Header, NewMimeType),
-			{reply, ok, Responses}
-	end;
+	Response = get_response(Client, Responses),
+	Result = response_set_mime_type(Response, NewMimeType),
+	{reply, Result, Responses};
 
-handle_call(get_mime_type, {Client,_}, Responses) ->
-	case lists:keyfind(Client,1, Responses) of
-		false ->
-			%% Response does not exist
-			{reply, error, Responses};
-		{Client, _Request, {Header,_Body}} ->
-			MimeType = conductor_response_header:get_mime_type(Header),
-			{reply, MimeType, Responses}
-	end;
+handle_call(mime_type, {Client,_}, Responses) ->
+	Response = get_response(Client, Responses),
+	MimeType = response_mime_type(Responese),
+	{reply, MimeType, Responses};
 
-%% ----------------------------------------------------------------------------
-% Response body functions
-%% ----------------------------------------------------------------------------
 handle_call({add_content, Content}, {Client,_}, Responses) ->
-	case lists:keyfind(Client,1, Responses) of
-		false ->
-			%% Response does not exist
-			{reply, error, Responses};
-		{Client, _Request, {_Header,Body}} ->
-			%% Add content to response body
-			case conductor_response_body:add_content(Body, Content) of
-				{error, Errors} ->
-					%% TODO: Write error reason to log
-					{reply, error, Responses};
-				ok ->
-					%% Content added
-					{reply, ok, Responses}
-			end
-	end;
+	Response = get_response(Client, Responses),
+	Result = response_add_content(Response, Content),
+	{reply, Result, Respones};
 
-handle_call(get_content, {Client,_}, Responses) ->
-	case lists:keyfind(Client,1, Responses) of
-		false ->
-			%% Response does not exist
-			{reply, error, Responses};
-		{Client, _Request, {_Header,Body}} ->
-			%% Get current response body content
-			Content = conductor_response_body:get_content(Body),
-			{reply, Content, Responses}
-	end;
+handle_call(content, {Client,_}, Responses) ->
+	Response = get_response(Client, Responses),
+	Content = response_content(Response),
+	{reply, Content, Responses};
 
 handle_call(purge_content, {Client,_}, Responses) ->
-	case lists:keyfind(Client,1, Responses) of
-		false ->
-			%% Response does not exist
-			{reply, error, Responses};
-		{Client, _Request, {_Header,Body}} ->
-			%% Purge all content from response body
-			conductor_response_body:purge_content(Body),
-			{reply, ok, Responses}
-	end;
+	Response = get_response(Client, Responses),
+	Result = response_purge_content(Response),
+	{reply, Result, Responses};
 
 handle_call(_Event, _From, State) ->
 	{stop, State}.
@@ -139,52 +107,58 @@ start_link() ->
 	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 %% ============================================================================
-%% @doc
+%% Response control function
+%% ============================================================================
+
+%% @doc Create a file response resource
 %% @spec
 create_file(Request) ->
 	gen_server:call(?MODULE, {create_file, Request}).
 
-response_create_file() ->
-	Header = conductor_response_header:create_file(),
-	Body =  conductor_response_body:create_file(),
-	{Header, Body}.
+response_create_file(Request) ->
+	case conductor_response_content:create_file(Request) of
+		error ->
+			error
+		ok ->
+			Content.
+
 	
-%% ============================================================================
-%% @doc
+%% @doc Create a program response resource
 %% @spec
 create_program(Request) ->
 	gen_server:call(?MODULE, {create_program, Request}).
 
 response_create_program() ->
-	Header = conductor_response_header:create_program(),
-	Body =  conductor_response_body:create_program(),
-	{Header, Body}.
+	Content = conductor_response_content:create_program(Request),
+	Content.
 
-%% ============================================================================
-%% @doc
+
+%% @doc Destroy a response resource
 %% @spec
 destroy() ->
 	gen_server:call(?MODULE, destroy).
 
-response_destroy(Client, Responses) ->
-	case lists:keyfind(Client, 1, Responses) of
-		false ->
-			{{error, response_not_found}, Responses};
-		{Client, _Request, {Header,Body}} ->
-			conductor_response_header:destroy(Header),
-			conductor_response_body:destroy(Body),
-
+response_destroy(Responses, false) ->
+	{error, Responses};
+response_destroy(Responses, {Client, _Request, Content}) ->
+	case conductor_response_content:destroy(Content) of
+		error ->
+			{error, Responses};
+		ok ->
 			UpdatedResponses = lists:keydelete(Client, 1, Responses),
 			{ok, UpdatedResponses}
 	end.
 
 %% ============================================================================
-%% @doc
+%% Response status function
+%% ============================================================================
+
+%% @doc Get the mathcing request to a response
 %% @spec
-get_request() ->
-	gen_server:call(?MODULE, get_request).
+request() ->
+	gen_server:call(?MODULE, request).
 	
-response_get_request(Client, Responses) ->
+response_request(Client, Responses) ->
 	case lists:keyfind(Client, 1, Responses) of
 		false ->
 			false;
@@ -192,25 +166,110 @@ response_get_request(Client, Responses) ->
 			Request
 	end.
 
+%% @doc Check if response exists
+%% @spec
+exists() ->
+	gen_server:call(?MODULE, exists).
+
+response_exists(Client, Responses) ->
+	case lists:keyfind(Client, 1, Responses) of
+		false ->
+			false;
+		{Client, _Request, {_Header,_Body}} ->
+			true
+	end.
+
 set_mime_type(MimeType) ->
 	gen_server:call(?MODULE, {set_mime_type, MimeType}).
 
-get_mime_type() ->
-	gen_server:call(?MODULE, get_mime_type).
+response_set_mime_type(Client, Responses, MimeType) ->
+	case lists:keyfind(Client,1, Responses) of
+		false ->
+		{Client, _Request, {Header,_Body}} ->
+			conductor_response_header:set_mime_type(Header, NewMimeType),
+	end;
 
-%% ----------------------------------------------------------------------------
-% Response body functions
-%% ----------------------------------------------------------------------------
+%% @doc Get mime type of response content
+%% @spec
+mime_type() ->
+	gen_server:call(?MODULE, mime_type).
+
+response:mime_type(Client, Respones) ->
+	case lists:keyfind(Client, 1, Responses) of
+		false ->
+			false;
+		{Client, _Request, {Header,_Body}} ->
+			MimeType = conductor_response_header:mime_type(Header),
+	end;
+
+%% ============================================================================
+%% Response content functions
+%% ============================================================================
+
 add_content(Content) ->
 	gen_server:call(?MODULE, {add_content, Content}).
 
-purge_content() ->
-	gen_server:call(?MODULE, purge_content).
+response_add_content(Content) ->
+	case lists:keyfind(Client,1, Responses) of
+		false ->
+			%% Response does not exist
+			{reply, error, Responses};
+		{Client, _Request, {_Header,Body}} ->
+			%% Add content to response body
+			case conductor_response_body:add_content(Body, Content) of
+				{error, Errors} ->
+					%% TODO: Write error reason to log
+					{reply, error, Responses};
+				ok ->
+					%% Content added
+					{reply, ok, Responses}
+			end
+	end;
+
 
 get_content() ->
 	gen_server:call(?MODULE, get_content).
 
+	case lists:keyfind(Client,1, Responses) of
+		false ->
+			%% Response does not exist
+			{reply, error, Responses};
+		{Client, _Request, {_Header,Body}} ->
+			%% Get current response body content
+			Content = conductor_response_body:get_content(Body),
+			{reply, Content, Responses}
+	end;
+
+purge_content() ->
+	gen_server:call(?MODULE, purge_content).
+	case lists:keyfind(Client,1, Responses) of
+		false ->
+			%% Response does not exist
+			{reply, error, Responses};
+		{Client, _Request, {_Header,Body}} ->
+			%% Purge all content from response body
+			conductor_response_body:purge_content(Body),
+			{reply, ok, Responses}
+	end;
+
+%% ============================================================================
+%% Helper functions
+%% ============================================================================
+
+%% @doc Get the response which matches the client
+get_response(Client, Responses) ->
+	case lists:keyfind(Client, 1, Respones) of
+		false ->
+			log_response_not_found_error()
+			false;
+		Response ->
+			Response
+	end.
+
 %% ============================================================================
 %% Logging functions
 %% ============================================================================
+
+log_response_not_found_error() ->
+    lager:warning("Could not find a matching response to the request").
 
