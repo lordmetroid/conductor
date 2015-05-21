@@ -1,4 +1,4 @@
--module(conductor_router).
+-module(conductor_application).
 -compile({parse_transform, lager_transform}).
 
 -export([

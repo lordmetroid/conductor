@@ -1,4 +1,4 @@
--module(conductor_router_interface).
+-module(conductor_application_interface).
 -compile({parse_transform, lager_transform}).
 
 -export([
@@ -18,7 +18,7 @@ init(_Arguments) ->
 
 service_available(Request, Context) ->
 	%% Execute the request to create a response
-	conductor_router:execute(Request),
+	conductor_application:execute(Request),
 	{true, Request, Context}.
 
 allowed_methods(Request, Context) ->
@@ -51,7 +51,7 @@ get_resource(Request, Context) ->
 	Domain = wrq:host_tokens(Request),
 	Path = wrq:path(Request),
 
-	Content = conductor_router:execute(Domain, Path),
+	Content = conductor_application:execute(Domain, Path),
 	{Content, Request, Context}.
 
 %% ============================================================================

@@ -279,11 +279,11 @@ add_data_function() ->
 				erl_syntax:variable("Function"),
 				erl_syntax:variable("Arguments")
 			], none, [
-				%% conductor_router:execute_model(
+				%% conductor_application:execute_model(
 				%%		ModelFile, Function, Arguments)
 				erl_syntax:application(
 					erl_syntax:module_qualifier(
-						erl_syntax:atom(conductor_router),
+						erl_syntax:atom(conductor_application),
 						erl_syntax:atom(execute_model)
 					), [
 					erl_syntax:variable("ModelFile"),
@@ -306,10 +306,10 @@ add_render_function() ->
 				erl_syntax:variable("ViewFile"),
 				erl_syntax:variable("Arguments")
 			], none, [
-				%% conductor_router:execute_view(ViewFile, Arguments)
+				%% conductor_application:execute_view(ViewFile, Arguments)
 				erl_syntax:application(
 					erl_syntax:module_qualifier(
-						erl_syntax:atom(conductor_router),
+						erl_syntax:atom(conductor_application),
 						erl_syntax:atom(execute_view)
 					), [
 					erl_syntax:variable("ViewFile"),
@@ -332,11 +332,11 @@ add_run_function() ->
 				erl_syntax:variable("Function"),
 				erl_syntax:variable("Arguments")
 			], none, [
-				%% conductor_router:execute_controller(
+				%% conductor_application:execute_controller(
 				%% 		ControllerFile, Function, Arguments)
 				erl_syntax:application(
 					erl_syntax:module_qualifier(
-						erl_syntax:atom(conductor_router),
+						erl_syntax:atom(conductor_application),
 						erl_syntax:atom(execute_controller)
 					), [
 					erl_syntax:variable("ControllerFile"),

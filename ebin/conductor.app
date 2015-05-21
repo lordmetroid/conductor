@@ -26,8 +26,8 @@
 		conductor_response_header,
 
 		conductor_interface_supervisor,
-		conductor_router_interface,
-		conductor_router
+		conductor_application_interface,
+		conductor_application
 	]},
 	{registered, [
 		conductor_supervisor,
