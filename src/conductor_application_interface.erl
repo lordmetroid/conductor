@@ -42,11 +42,12 @@ resource_exists(Request,Context) ->
 
 %% @doc Publish the results of an executed program or content of a file
 content_types_provided(Request, Context) ->
-	MimeTypes = conductor_response:mime_type(),
-	ContentTypes = [
-		{MimeType, get_resource}
-	],
-	{ContentType, Request, Context}.
+	case conductor_response:get_mime_type() of
+		false ->
+			{[], Request, Context};
+		MimeType ->
+			{[{MimeType, get_resource}], Request, Context}
+	end.
 
 get_resource(Request, Context) ->
 	Domain = wrq:host_tokens(Request),
@@ -61,17 +62,3 @@ get_resource(Request, Context) ->
 
 
 
-
-%% ----------------------------------------------------------------------------
-% @spec provide_content(Request,Context) -> {Body::iolist(), Request,Context}
-% @doc Provide the response body to the client
-%% ----------------------------------------------------------------------------
-provide_content(Request,Context) ->
-	%% Get response body content
-	Content = conductor_response:get_content(),
-	
-	%% Terminate current response
-	conductor_response:destroy(),
-	
-	%% Publish content to client
-	{Content, Request,Context}.

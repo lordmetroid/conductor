@@ -107,6 +107,7 @@ code_change(_OldVersion, State, _Extra) ->
 start_link() ->
 	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
+
 %% @doc Create a file response resource
 %% @spec
 create_file(Request) ->
@@ -114,6 +115,7 @@ create_file(Request) ->
 
 response_create_file(Request) ->
 	conductor_response_content:create_file(Request).
+
 	
 %% @doc Create a program response resource
 %% @spec
@@ -122,6 +124,7 @@ create_program(Request) ->
 
 response_create_program(Request) ->
 	conductor_response_content:create_program(Request).
+
 
 %% @doc Check if response exists
 %% @spec
@@ -132,6 +135,7 @@ response_exists(false) ->
 	false;
 response_exists(_Response) ->
 	true.
+
 
 %% @doc Destroy a response resource
 %% @spec
@@ -160,6 +164,7 @@ response_get_request(false) ->
 response_get_request({_Client, Request, _Content}) ->
 	Request.
 
+
 %% @doc Set mime type of content
 %% @spec
 set_mime_type(MimeType) ->
@@ -169,6 +174,7 @@ response_set_mime_type(false, _NewMimeType) ->
 	error;	
 response_set_mime_type({_Client, _Request, Content}, NewMimeType) ->
 	conductor_response_content:set_mime_type(Content, NewMimeType).
+
 
 %% @doc Get mime type of response content
 %% @spec
@@ -180,6 +186,7 @@ response_get_mime_type(false) ->
 response_get_mime_type({_Client, _Request, Content}) ->
 	conductor_response_header:get_mime_type(Content).
 
+
 %% @doc
 %% @spec
 add_content(Content) ->
@@ -190,6 +197,7 @@ response_add_content(false, _NewContent) ->
 response_add_content({_Client, _Request, Content}, NewContent) ->
 	conductor_response_body:add_content(Content, NewContent).
 
+
 %% @doc
 %% @spec
 get_content() ->
@@ -199,6 +207,7 @@ response_get_content(false) ->
 	false;
 response_get_content({_Client, _Request, Content}) ->
 	conductor_response_body:get_content(Content).
+
 
 %% @doc
 %% @spec
