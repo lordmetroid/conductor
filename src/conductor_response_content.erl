@@ -62,6 +62,27 @@ undefined(_Event, _From, State) ->
 %% ----------------------------------------------------------------------------
 % File content
 %% ----------------------------------------------------------------------------
+file({set_mime_type, NewMimeType}, _From, {StatusCode,_MimeType}) ->
+	%% Set file mime type
+	{reply, ok, file, {StatusCode,NewMimeType}};
+	
+file(get_mime_type, _From, {StatusCode,MimeType}) ->
+	case filelib:is_file(MimeType) of
+		false ->
+			%% Return set mime type
+			{reply, MimeType, file, {StatusCode,MimeType}};
+		true ->
+			%% Guess mime type from filepath
+			case mimetypes:filename(MimeType) of
+				undefined ->
+					%% Return default mime type
+					{reply, "text/html", file, {StatusCode,MimeType}};
+				MimeType ->
+					%% Return mime type of file
+					{reply, MimeType, file, {StatusCode,MimeType}}
+			end
+	end;
+
 file({add_content, FilePath}, _From, Content) ->
 	%% Add binary content
 	case file:read_file(FilePath) of
@@ -86,6 +107,14 @@ file(_Event, _From, Content) ->
 %% ----------------------------------------------------------------------------
 % Program content
 %% ----------------------------------------------------------------------------
+program({set_mime_type, NewMimeType}, _From, {StatusCode,_MimeType}) ->
+	%% Set program mime type
+	{reply, ok, program, {StatusCode,NewMimeType}};
+
+program(get_mime_type, _From, {StatusCode,MimeType}) ->
+	%% Get program mime type
+	{reply, MimeType, program, {StatusCode,MimeType}};
+
 program({add_content, NewContent}, _From, Content) ->
 	%% Add new content to program response
 	{reply, ok, program, [NewContent | Content]};
@@ -121,7 +150,11 @@ create_program() ->
 destroy(Body) ->
 	gen_fsm:sync_send_event(Body, destroy_body).
 
+set_mime_type(Header, NewMimeType) ->
+	gen_fsm:sync_send_event(Header, {set_mime_type, NewMimeType}).
 
+get_mime_type(Header) ->
+	gen_fsm:sync_send_event(Header, get_mime_type).
 %% ----------------------------------------------------------------------------
 % Response body content function
 %% ----------------------------------------------------------------------------
