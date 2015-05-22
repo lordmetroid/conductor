@@ -246,7 +246,7 @@ create_domain([Token | Rest]) ->
 
 %% ============================================================================
 %% @doc Search for a matching domain
-search_domain(Domain, []) ->
+search_domain(_Domain, []) ->
 	false;
 search_domain(Domain, [Setting | Rest]) ->
 	{Domains, _Values, _FilePath, _Date} = Setting,

@@ -23,12 +23,12 @@ execute(Request) ->
 
 	case lists:keyfind(Path, 1, Programs) of
 		false ->
-			publish_file(Domain, Path);
+			publish_file(Request, Domain, Path);
 		{Path, ProgramFile} ->
 			get_program(Request, Domain, ProgramFile)
 	end.
 
-publish_file(Domain, Path) ->
+publish_file(Request, Domain, Path) ->
 	FileRoot = conductor_settings:get(Domain, file_root),
 	FilePath = filename:join([FileRoot, Path]),
 
@@ -64,7 +64,7 @@ execute_program_module(Request, Program) ->
 % @doc Execute a model file during the execution of a program
 % @spec
 execute_model(ModelFile, Function, Arguments) ->
-	case conductor_response:request() of
+	case conductor_response:get_request() of
 		false ->
 			false;
 		Request ->
@@ -96,7 +96,7 @@ execute_model_module(Request, Model, Function, Arguments) ->
 % @doc Render a view file during the execution of a program
 % @spec
 execute_view(ViewFile, Arguments) ->
-	case conductor_response:request() of
+	case conductor_response:get_request() of
 		false ->
 			false;
 		Request ->
@@ -148,7 +148,7 @@ render_view_template(Compiler, Template, Arguments) ->
 %%  @doc Execute a controller file during the execution of a program
 %%
 execute_controller(ControllerFile, Function, Arguments)  ->
-	case conductor_response:request() of
+	case conductor_response:get_request() of
 		false ->
 			false;
 		Request ->
