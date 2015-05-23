@@ -1,4 +1,4 @@
--module(conductor_response_body).
+-module(conductor_response_data).
 
 -behavior(gen_fsm).
 -export([
@@ -19,9 +19,9 @@
 	create_program/0,
 	destroy/1,
 
-	add_content/2,
-	purge_content/1,
-	get_content/1
+	add_data/2,
+	purge_data/1,
+	get_data/1
 ]).
 
 %% ----------------------------------------------------------------------------
@@ -45,23 +45,21 @@ terminate(_Reason, _StateName, _State) ->
 code_change(_OldVersion, StateName, State, _Extra) ->
 	{ok, StateName, State}.
 
-%% ----------------------------------------------------------------------------
-% Undefined content (Default)
-%% ----------------------------------------------------------------------------
+%% ============================================================================
+%% Undefined data (Default)
+%% ============================================================================
 undefined(create_file, _From, _State) ->
-	%% Create a file response body, FilePath
 	{reply, ok, file, []};
 
 undefined(create_program, _From, _State) ->
-	%% Create a program response body, Content
 	{reply, ok, program, []};
 
 undefined(_Event, _From, State) ->
 	{reply, error, undefined, State}.
 
-%% ----------------------------------------------------------------------------
-% File content
-%% ----------------------------------------------------------------------------
+%% ============================================================================
+%% File data
+%% ============================================================================
 file({set_mime_type, NewMimeType}, _From, {StatusCode,_MimeType}) ->
 	%% Set file mime type
 	{reply, ok, file, {StatusCode,NewMimeType}};
@@ -83,29 +81,28 @@ file(get_mime_type, _From, {StatusCode,MimeType}) ->
 			end
 	end;
 
-file({add_content, FilePath}, _From, Content) ->
-	%% Add binary content
+file({add_data, FilePath}, _From, Data) ->
+	%% Add binary data
 	case file:read_file(FilePath) of
 		{ok, Binary} ->
-			%% File content 
+			%% File data 
 			{reply, ok, file, Binary};
 		{error, Reason} ->
 			%% No file
-			{reply, {error, Reason}, file, Content}
+			{reply, {error, Reason}, file, Data}
 	end;
 
-file(get_content, _From, Content) ->
-	{reply, Content, file, Content};
+file(get_data, _From, Data) ->
+	{reply, Data, file, Content};
 
-file(destroy_body, _From, Content) ->
-	%% Destroy response body
-	{stop, normal, ok, Content};
+file(destroy, _From, Data) ->
+	{stop, normal, ok, Data};
 
-file(_Event, _From, Content) ->
-	{reply, error, file, Content}.
+file(_Event, _From, Data) ->
+	{reply, error, file, Data}.
 
 %% ----------------------------------------------------------------------------
-% Program content
+% Program data
 %% ----------------------------------------------------------------------------
 program({set_mime_type, NewMimeType}, _From, {StatusCode,_MimeType}) ->
 	%% Set program mime type
@@ -115,24 +112,24 @@ program(get_mime_type, _From, {StatusCode,MimeType}) ->
 	%% Get program mime type
 	{reply, MimeType, program, {StatusCode,MimeType}};
 
-program({add_content, NewContent}, _From, Content) ->
-	%% Add new content to program response
-	{reply, ok, program, [NewContent | Content]};
+program({add_data, NewData}, _From, Content) ->
+	%% Add new data to program response
+	{reply, ok, program, [NewData | Content]};
 
-program(purge_content, _From, _Content) ->
-	%% Purge content
+program(purge_data, _From, _Data) ->
+	%% Purge data
 	{reply, ok, program, []};
 
-program(get_content, _From, Content) ->
-	%% Get and reset content
-	{reply, lists:reverse(Content), program, Content};
+program(get_data, _From, Data) ->
+	%% Get and reset data
+	{reply, lists:reverse(Data), program, Content};
 
-program(destroy_body, _From, Content) ->
+program(destroy_body, _From, Data) ->
 	%% Destroy response body
-	{stop, normal, ok, Content};
+	{stop, normal, ok, Data};
 
-program(_Event, _From, Content) ->
-	{reply, error, program, Content}.
+program(_Event, _From, Data) ->
+	{reply, error, program, Data}.
 
 %% ----------------------------------------------------------------------------
 % Response body control functions
@@ -156,13 +153,13 @@ set_mime_type(Header, NewMimeType) ->
 get_mime_type(Header) ->
 	gen_fsm:sync_send_event(Header, get_mime_type).
 %% ----------------------------------------------------------------------------
-% Response body content function
+% Response body data function
 %% ----------------------------------------------------------------------------
-add_content(Body, NewContent) ->
-	gen_fsm:sync_send_event(Body, {add_content, NewContent}).
+add_data(Body, NewData) ->
+	gen_fsm:sync_send_event(Body, {add_data, NewData}).
 
-purge_content(Body) ->
-	gen_fsm:sync_send_event(Body, purge_content).
+purge_data(Body) ->
+	gen_fsm:sync_send_event(Body, purge_data).
 
-get_content(Body) ->
-	gen_fsm:sync_send_event(Body, get_content).
+get_data(Body) ->
+	gen_fsm:sync_send_event(Body, get_data).

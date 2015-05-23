@@ -23,9 +23,9 @@
 	set_mime_type/1,
 	get_mime_type/0,
 	
-	add_content/1,
-	get_content/0,
-	purge_content/0
+	add_data/1,
+	get_data/0,
+	purge_data/0
 ]).
 
 %% ============================================================================
@@ -37,12 +37,12 @@ init(_Arguments) ->
 	{ok, []}.
 
 handle_call({create_file, Request}, {Client, _}, Responses) ->
-	{Result, Content} = response_create_file(Request),
-	{reply, Result, [{Client, Request, Content} | Responses]};
+	{Result, Data} = response_create_file(Request),
+	{reply, Result, [{Client, Request, Data} | Responses]};
 
 handle_call({create_program, Request},  {Client, _}, Responses) ->
-	{Result, Content} = response_create_program(Request),
-	{reply, Result, [{Client, Request, Content} | Responses]};
+	{Result, Data} = response_create_program(Request),
+	{reply, Result, [{Client, Request, Data} | Responses]};
 
 handle_call(exists, {Client, _}, Responses) ->
 	Response = get_response(Client, Responses),
@@ -69,19 +69,19 @@ handle_call(get_mime_type, {Client, _}, Responses) ->
 	MimeType = response_get_mime_type(Response),
 	{reply, MimeType, Responses};
 
-handle_call({add_content, Content}, {Client, _}, Responses) ->
+handle_call({add_data, Data}, {Client, _}, Responses) ->
 	Response = get_response(Client, Responses),
-	Result = response_add_content(Response, Content),
+	Result = response_add_data(Response, Data),
 	{reply, Result, Responses};
 
-handle_call(get_content, {Client, _}, Responses) ->
+handle_call(get_data, {Client, _}, Responses) ->
 	Response = get_response(Client, Responses),
-	Content = response_get_content(Response),
-	{reply, Content, Responses};
+	Data = response_get_data(Response),
+	{reply, Data, Responses};
 
-handle_call(purge_content, {Client, _}, Responses) ->
+handle_call(purge_data, {Client, _}, Responses) ->
 	Response = get_response(Client, Responses),
-	Result = response_purge_content(Response),
+	Result = response_purge_data(Response),
 	{reply, Result, Responses};
 
 handle_call(_Event, _From, State) ->
@@ -114,7 +114,7 @@ create_file(Request) ->
 	gen_server:call(?MODULE, {create_file, Request}).
 
 response_create_file(Request) ->
-	conductor_response_content:create_file(Request).
+	conductor_response_data:create_file(Request).
 
 	
 %% @doc Create a program response resource
@@ -123,7 +123,7 @@ create_program(Request) ->
 	gen_server:call(?MODULE, {create_program, Request}).
 
 response_create_program(Request) ->
-	conductor_response_content:create_program(Request).
+	conductor_response_data:create_program(Request).
 
 
 %% @doc Check if response exists
@@ -144,8 +144,8 @@ destroy() ->
 
 response_destroy(Responses, false) ->
 	{error, Responses};
-response_destroy(Responses, {Client, _Request, Content}) ->
-	case conductor_response_content:destroy(Content) of
+response_destroy(Responses, {Client, _Request, Data}) ->
+	case conductor_response_data:destroy(Data) of
 		error ->
 			{error, Responses};
 		ok ->
@@ -161,63 +161,63 @@ get_request() ->
 
 response_get_request(false) ->
 	false;
-response_get_request({_Client, Request, _Content}) ->
+response_get_request({_Client, Request, _Data}) ->
 	Request.
 
 
-%% @doc Set mime type of content
+%% @doc Set mime type of data
 %% @spec
 set_mime_type(MimeType) ->
 	gen_server:call(?MODULE, {set_mime_type, MimeType}).
 
 response_set_mime_type(false, _NewMimeType) ->
 	error;	
-response_set_mime_type({_Client, _Request, Content}, NewMimeType) ->
-	conductor_response_content:set_mime_type(Content, NewMimeType).
+response_set_mime_type({_Client, _Request, Data}, NewMimeType) ->
+	conductor_response_data:set_mime_type(Data, NewMimeType).
 
 
-%% @doc Get mime type of response content
+%% @doc Get mime type of response data
 %% @spec
 get_mime_type() ->
 	gen_server:call(?MODULE, get_mime_type).
 
 response_get_mime_type(false) ->
 	false;
-response_get_mime_type({_Client, _Request, Content}) ->
-	conductor_response_header:get_mime_type(Content).
+response_get_mime_type({_Client, _Request, Data}) ->
+	conductor_response_header:get_mime_type(Data).
 
 
 %% @doc
 %% @spec
-add_content(Content) ->
-	gen_server:call(?MODULE, {add_content, Content}).
+add_data(Data) ->
+	gen_server:call(?MODULE, {add_data, Data}).
 
-response_add_content(false, _NewContent) ->
+response_add_data(false, _NewData) ->
 	error;
-response_add_content({_Client, _Request, Content}, NewContent) ->
-	conductor_response_body:add_content(Content, NewContent).
+response_add_data({_Client, _Request, Data}, NewContent) ->
+	conductor_response_body:add_data(Data, NewContent).
 
 
 %% @doc
 %% @spec
-get_content() ->
-	gen_server:call(?MODULE, get_content).
+get_data() ->
+	gen_server:call(?MODULE, get_data).
 
-response_get_content(false) ->
+response_get_data(false) ->
 	false;
-response_get_content({_Client, _Request, Content}) ->
-	conductor_response_body:get_content(Content).
+response_get_data({_Client, _Request, Data}) ->
+	conductor_response_body:get_data(Data).
 
 
 %% @doc
 %% @spec
-purge_content() ->
-	gen_server:call(?MODULE, purge_content).
+purge_data() ->
+	gen_server:call(?MODULE, purge_data).
 
-response_purge_content(false) ->
+response_purge_data(false) ->
 	false;
-response_purge_content({_Client, _Request, Content}) ->
-	conductor_response_body:purge_content(Content).
+response_purge_data({_Client, _Request, Data}) ->
+	conductor_response_body:purge_data(Data).
 
 %% ============================================================================
 %% Helper functions
