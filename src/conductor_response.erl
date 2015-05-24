@@ -42,7 +42,6 @@ handle_call({create_file, Request}, {Client, _}, Responses) ->
 			{reply, {error, Reason}, Responses};
 		{ok, Content} ->
 			{reply, {ok, Content}, [{Client, Request, Content} | Responses]}
-
 	end;
 
 handle_call({create_program, Request},  {Client, _}, Responses) ->

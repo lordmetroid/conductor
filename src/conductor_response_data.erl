@@ -74,32 +74,20 @@ file(get_mime_type, _From, {FilePath, Data}) ->
 	{reply, , file, {FilePath, Data};
 
 
-file({add_data, FilePath}, _From, Data) ->
-	{Result, Data} = file_add_data(FilePath),
-	
-	case Result of
-		error ->
-		ok ->
-			{reply, Result, file, {FilePath, Data}}
-	end.
-
-
+file({add_data, FilePath}, _From, _Data) ->
 	case file:read_file(FilePath) of
 		{ok, Binary} ->
-			%% File data 
-			{reply, ok, file, Binary};
+			
 		{error, Reason} ->
-			%% No file
-			{reply, {error, Reason}, file, Data}
 	end;
 
-file(get_data, _From, Data) ->
-	{reply, Data, file, Content};
+file(get_data, _From, Content) ->
+	{reply, Content, file, Data};
 
-file(destroy, _From, Data) ->
+file(destroy, _From, Content) ->
 	{stop, normal, ok, Data};
 
-file(_Event, _From, Data) ->
+file(_Event, _From, Content) ->
 	{reply, error, file, Data}.
 
 %% ============================================================================
@@ -115,21 +103,21 @@ program(get_mime_type, _From, {StatusCode,MimeType}) ->
 
 program({add_data, NewData}, _From, Content) ->
 	%% Add new data to program response
-	{reply, ok, program, [NewData | Content]};
+	{reply, ok, program, [NewContent | Content]};
 
-program(purge_data, _From, _Data) ->
+program(purge_data, _From, _Content) ->
 	%% Purge data
 	{reply, ok, program, []};
 
-program(get_data, _From, Data) ->
+program(get_data, _From, Content) ->
 	%% Get and reset data
-	{reply, lists:reverse(Data), program, Content};
+	{reply, lists:reverse(Content), program, Data};
 
-program(destroy_body, _From, Data) ->
+program(destroy_body, _From, Content) ->
 	%% Destroy response body
 	{stop, normal, ok, Data};
 
-program(_Event, _From, Data) ->
+program(_Event, _From, Content) ->
 	{reply, error, program, Data}.
 
 %% ============================================================================
@@ -143,9 +131,9 @@ create_file(Request) ->
 		{error, Reason} ->
 			log_create_response_error(Reason),
 			{error, Reason};
-		{ok, DataId} ->
-			gen_fsm:sync_send_event(DataId, {create_file, Request}),
-			{ok, DataId}
+		{ok, Data} ->
+			gen_fsm:sync_send_event(Content, {create_file, Request}),
+			{ok, Data}
 	end.
 
 create_program(Request) ->
@@ -156,18 +144,18 @@ create_program(Request) ->
 		{error, Reason} ->
 			log_create_response_error(Reason),
 			{error, Reason};
-		{ok, DataId} ->
-			gen_fsm:sync_send_event(DataId, {create_program, Request}),
-			{ok, DataId}
+		{ok, Data} ->
+			gen_fsm:sync_send_event(Content, {create_program, Request}),
+			{ok, Data}
 	end.
 
-destroy(DataId) ->
-	gen_fsm:sync_send_event(DataId, destroy_body).
+destroy(Content) ->
+	gen_fsm:sync_send_event(Content, destroy_body).
 
 set_mime_type(Header, NewMimeType) ->
 	gen_fsm:sync_send_event(Header, {set_mime_type, NewMimeType}).
 
-get_mime_type(Data) ->
+get_mime_type(Content) ->
 	gen_fsm:sync_send_event(Header, get_mime_type).
 
 file_get_mime_type(FilePath) ->
@@ -189,7 +177,7 @@ file_get_mime_type(FilePath) ->
 %% ----------------------------------------------------------------------------
 % Response body data function
 %% ----------------------------------------------------------------------------
-add_data(Body, NewData) ->
+add_data(Body, NewContent) ->
 	gen_fsm:sync_send_event(Body, {add_data, NewData}).
 
 purge_data(Body) ->

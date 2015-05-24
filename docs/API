@@ -1,9 +1,18 @@
-Client = pid() of Webmachine request process
-Request = rd()
-Content = pid() of Response content process
+conductor_response.erl:
+	Client = pid() of Webmachine request process
+	Request = rd()
+	Content = pid() of conductor_response_data process
 
-Response = {Client, Request, Content}
+	Response = {Client, Request, Content}
 
-Responses = [Response]
+	Responses = [Response]
 
+conductor_response_data.erl>
+	
+	Request = rd()
+
+	Client = pid() of conductor_response_data process
+
+	FilePath = string() 
+	Data = term()
 
