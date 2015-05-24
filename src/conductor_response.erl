@@ -37,25 +37,20 @@ init(_Arguments) ->
 	{ok, []}.
 
 handle_call({create_file, Request}, {Client, _}, Responses) ->
-	{Result, DataId} = response_create_file(Request),
+	case response_create_file(Request) of
+		{error, Reason} ->
+			{reply, {error, Reason}, Responses};
+		{ok, Content} ->
+			{reply, {ok, Content}, [{Client, Request, Content} | Responses]}
 
-	case Result of
-		error ->
-			log_create_file_response_error(),
-			{reply, error, Responses};
-		ok ->
-			{reply, ok, [{Client, Request, DataId} | Responses]}
 	end;
 
 handle_call({create_program, Request},  {Client, _}, Responses) ->
-	{Result, DataId} = response_create_program(Request),
-
-	case Result of
-		error ->
-			log_create_program_response_error(),
-			{reply, error, Responses};
-		ok ->
-			{reply, Result, [{Client, Request, DataId} | Responses]}
+	case response_create_program(Request) of
+		{error, Reason} ->
+			{reply, {error, Reason}, Responses};
+		{ok, Content} ->
+			{reply, {ok, Content}, [{Client, Request, Content} | Responses]}
 	end;
 
 handle_call(exists, {Client, _}, Responses) ->
@@ -83,15 +78,15 @@ handle_call(get_mime_type, {Client, _}, Responses) ->
 	MimeType = response_get_mime_type(Response),
 	{reply, MimeType, Responses};
 
-handle_call({add_data, DataId}, {Client, _}, Responses) ->
+handle_call({add_data, Content}, {Client, _}, Responses) ->
 	Response = get_response(Client, Responses),
-	Result = response_add_data(Response, DataId),
+	Result = response_add_data(Response, Content),
 	{reply, Result, Responses};
 
 handle_call(get_data, {Client, _}, Responses) ->
 	Response = get_response(Client, Responses),
-	DataId = response_get_data(Response),
-	{reply, DataId, Responses};
+	Content = response_get_data(Response),
+	{reply, Content, Responses};
 
 handle_call(purge_data, {Client, _}, Responses) ->
 	Response = get_response(Client, Responses),
@@ -120,7 +115,6 @@ code_change(_OldVersion, State, _Extra) ->
 %% @doc Start the response manager 
 start_link() ->
 	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
-
 
 %% @doc Create a file response resource
 %% @spec
@@ -157,9 +151,9 @@ destroy() ->
 	gen_server:call(?MODULE, destroy).
 
 response_destroy(Responses, false) ->
-	{error, Responses};
-response_destroy(Responses, {Client, _Request, DataId}) ->
-	case conductor_response_data:destroy(DataId) of
+	{false, Responses};
+response_destroy(Responses, {Client, _Request, Content}) ->
+	case conductor_response_data:destroy(Content) of
 		error ->
 			{error, Responses};
 		ok ->
@@ -175,7 +169,7 @@ get_request() ->
 
 response_get_request(false) ->
 	false;
-response_get_request({_Client, Request, _DataId}) ->
+response_get_request({_Client, Request, _Content}) ->
 	Request.
 
 
@@ -185,9 +179,9 @@ set_mime_type(MimeType) ->
 	gen_server:call(?MODULE, {set_mime_type, MimeType}).
 
 response_set_mime_type(false, _NewMimeType) ->
-	error;	
-response_set_mime_type({_Client, _Request, DataId}, NewMimeType) ->
-	conductor_response_data:set_mime_type(DataId, NewMimeType).
+	false;	
+response_set_mime_type({_Client, _Request, Content}, NewMimeType) ->
+	conductor_response_data:set_mime_type(Content, NewMimeType).
 
 
 %% @doc Get mime type of response data
@@ -197,19 +191,19 @@ get_mime_type() ->
 
 response_get_mime_type(false) ->
 	false;
-response_get_mime_type({_Client, _Request, DataId}) ->
-	conductor_response_header:get_mime_type(DataId).
+response_get_mime_type({_Client, _Request, Content}) ->
+	conductor_response_header:get_mime_type(Content).
 
 
 %% @doc
 %% @spec
-add_data(DataId) ->
-	gen_server:call(?MODULE, {add_data, DataId}).
+add_data(Content) ->
+	gen_server:call(?MODULE, {add_data, Data}).
 
-response_add_data(false, _NewDataId) ->
-	error;
-response_add_data({_Client, _Request, DataId}, NewContent) ->
-	conductor_response_body:add_data(DataId, NewContent).
+response_add_data(false, _NewData) ->
+	false;
+response_add_data({_Client, _Request, Content}, NewData) ->
+	conductor_response_body:add_data(Content, NewData).
 
 
 %% @doc
@@ -219,8 +213,8 @@ get_data() ->
 
 response_get_data(false) ->
 	false;
-response_get_data({_Client, _Request, DataId}) ->
-	conductor_response_body:get_data(DataId).
+response_get_data({_Client, _Request, Content}) ->
+	conductor_response_body:get_data(Content).
 
 
 %% @doc
@@ -230,8 +224,8 @@ purge_data() ->
 
 response_purge_data(false) ->
 	false;
-response_purge_data({_Client, _Request, DataId}) ->
-	conductor_response_body:purge_data(DataId).
+response_purge_data({_Client, _Request, Content}) ->
+	conductor_response_body:purge_data(Content).
 
 %% ============================================================================
 %% Helper functions
@@ -251,11 +245,8 @@ get_response(Client, Responses) ->
 %% Logging functions
 %% ============================================================================
 
-log_create_file_response_error() ->
-	lager:warning("Could not create a file response").
-
-log_create_program_response_error() ->
-	lager:warning("Could not create a program response").
+log_response_create_error(Reason) ->
+	lager:warning("Could not create a response: ~s", [Reason]).
 
 log_response_not_found_error() ->
     lager:warning("Could not find a matching response to the request").

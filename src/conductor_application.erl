@@ -37,7 +37,7 @@ publish_file(Request, Domain, Path) ->
 			false; %% 404 Not Found
 		true ->
 			conductor_response:create_file(Request),
-			conductor_response:add_file_content(FilePath)
+			conductor_response:add_file_data(FilePath)
 	end.
 
 get_program(Request, Domain, ProgramFile) ->
@@ -136,10 +136,10 @@ validate_template(Compiler, Template, Arguments) ->
 render_view_template(Compiler, Template, Arguments) ->
 	case Compiler:render(Template, Arguments) of
 		{error, Content, Errors} ->
-			log_render_content_error(Errors),
-			conductor_response:add_content(Content);
+			log_render_data_error(Errors),
+			conductor_response:add_data(Content);
 		{ok, Content} ->
-			conductor_response:add_content(Content);	
+			conductor_response:add_data(Content);	
 		_ ->
 			log_render_api_error(Compiler)
 	end.
@@ -190,7 +190,7 @@ log_compiler_error(error) ->
 log_compiler_error(Compiler) ->
 	lager:warning("Could not find the render function in ~s", [Compiler]).
 
-log_render_content_error(Errors) ->
+log_render_data_error(Errors) ->
 	lager:warning("Could not render template ~p", [Errors]).
 
 log_render_api_error(Compiler) ->

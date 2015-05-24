@@ -1,0 +1,9 @@
+Client = pid() of Webmachine request process
+Request = rd()
+Content = pid() of Response content process
+
+Response = {Client, Request, Content}
+
+Responses = [Response]
+
+

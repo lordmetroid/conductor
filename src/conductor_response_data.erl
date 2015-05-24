@@ -24,9 +24,10 @@
 	get_data/1
 ]).
 
-%% ----------------------------------------------------------------------------
-% @doc Initialize a new response body
-%% ----------------------------------------------------------------------------
+%% ============================================================================
+%% Callback functions
+%% ============================================================================
+
 init(_Arguments) ->
 	{ok, undefined, []}.
 
@@ -48,10 +49,10 @@ code_change(_OldVersion, StateName, State, _Extra) ->
 %% ============================================================================
 %% Undefined data (Default)
 %% ============================================================================
-undefined(create_file, _From, _State) ->
+undefined({create_file Request}, _From, _State) ->
 	{reply, ok, file, []};
 
-undefined(create_program, _From, _State) ->
+undefined({create_program, Request}, _From, _State) ->
 	{reply, ok, program, []};
 
 undefined(_Event, _From, State) ->
@@ -60,29 +61,29 @@ undefined(_Event, _From, State) ->
 %% ============================================================================
 %% File data
 %% ============================================================================
-file({set_mime_type, NewMimeType}, _From, {StatusCode,_MimeType}) ->
-	%% Set file mime type
-	{reply, ok, file, {StatusCode,NewMimeType}};
-	
-file(get_mime_type, _From, {StatusCode,MimeType}) ->
-	case filelib:is_file(MimeType) of
-		false ->
-			%% Return set mime type
-			{reply, MimeType, file, {StatusCode,MimeType}};
-		true ->
-			%% Guess mime type from filepath
-			case mimetypes:filename(MimeType) of
-				undefined ->
-					%% Return default mime type
-					{reply, "text/html", file, {StatusCode,MimeType}};
-				MimeType ->
-					%% Return mime type of file
-					{reply, MimeType, file, {StatusCode,MimeType}}
-			end
-	end;
+
+%% @doc
+%% @spec
+file(set_mime_type, _From, {FilePath, Data}) ->
+	{reply, error, file, {FilePath, Data};
+
+%% @doc
+%% @spec
+file(get_mime_type, _From, {FilePath, Data}) ->
+	{Result, MimeType} = file_get_mime_type(FilePath),
+	{reply, , file, {FilePath, Data};
+
 
 file({add_data, FilePath}, _From, Data) ->
-	%% Add binary data
+	{Result, Data} = file_add_data(FilePath),
+	
+	case Result of
+		error ->
+		ok ->
+			{reply, Result, file, {FilePath, Data}}
+	end.
+
+
 	case file:read_file(FilePath) of
 		{ok, Binary} ->
 			%% File data 
@@ -101,9 +102,9 @@ file(destroy, _From, Data) ->
 file(_Event, _From, Data) ->
 	{reply, error, file, Data}.
 
-%% ----------------------------------------------------------------------------
-% Program data
-%% ----------------------------------------------------------------------------
+%% ============================================================================
+%% Program data
+%% ============================================================================
 program({set_mime_type, NewMimeType}, _From, {StatusCode,_MimeType}) ->
 	%% Set program mime type
 	{reply, ok, program, {StatusCode,NewMimeType}};
@@ -131,27 +132,60 @@ program(destroy_body, _From, Data) ->
 program(_Event, _From, Data) ->
 	{reply, error, program, Data}.
 
-%% ----------------------------------------------------------------------------
-% Response body control functions
-%% ----------------------------------------------------------------------------
-create_file() ->
-	{ok, Body} = gen_fsm:start(?MODULE, [], []),
-	gen_fsm:sync_send_event(Body, create_file),
-	Body.
+%% ============================================================================
+%% Module functions
+%% ============================================================================
+create_file(Request) ->
+	case gen_fsm:start(?MODULE, [], []) of
+		ignore ->
+			log_create_response_error(ignore),
+			{error, ignore};
+		{error, Reason} ->
+			log_create_response_error(Reason),
+			{error, Reason};
+		{ok, DataId} ->
+			gen_fsm:sync_send_event(DataId, {create_file, Request}),
+			{ok, DataId}
+	end.
 
-create_program() ->
-	{ok, Body} = gen_fsm:start(?MODULE, [], []),
-	gen_fsm:sync_send_event(Body, create_program),
-	Body.
+create_program(Request) ->
+	case gen_fsm:start(?MODULE, [], []) of
+		ignore ->
+			log_create_response_error(ignore),
+			{error, ignore};
+		{error, Reason} ->
+			log_create_response_error(Reason),
+			{error, Reason};
+		{ok, DataId} ->
+			gen_fsm:sync_send_event(DataId, {create_program, Request}),
+			{ok, DataId}
+	end.
 
-destroy(Body) ->
-	gen_fsm:sync_send_event(Body, destroy_body).
+destroy(DataId) ->
+	gen_fsm:sync_send_event(DataId, destroy_body).
 
 set_mime_type(Header, NewMimeType) ->
 	gen_fsm:sync_send_event(Header, {set_mime_type, NewMimeType}).
 
-get_mime_type(Header) ->
+get_mime_type(Data) ->
 	gen_fsm:sync_send_event(Header, get_mime_type).
+
+file_get_mime_type(FilePath) ->
+	case filelib:is_file(FilePath) of
+		false ->
+			{reply, MimeType, file, {StatusCode,MimeType}};
+		true ->
+			%% Guess mime type from filepath
+			case mimetypes:filename(MimeType) of
+				undefined ->
+					%% Return default mime type
+					{reply, "text/html", file, {StatusCode,MimeType}};
+				MimeType ->
+					%% Return mime type of file
+					{reply, MimeType, file, {StatusCode,MimeType}}
+			end
+	end;
+
 %% ----------------------------------------------------------------------------
 % Response body data function
 %% ----------------------------------------------------------------------------
@@ -163,3 +197,12 @@ purge_data(Body) ->
 
 get_data(Body) ->
 	gen_fsm:sync_send_event(Body, get_data).
+
+%% ============================================================================
+%% Logging function
+%% ============================================================================
+
+log_response_create_error(Reason) ->
+	lager:warning("Could not create a response: ~s", [Reason]).
+
+
