@@ -77,11 +77,6 @@ file(get_mime_type, _From, {FilePath, Data}) ->
 file({add_data, FilePath}, _From, _Data) ->
 	{Result, NewData} = file_add_data(FilePath),
 
-	case file:read_file(FilePath) of
-		{ok, Binary} ->
-			
-		{error, Reason} ->
-	end;
 
 file(get_data, _From, Content) ->
 	{reply, Content, file, Data};
@@ -176,11 +171,15 @@ file_get_mime_type(FilePath) ->
 			end
 	end;
 
-%% ----------------------------------------------------------------------------
-% Response body data function
-%% ----------------------------------------------------------------------------
 add_data(Body, NewContent) ->
 	gen_fsm:sync_send_event(Body, {add_data, NewData}).
+
+file_add_data(FilePath) ->
+	case file:read_file(FilePath) of
+		{ok, Binary} ->
+			
+		{error, Reason} ->
+	end;
 
 purge_data(Body) ->
 	gen_fsm:sync_send_event(Body, purge_data).
