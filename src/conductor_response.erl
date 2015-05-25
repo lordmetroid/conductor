@@ -121,7 +121,7 @@ create_file(Request) ->
 	gen_server:call(?MODULE, {create_file, Request}).
 
 response_create_file() ->
-	conductor_response_data:create_file().
+	conductor_response_content:create_file().
 
 	
 %% @doc Create a program response resource
@@ -130,7 +130,7 @@ create_program(Request) ->
 	gen_server:call(?MODULE, {create_program, Request}).
 
 response_create_program() ->
-	conductor_response_data:create_program().
+	conductor_response_content:create_program().
 
 
 %% @doc Check if response exists
@@ -152,7 +152,7 @@ destroy() ->
 response_destroy(Responses, false) ->
 	{false, Responses};
 response_destroy(Responses, {Client, _Request, Content}) ->
-	case conductor_response_data:destroy(Content) of
+	case conductor_response_content:destroy(Content) of
 		error ->
 			{error, Responses};
 		ok ->
@@ -180,7 +180,7 @@ set_mime_type(MimeType) ->
 response_set_mime_type(false, _NewMimeType) ->
 	false;	
 response_set_mime_type({_Client, _Request, Content}, NewMimeType) ->
-	conductor_response_data:set_mime_type(Content, NewMimeType).
+	conductor_response_content:set_mime_type(Content, NewMimeType).
 
 
 %% @doc Get mime type of response data

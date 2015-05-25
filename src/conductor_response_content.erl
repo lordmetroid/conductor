@@ -1,4 +1,4 @@
--module(conductor_response_data).
+-module(conductor_response_content).
 
 -behavior(gen_fsm).
 -export([
