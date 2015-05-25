@@ -239,13 +239,15 @@ create_setting(FilePath, _Date, {error, Reason}) ->
 create_setting(FilePath, Date, {ok, [{Domains, Values}]}) ->
 	[{Domains, Values, FilePath, Date}].
 
-%% ============================================================================ 
+
 %% @doc Join domain tokens together
+%% @spec
 create_domain([Token | Rest]) ->
 	lists:flatten([Token] ++ [ "." ++ X || X <- Rest]).
 
-%% ============================================================================
+
 %% @doc Search for a matching domain
+%% @spec
 search_domain(_Domain, []) ->
 	false;
 search_domain(Domain, [Setting | Rest]) ->

@@ -47,7 +47,7 @@ code_change(_OldVersion, StateName, State, _Extra) ->
 	{ok, StateName, State}.
 
 %% ============================================================================
-%% Undefined data (Default)
+%% Undefined content (Default)
 %% ============================================================================
 undefined(create_file, _From, _State) ->
 	{reply, ok, file, {[],[]}};
@@ -59,27 +59,25 @@ undefined(_Event, _From, State) ->
 	{reply, error, undefined, State}.
 
 %% ============================================================================
-%% File data
+%% File content 
 %% ============================================================================
 
-%% @doc
-%% @spec
-file(set_mime_type, _From, {FilePath, Data}) ->
-	{reply, error, file, {FilePath, Data};
+file(set_mime_type, _From, FilePath) ->
+	{reply, error, file, FilePath};
 
-%% @doc
-%% @spec
-file(get_mime_type, _From, {FilePath, Data}) ->
-	{Result, MimeType} = file_get_mime_type(FilePath),
-	{reply, , file, {FilePath, Data};
+file(get_mime_type, _From, FilePath) ->
+	MimeType = file_get_mime_type(FilePath),
+	{reply, MimeType, file, FilePath};
 
+file({add_data, NewFilePath}, _From, FilePath) ->
+	{reply, Result, file, NewFilePath};
 
-file({add_data, FilePath}, _From, _Data) ->
-	{Result, NewData} = file_add_data(FilePath),
+file(get_data, _From, FilePath) ->
+	Data = file_get_data()
+	{reply, Data, file, FilePath};
 
-
-file(get_data, _From, Content) ->
-	{reply, Content, file, Data};
+file(purge_data, _From, _FilePath) ->
+	{reply, ok, file, []};
 
 file(destroy, _From, Content) ->
 	{stop, normal, ok, Data};
@@ -88,8 +86,9 @@ file(_Event, _From, Content) ->
 	{reply, error, file, Data}.
 
 %% ============================================================================
-%% Program data
+%% Program content 
 %% ============================================================================
+
 program({set_mime_type, NewMimeType}, _From, {StatusCode,_MimeType}) ->
 	%% Set program mime type
 	{reply, ok, program, {StatusCode,NewMimeType}};
@@ -102,15 +101,15 @@ program({add_data, NewData}, _From, Content) ->
 	%% Add new data to program response
 	{reply, ok, program, [NewContent | Content]};
 
+program(get_data, _From, Content) ->
+	%% Get and reset data
+	{reply, ,program, Data};
+
 program(purge_data, _From, _Content) ->
 	%% Purge data
 	{reply, ok, program, []};
 
-program(get_data, _From, Content) ->
-	%% Get and reset data
-	{reply, lists:reverse(Content), program, Data};
-
-program(destroy_body, _From, Content) ->
+program(destroy, _From, Content) ->
 	%% Destroy response body
 	{stop, normal, ok, Data};
 
@@ -149,27 +148,36 @@ create_program() ->
 destroy(Content) ->
 	gen_fsm:sync_send_event(Content, destroy_body).
 
+
+
 set_mime_type(Header, NewMimeType) ->
 	gen_fsm:sync_send_event(Header, {set_mime_type, NewMimeType}).
 
+
+%% @doc
+%% @spec
 get_mime_type(Content) ->
-	gen_fsm:sync_send_event(Header, get_mime_type).
+	gen_fsm:sync_send_event(Content, get_mime_type).
 
 file_get_mime_type(FilePath) ->
-	case filelib:is_file(FilePath) of
+	case filelib:is_file(Filepath) of
 		false ->
-			{reply, MimeType, file, {StatusCode,MimeType}};
+			log_invalid_filepath_error(FilePath),
+			"";
 		true ->
-			%% Guess mime type from filepath
-			case mimetypes:filename(MimeType) of
-				undefined ->
-					%% Return default mime type
-					{reply, "text/html", file, {StatusCode,MimeType}};
-				MimeType ->
-					%% Return mime type of file
-					{reply, MimeType, file, {StatusCode,MimeType}}
-			end
-	end;
+			get_file_mime_type(FilePath)
+	end.
+
+
+get_file_mime_type(FilePath) ->
+	case mimetypes:filename(MimeType) of
+		undefined ->
+			"text/html";
+		MimeType ->
+			MimeType
+	end.
+
+
 
 add_data(Body, NewContent) ->
 	gen_fsm:sync_send_event(Body, {add_data, NewData}).
@@ -190,6 +198,9 @@ get_data(Body) ->
 %% ============================================================================
 %% Logging function
 %% ============================================================================
+
+log_invalid_file_error(FilePath) ->
+	lager:warning("Invalid file, ~s", [FilePath]).
 
 log_response_create_error(Reason) ->
 	lager:warning("Could not create a response: ~s", [Reason]).
