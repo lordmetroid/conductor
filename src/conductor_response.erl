@@ -37,7 +37,7 @@ init(_Arguments) ->
 	{ok, []}.
 
 handle_call({create_file, Request}, {Client, _}, Responses) ->
-	case response_create_file(Request) of
+	case response_create_file() of
 		{error, Reason} ->
 			{reply, {error, Reason}, Responses};
 		{ok, Content} ->
@@ -45,7 +45,7 @@ handle_call({create_file, Request}, {Client, _}, Responses) ->
 	end;
 
 handle_call({create_program, Request},  {Client, _}, Responses) ->
-	case response_create_program(Request) of
+	case response_create_program() of
 		{error, Reason} ->
 			{reply, {error, Reason}, Responses};
 		{ok, Content} ->
@@ -120,8 +120,8 @@ start_link() ->
 create_file(Request) ->
 	gen_server:call(?MODULE, {create_file, Request}).
 
-response_create_file(Request) ->
-	conductor_response_data:create_file(Request).
+response_create_file() ->
+	conductor_response_data:create_file().
 
 	
 %% @doc Create a program response resource
@@ -129,8 +129,8 @@ response_create_file(Request) ->
 create_program(Request) ->
 	gen_server:call(?MODULE, {create_program, Request}).
 
-response_create_program(Request) ->
-	conductor_response_data:create_program(Request).
+response_create_program() ->
+	conductor_response_data:create_program().
 
 
 %% @doc Check if response exists

@@ -49,11 +49,11 @@ code_change(_OldVersion, StateName, State, _Extra) ->
 %% ============================================================================
 %% Undefined data (Default)
 %% ============================================================================
-undefined({create_file Request}, _From, _State) ->
-	{reply, ok, file, []};
+undefined(create_file, _From, _State) ->
+	{reply, ok, file, {[],[]}};
 
-undefined({create_program, Request}, _From, _State) ->
-	{reply, ok, program, []};
+undefined(create_program, _From, _State) ->
+	{reply, ok, program, {[],[]}};
 
 undefined(_Event, _From, State) ->
 	{reply, error, undefined, State}.
@@ -75,6 +75,8 @@ file(get_mime_type, _From, {FilePath, Data}) ->
 
 
 file({add_data, FilePath}, _From, _Data) ->
+	{Result, NewData} = file_add_data(FilePath),
+
 	case file:read_file(FilePath) of
 		{ok, Binary} ->
 			
@@ -123,7 +125,7 @@ program(_Event, _From, Content) ->
 %% ============================================================================
 %% Module functions
 %% ============================================================================
-create_file(Request) ->
+create_file() ->
 	case gen_fsm:start(?MODULE, [], []) of
 		ignore ->
 			log_create_response_error(ignore),
@@ -132,11 +134,11 @@ create_file(Request) ->
 			log_create_response_error(Reason),
 			{error, Reason};
 		{ok, Data} ->
-			gen_fsm:sync_send_event(Content, {create_file, Request}),
+			gen_fsm:sync_send_event(Content, create_file),
 			{ok, Data}
 	end.
 
-create_program(Request) ->
+create_program() ->
 	case gen_fsm:start(?MODULE, [], []) of
 		ignore ->
 			log_create_response_error(ignore),
@@ -145,7 +147,7 @@ create_program(Request) ->
 			log_create_response_error(Reason),
 			{error, Reason};
 		{ok, Data} ->
-			gen_fsm:sync_send_event(Content, {create_program, Request}),
+			gen_fsm:sync_send_event(Content, create_program),
 			{ok, Data}
 	end.
 
