@@ -25,8 +25,8 @@
 	get_mime_type/1,
 
 	add_data/2,
-	purge_data/1,
-	get_data/1
+	get_data/1,
+	purge_data/1
 ]).
 
 %% ============================================================================
@@ -123,7 +123,7 @@ program(Event, _From, State) ->
 %% ============================================================================
 
 %% @doc
-%% @spec
+%% @spec start() -> ignore | {error, Reason} | {ok, Content}
 start() ->
 	gen_fsm:start(?MODULE, [], []).
 

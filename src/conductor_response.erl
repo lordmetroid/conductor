@@ -39,18 +39,18 @@ init(_Arguments) ->
 
 handle_call({create_file, Request}, {Client, _}, Responses) ->
 	case response_create_file() of
-		{error, Reason} ->
-			{reply, {error, Reason}, Responses};
+		error ->
+			{reply, error, Responses};
 		{ok, Content} ->
-			{reply, {ok, Content}, [{Client, Request, Content} | Responses]}
+			{reply, ok, [{Client, Request, Content} | Responses]}
 	end;
 
 handle_call({create_program, Request},  {Client, _}, Responses) ->
 	case response_create_program() of
-		{error, Reason} ->
-			{reply, {error, Reason}, Responses};
+		error ->
+			{reply, error, Responses};
 		{ok, Content} ->
-			{reply, {ok, Content}, [{Client, Request, Content} | Responses]}
+			{reply, ok, [{Client, Request, Content} | Responses]}
 	end;
 
 handle_call(exists, {Client, _}, Responses) ->
@@ -125,10 +125,10 @@ response_create_file() ->
 	case conductor_response_content:start() of
 		ignore ->
 			log_response_create_error(ignore),
-			{error, ignore};
+			error;
 		{error, Reason} ->
 			log_response_create_error(Reason),
-			{error, Reason};
+			error;
 		{ok, Content} ->
 			conductor_response_content:create_file(Content),
 			{ok, Content}
@@ -144,10 +144,10 @@ response_create_program() ->
 	case conductor_response_content:start() of
 		ignore ->
 			log_response_create_error(ignore),
-			{error, ignore};
+			error;
 		{error, Reason} ->
 			log_response_create_error(Reason),
-			{error, Reason};
+			error;
 		{ok, Content} ->
 			conductor_response_content:create_program(Content),
 			{ok, Content}

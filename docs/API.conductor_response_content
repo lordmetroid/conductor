@@ -1,0 +1,36 @@
+
+
+undefined state:
+	start() -> ignore | {error, Reason} | {ok, Content}
+
+	create_file(Request) -> ok
+
+	create_program(Request) -> ok
+
+	destroy(Content) -> ok
+
+
+file state:
+	get_mime_type(Content) -> MimeType | undefined
+
+	add_data(Content, FilePath) -> ok
+
+	get_data(Content) -> Data
+
+	purge_data(Content) -> ok
+
+	destroy(Content) -> ok
+
+program state:
+	set_mime_type(Content, NewMimeType) -> ok
+
+	get_mime_type(Content) -> MimeType | "text/html"
+
+	add_data(Content, Data) -> ok
+
+	get_data(Content) -> Data
+
+	purge_data(Content) -> ok
+
+	destroy(Content) -> ok
+

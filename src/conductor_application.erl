@@ -45,8 +45,15 @@ publish_file(Request, Domain, Path) ->
 		false ->
 			false; %% 404 Not Found
 		true ->
-			conductor_response:create_file(Request),
-			conductor_response:add_file_data(FilePath)
+			create_file_response(Request, FilePath)
+	end.
+
+create_file_response(Request, FilePath) ->
+	case conductor_response:create_file(Request) of
+		error ->
+			false;
+		ok ->
+			conductor_response:add_data(FilePath)
 	end.
 
 get_program(Request, Domain, ProgramFile) ->
@@ -55,7 +62,8 @@ get_program(Request, Domain, ProgramFile) ->
 
 	case conductor_cache:get_module(ProgramPath) of
 		false ->
-			log_module_not_found_error(ProgramPath);
+			log_module_not_found_error(ProgramPath),
+			false;
 		Program ->
 			execute_program_module(Request, Program)
 	end.
@@ -63,11 +71,20 @@ get_program(Request, Domain, ProgramFile) ->
 execute_program_module(Request, Program) ->
 	case erlang:function_exported(Program, execute, 1) of
 		false ->
-			log_function_not_exported_error(execute, 1);
+			log_function_not_exported_error(execute, 1),
+			false;
 		true ->
-			conductor_response:create_program(Request),
+			create_program_response(Request, Program)
+	end.
+
+create_program_response(Request, Program) ->
+	case conductor_response:create_program(Request) of
+		error ->
+			false;
+		ok ->
 			Program:execute(Request)
 	end.
+
 
 %% ============================================================================
 % @doc Execute a model file during the execution of a program
