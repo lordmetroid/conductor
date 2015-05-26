@@ -140,8 +140,6 @@ get(Domain, Argument) ->
 	gen_server:call(?MODULE, {get, Domain, Argument}).
 
 settings_get(Domain, Argument, Settings) ->
-	Domain = create_domain(Domain),
-
 	case get_domain_configurations(Domain, Settings) of
 		{NewSettings, false} ->
 			log_undefined_domain(Domain),
@@ -239,11 +237,6 @@ create_setting(FilePath, _Date, {error, Reason}) ->
 create_setting(FilePath, Date, {ok, [{Domains, Values}]}) ->
 	[{Domains, Values, FilePath, Date}].
 
-
-%% @doc Join domain tokens together
-%% @spec
-create_domain([Token | Rest]) ->
-	lists:flatten([Token] ++ [ "." ++ X || X <- Rest]).
 
 
 %% @doc Search for a matching domain

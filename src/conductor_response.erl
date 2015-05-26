@@ -1,4 +1,5 @@
 -module(conductor_response).
+-compile({parse_transform, lager_transform}).
 
 -behavior(gen_server).
 -export([
@@ -121,7 +122,17 @@ create_file(Request) ->
 	gen_server:call(?MODULE, {create_file, Request}).
 
 response_create_file() ->
-	conductor_response_content:create_file().
+	case conductor_response_content:start() of
+		ignore ->
+			log_response_create_error(ignore),
+			{error, ignore};
+		{error, Reason} ->
+			log_response_create_error(Reason),
+			{error, Reason};
+		{ok, Content} ->
+			conductor_response_content:create_file(Content),
+			{ok, Content}
+	end.
 
 	
 %% @doc Create a program response resource
@@ -130,8 +141,17 @@ create_program(Request) ->
 	gen_server:call(?MODULE, {create_program, Request}).
 
 response_create_program() ->
-	conductor_response_content:create_program().
-
+	case conductor_response_content:start() of
+		ignore ->
+			log_response_create_error(ignore),
+			{error, ignore};
+		{error, Reason} ->
+			log_response_create_error(Reason),
+			{error, Reason};
+		{ok, Content} ->
+			conductor_response_content:create_program(Content),
+			{ok, Content}
+	end.
 
 %% @doc Check if response exists
 %% @spec
@@ -196,7 +216,7 @@ response_get_mime_type({_Client, _Request, Content}) ->
 
 %% @doc
 %% @spec
-add_data(Content) ->
+add_data(Data) ->
 	gen_server:call(?MODULE, {add_data, Data}).
 
 response_add_data(false, _NewData) ->

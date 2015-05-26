@@ -19,6 +19,7 @@ init(_Arguments) ->
 service_available(Request, Context) ->
 	%% Execute the request to create a response
 	conductor_application:execute(Request),
+
 	{true, Request, Context}.
 
 allowed_methods(Request, Context) ->
@@ -50,15 +51,11 @@ content_types_provided(Request, Context) ->
 	end.
 
 get_resource(Request, Context) ->
-	Domain = wrq:host_tokens(Request),
-	Path = wrq:path(Request),
-
-	Content = conductor_application:execute(Domain, Path),
-	{Content, Request, Context}.
+	Data = conductor_response:get_data(),
+	{Data, Request, Context}.
 
 %% ============================================================================
 %% POST functions
 %% ============================================================================
-
 
 

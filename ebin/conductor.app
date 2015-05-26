@@ -22,8 +22,7 @@
 		conductor_cache,
 		conductor_cache_compiler,
 		conductor_response,
-		conductor_response_body,
-		conductor_response_header,
+		conductor_response_content,
 
 		conductor_interface_supervisor,
 		conductor_application_interface,
@@ -35,8 +34,7 @@
 		conductor_settings,
 		conductor_cache,
 		conductor_response,
-		conductor_response_body,
-		conductor_response_header,
+		conductor_response_content,
 		conductor_interface_supervisor
 	]},
 

@@ -18,9 +18,18 @@
 %% @spec execute(Request::rd()) -> Content::iolist()
 execute(Request) ->
 	Path = wrq:path(Request),
-	Domain = wrq:host_tokens(Request),
-	Programs = conductor_settings:get(Domain, programs),
+	DomainTokens = wrq:host_tokens(Request),
+	Domain = create_domain(DomainTokens),
 
+	case conductor_settings:get(Domain, programs) of
+		undefined ->
+			log_no_programs_error(Domain),
+			false;
+		Programs ->
+			select_response_type(Request, Domain, Path, Programs)
+	end.
+			
+select_response_type(Request, Path, Domain, Programs) ->
 	case lists:keyfind(Path, 1, Programs) of
 		false ->
 			publish_file(Request, Domain, Path);
@@ -72,7 +81,8 @@ execute_model(ModelFile, Function, Arguments) ->
 	end.
 
 get_model_module(Request, ModelFile, Function, Arguments) ->
-	Domain = wrq:domain_tokens(Request),
+	DomainTokens = wrq:domain_tokens(Request),
+	Domain = create_domain(DomainTokens),
 
 	ModelRoot = conductor_settings:get(Domain, model_root),
 	ModelPath = filename:join([ModelRoot, ModelFile]),
@@ -104,7 +114,8 @@ execute_view(ViewFile, Arguments) ->
 	end.
 
 get_view_module(Request, ViewFile, Arguments) ->
-	Domain = wrq:domain_tokens(Request),
+	DomainTokens = wrq:domain_tokens(Request),
+	Domain = create_domain(DomainTokens),
 
 	ViewRoot = conductor_settings:get(Domain, view_root),
 	ViewPath = filename:join([ViewRoot, ViewFile]),
@@ -156,7 +167,8 @@ execute_controller(ControllerFile, Function, Arguments)  ->
 	end.
 
 get_controller_module(Request, ControllerFile, Function, Arguments) ->
-	Domain = wrq:domain_tokens(Request),
+	DomainTokens = wrq:domain_tokens(Request),
+	Domain = create_domain(DomainTokens),
 
 	ControllerRoot = conductor_settings:get(Domain, controller_root),
 	ControllerPath = filename:join([ControllerRoot, ControllerFile]),
@@ -177,8 +189,22 @@ execute_controller_module(Request, Controller, Function, Arguments) ->
 	end.
 
 %% ============================================================================
+%% Helper function
+%% ============================================================================
+
+%% @doc Join domain tokens together
+%% @spec
+create_domain([Token | Rest]) ->
+	lists:flatten([Token] ++ [ "." ++ X || X <- Rest]).
+
+
+%% ============================================================================
 %% Logging functions
 %% ============================================================================
+
+log_no_programs_error(Domain) ->
+	lager:warning("No programs specified for: ~s", [Domain]).
+
 log_module_not_found_error(Path) ->
 	lager:warning("Could not find ~s", [Path]).
 
@@ -195,3 +221,4 @@ log_render_data_error(Errors) ->
 
 log_render_api_error(Compiler) ->
 	lager:warning("Compiler ~s returned invalid value", [Compiler]).
+
