@@ -169,9 +169,6 @@ get_module(ModulePath) ->
 	gen_server:call(?MODULE, {get_module, ModulePath}).
 
 cache_get_module(ModulePath, Modules) ->
-
-
-
 	%% Search cache for module
 	{Cache, _Garbage} = Modules,
 	case lists:keyfind(ModulePath,1, Cache) of

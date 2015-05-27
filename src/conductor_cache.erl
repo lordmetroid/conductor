@@ -132,12 +132,10 @@ start_link() ->
 get_module(ModulePath) ->
 	gen_server:call(?MODULE, {get_module, ModulePath}).
 
-cache_get_module(ModulePath, Modules) ->
-	{Cache, _Garbage} = Modules,
-		
+cache_get_module(ModulePath, {Cache, Garbage}) ->
 	case lists:keyfind(ModulePath,1, Cache) of
 		false ->
-			add_module_to_cache(ModulePath, Modules 
+			add_module_to_cache(ModulePath, {Cache, Garbage});
 		{ModulePath, {Module, Date}} ->
 			check_file_updates(ModulePath, Modules, Module, Date) 
 	end.
@@ -162,17 +160,21 @@ check_file_updates(ModulePath, {Cache, Garbage}, Module, Date) ->
 			{Module, {Cache, Garbage}};
 		_NewDate ->
 			%% Module file has been changed since last cached
-			update_cache(ModulePath, 
+			update_cache(ModulePath, {Cache, Garbage}, Module)
+	end.
 
-			case update(Modules, ModulePath, Module) of
-				error ->
-					%% Cache could not be updated
-					{reply, error, Modules};
-				{ok, UpdatedModules, NewModule} ->
-					%% Updated cache with new module
-					{reply, {ok, NewModule}, UpdatedModules}
-			end
-	end
+update_cache(ModulePath, {Cache, Garbage}, Module) ->
+	case install_module(ModulePath) of
+		error ->
+		{NewModule, Date} ->
+			NewEntry = {ModulePath, {NewModule, Data}},
+			UpdatedCache = lists:keyreplace(ModulePath, 1, Cache, NewEntry),
+
+			code:delete(Module),
+			UpdatedGarbage = uninstall_module(Module, Garbage),
+
+			{{UpdatedCache, UpdatedGarbage}, NewModule}
+	end.
 
 remove_deleted_module(ModuklePath, {Cache, Garbage}, Module) ->
 			case remove(Modules, ModulePath, Module) of
@@ -189,13 +191,15 @@ add({Cache, Garbage}, ModulePath) ->
 		error ->
 			%% Module could not be compiled
 			error;
-		{ok, {Module,Date}} ->
+		{Module,Date} ->
 			%% Add module to cache
 			UpdatedCache = [{ModulePath, {Module,Date}} | Cache],
 			{ok, {UpdatedCache, Garbage}, Module}
 	end.
 
 install_module(ModulePath) ->
+
+
 	case filelib:last_modified(ModulePath) of
 		0 ->
 			%% Module file does not exist
@@ -228,7 +232,7 @@ install_module(ModulePath) ->
 %% Helper functions
 %% ============================================================================
 
-%% @doc Install a module to the system
+%% @doc Compile and load a module into the virtual machine
 %% @spec
 install_module(ModulePath) ->
 	case filelib:last_modified(ModulePath) of
@@ -268,4 +272,4 @@ log_compile_error(ModulePath) ->
 	lager:warning("Could not compile: ~s", [ModulePath]).
 
 log_load_binary_error(ModulePath, Reason) ->
-	lager:warning("Could not load ~s, binary: ~p", [ModulePath, Reason]).
+	lager:warning("Could not load load binary, ~s: ~p", [ModulePath, Reason]).
