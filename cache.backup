@@ -1,3 +1,4 @@
+%% -*- erlang -*-
 -module(conductor_cache).
 
 -behavior(gen_server).
@@ -24,8 +25,6 @@ init(_Arguments) ->
 	{ok, {[],[]}}.
 
 handle_call({get_module, ModulePath}, _From, Modules) ->
-	 {UpdatedModules, Module} = cache_get_module(ModulePath, Modules),
-	 {reply, Module, UpdatedModules}
 	
 handle_call(_Event, _From, State) ->
 	{stop, State}.
@@ -50,6 +49,16 @@ code_change(_OldVersion, State, _Extra) ->
 % @spec add({Cache, DeathRow}, ModulePath) -> error | 
 % @doc Add module to cache
 %% ----------------------------------------------------------------------------
+add({Cache, Garbage}, ModulePath) ->
+	case install_module(ModulePath) of
+		error ->
+			%% Module could not be compiled
+			error;
+		{ok, {Module,Date}} ->
+			%% Add module to cache
+			UpdatedCache = [{ModulePath, {Module,Date}} | Cache],
+			{ok, {UpdatedCache, Garbage}, Module}
+	end.
 
 %% ----------------------------------------------------------------------------
 % @spec purge_module(DeathRow) -> UpdatedDeathRow
@@ -117,84 +126,6 @@ uninstall_module([], UpdatedGarbage) ->
 % @spec install_module(ModulePath) -> error | {ok, {Module, Date}}
 % @doc Compile and load module from file into memory
 %% ----------------------------------------------------------------------------
-
-%% ----------------------------------------------------------------------------
-% @spec start() ->
-% @doc Start the web application file cache manager
-%% ----------------------------------------------------------------------------
-start_link() ->
-	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
-
-%% ----------------------------------------------------------------------------
-% @spec get_module(ModulePath) -> error | {ok, Module}
-% @doc Get the cached web application module
-%% ----------------------------------------------------------------------------
-get_module(ModulePath) ->
-	gen_server:call(?MODULE, {get_module, ModulePath}).
-
-cache_get_module(ModulePath, Modules) ->
-	{Cache, _Garbage} = Modules,
-		
-	case lists:keyfind(ModulePath,1, Cache) of
-		false ->
-			add_module_to_cache(ModulePath, Modules 
-		{ModulePath, {Module, Date}} ->
-			check_file_updates(ModulePath, Modules, Module, Date) 
-	end.
-
-add_module_to_cache(ModulePath, {Cache, Garbage}) ->
-	case install_module(ModulePath) of
-		error ->
-			
-		{Module, Date} ->
-			UpdatedCache = [{ModulePath, {Module, Date}} | Cache],
-			{Module, {UpdatedCache, Garbage}}
-	end.
-
-
-check_file_updates(ModulePath, {Cache, Garbage}, Module, Date) ->
-	case filelib:last_modified(ModulePath) of
-		0 ->
-			%% Module file has been deleted
-			remove_deleted_module(ModulePath, {Cache, Garbage}, Module),
-		Date ->
-			%% Module in cache is up to date
-			{Module, {Cache, Garbage}};
-		_NewDate ->
-			%% Module file has been changed since last cached
-			update_cache(ModulePath, 
-
-			case update(Modules, ModulePath, Module) of
-				error ->
-					%% Cache could not be updated
-					{reply, error, Modules};
-				{ok, UpdatedModules, NewModule} ->
-					%% Updated cache with new module
-					{reply, {ok, NewModule}, UpdatedModules}
-			end
-	end
-
-remove_deleted_module(ModuklePath, {Cache, Garbage}, Module) ->
-			case remove(Modules, ModulePath, Module) of
-				error ->
-					%% Cache has not been changed
-					{reply, error, Modules};
-				{ok, UpdatedModules} ->
-					%% Module removed from cache
-					{reply, error, UpdatedModules}
-			end;
-
-add({Cache, Garbage}, ModulePath) ->
-	case install_module(ModulePath) of
-		error ->
-			%% Module could not be compiled
-			error;
-		{ok, {Module,Date}} ->
-			%% Add module to cache
-			UpdatedCache = [{ModulePath, {Module,Date}} | Cache],
-			{ok, {UpdatedCache, Garbage}, Module}
-	end.
-
 install_module(ModulePath) ->
 	case filelib:last_modified(ModulePath) of
 		0 ->
@@ -223,49 +154,62 @@ install_module(ModulePath) ->
 			end
 	end.
 
+%% ----------------------------------------------------------------------------
+% @spec start() ->
+% @doc Start the web application file cache manager
+%% ----------------------------------------------------------------------------
+start_link() ->
+	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
-%% ============================================================================
-%% Helper functions
-%% ============================================================================
+%% ----------------------------------------------------------------------------
+% @spec get_module(ModulePath) -> error | {ok, Module}
+% @doc Get the cached web application module
+%% ----------------------------------------------------------------------------
+get_module(ModulePath) ->
+	gen_server:call(?MODULE, {get_module, ModulePath}).
 
-%% @doc Install a module to the system
-%% @spec
-install_module(ModulePath) ->
-	case filelib:last_modified(ModulePath) of
-		0 ->
-			log_file_not_found_error(ModulePath),
-			error;
-		Date ->
-			compile_module(ModulePath, Date)
-	end.
+cache_get_module(ModulePath, Modules) ->
 
-compile_module(ModulePath, Date) ->
-	case conductor_compiler:make(ModulePath) of
-		error ->
-			log_compile_error(ModulePath),
-			error;
-		{Module, ModuleBinary} ->
-			load_module_binary(ModulePath, Date, Module, ModuleBinary)
-	end.
 
-load_module_binary(ModulePath, Date, Module, ModuleBinary) ->
-	case code:load_binary(Module, Module, ModuleBinary) of
-		{error, Reason} ->
-			log_load_binary_error(ModulePath, Reason),
-			error;
-		{module, Module} ->
-			{Module, Date}
-	end.
 
-%% ============================================================================
-%% Logging functions
-%% ============================================================================
+	%% Search cache for module
+	{Cache, _Garbage} = Modules,
+	case lists:keyfind(ModulePath,1, Cache) of
+		false ->
+			%% Module does not exist in cache
+			case add(Modules, ModulePath) of
+				error ->
+					%% Could not add module
+					{reply, error, Modules};
+				{ok, UpdatedModules, NewModule} ->
+					%% New module added to cache
+					{reply, {ok, NewModule}, UpdatedModules}
+			end;
+		{ModulePath, {Module,Date}} ->
+			case filelib:last_modified(ModulePath) of
+				0 ->
+					%% Module file has been deleted
+					case remove(Modules, ModulePath, Module) of
+						error ->
+							%% Cache has not been changed
+							{reply, error, Modules};
+						{ok, UpdatedModules} ->
+							%% Module removed from cache
+							{reply, error, UpdatedModules}
+					end;
+				Date ->
+					%% Module in cache is up to date
+					{reply, {ok, Module}, Modules};
+				_NewDate ->
+					%% Module file has been changed since last cached
+					case update(Modules, ModulePath, Module) of
+						error ->
+							%% Cache could not be updated
+							{reply, error, Modules};
+						{ok, UpdatedModules, NewModule} ->
+							%% Updated cache with new module
+							{reply, {ok, NewModule}, UpdatedModules}
+					end
+			end
+	end;
 
-log_file_not_found_error(ModulePath) ->
-	lager:warning("Could not find module file: ~s", [ModulePath]).
-
-log_compile_error(ModulePath) ->
-	lager:warning("Could not compile: ~s", [ModulePath]).
-
-log_load_binary_error(ModulePath, Reason) ->
-	lager:warning("Could not load ~s, binary: ~p", [ModulePath, Reason]).

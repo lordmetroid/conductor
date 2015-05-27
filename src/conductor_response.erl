@@ -60,8 +60,8 @@ handle_call(exists, {Client, _}, Responses) ->
 
 handle_call(destroy, {Client, _}, Responses) ->
 	Response = get_response(Client, Responses),
-	{Result, UpdatedResponses} = response_destroy(Responses, Response),
-	{reply, Result, UpdatedResponses};
+	UpdatedResponses = response_destroy(Responses, Response),
+	{reply, ok, UpdatedResponses};
 
 handle_call(get_request, {Client, _}, Responses) ->
 	Response = get_response(Client, Responses),
@@ -172,13 +172,8 @@ destroy() ->
 response_destroy(Responses, false) ->
 	{false, Responses};
 response_destroy(Responses, {Client, _Request, Content}) ->
-	case conductor_response_content:destroy(Content) of
-		error ->
-			{error, Responses};
-		ok ->
-			UpdatedResponses = lists:keydelete(Client, 1, Responses),
-			{ok, UpdatedResponses}
-	end.
+	conductor_response_content:destroy(Content),
+	lists:keydelete(Client, 1, Responses).
 
 %% ============================================================================
 %% @doc Get the mathcing request to a response

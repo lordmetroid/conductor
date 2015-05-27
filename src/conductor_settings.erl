@@ -27,8 +27,8 @@ init(_Arguments) ->
 	{ok, Settings}.
 
 handle_call({set_directory, Path}, _From, Settings) ->
-	NewSettings = settings_set_directory(Path, Settings),
-	{reply, ok, NewSettings};
+	UpdatedSettings = settings_set_directory(Path, Settings),
+	{reply, ok, UpdatedSettings};
 
 handle_call({get, Domain, Argument}, _From, Settings) ->
 	{NewSettings, Value} = settings_get(Domain, Argument, Settings),
@@ -141,12 +141,12 @@ get(Domain, Argument) ->
 
 settings_get(Domain, Argument, Settings) ->
 	case get_domain_configurations(Domain, Settings) of
-		{NewSettings, false} ->
+		{UpdatedSettings, false} ->
 			log_undefined_domain(Domain),
-			{NewSettings, undefined};
-		{NewSettings, Values} ->
+			{UpdatedSettings, undefined};
+		{UpdatedSettings, Values} ->
 			Value = get_value(Argument, Values),
-			{NewSettings, Value}
+			{UpdatedSettings, Value}
 	end.
 
 get_domain_configurations(Domain, Settings) ->
@@ -154,16 +154,17 @@ get_domain_configurations(Domain, Settings) ->
 		false ->
 			update_configurations(Domain, Settings, false);
 		Setting ->
-			check_config_file_updates(Setting, Settings)
+			check_file_updates(Setting, Settings)
 	end.
 
 
-check_config_file_updates({Domain, Values, FilePath, Date}, Settings) ->
+check_file_updates({Domain, Values, FilePath, Date}, Settings) ->
 	case filelib:last_modified(FilePath) of
 		0 ->
 			%% File has been deleted
 			update_configurations(Domain, Values, Settings);
 		Date ->
+			%% File has previously been read
 			{Settings, Values};
 		_NewDate ->
 			%% File has been edited
@@ -185,12 +186,12 @@ get_updated_config_files(Domain, Values, Settings, Path) ->
 			log_directory_error(Path, Reason),
 			{Settings, Values};
 		{ok, FileNames} ->
-			NewSettings = read_config_files(Path, FileNames, Settings, []),
-			NewValues = get_domain_values(Domain, NewSettings), 
-			{NewSettings, NewValues}
+			UpdatedSettings = read_config_files(Path, FileNames, Settings, []),
+			UpdatedValues = get_domain_values(Domain, UpdatedSettings), 
+			{UpdatedSettings, UpdatedValues}
 	end.
 
-get_domain_values(Domain, NewSettings) ->
+get_domain_values(Domain, UpdatedSettings) ->
 	case search_domain(Domain, NewSettings) of
 		false ->
 			false;
@@ -203,7 +204,7 @@ get_value(Argument, Values) ->
 		false ->
 			log_undefined_value(Argument),
 			undefined;
-		Value ->
+		{Argument, Value} ->
 			Value
 	end.
 

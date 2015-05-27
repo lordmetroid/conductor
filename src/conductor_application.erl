@@ -29,7 +29,7 @@ execute(Request) ->
 			select_response_type(Request, Domain, Path, Programs)
 	end.
 			
-select_response_type(Request, Path, Domain, Programs) ->
+select_response_type(Request, Domain, Path, Programs) ->
 	case lists:keyfind(Path, 1, Programs) of
 		false ->
 			publish_file(Request, Domain, Path);
