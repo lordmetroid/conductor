@@ -1,4 +1,5 @@
 -module(conductor_cache).
+-compule({parse_transform, lager_transform}).
 
 -behavior(gen_server).
 -export([
@@ -24,8 +25,8 @@ init(_Arguments) ->
 	{ok, {[],[]}}.
 
 handle_call({get_module, ModulePath}, _From, Modules) ->
-	 {UpdatedModules, Module} = cache_get_module(ModulePath, Modules),
-	 {reply, Module, UpdatedModules}
+	 {Module, UpdatedModules} = cache_get_module(ModulePath, Modules),
+	 {reply, Module, UpdatedModules};
 	
 handle_call(_Event, _From, State) ->
 	{stop, State}.
@@ -42,76 +43,16 @@ terminate(_Reason, _State) ->
 code_change(_OldVersion, State, _Extra) ->
 	{ok, State}.
 
-%% ----------------------------------------------------------------------------
-% get_module helper function
-%% ----------------------------------------------------------------------------
 
-%% ----------------------------------------------------------------------------
-% @spec add({Cache, DeathRow}, ModulePath) -> error | 
-% @doc Add module to cache
-%% ----------------------------------------------------------------------------
+%% ============================================================================
+%% Module functions
+%% ============================================================================
 
-%% ----------------------------------------------------------------------------
-% @spec purge_module(DeathRow) -> UpdatedDeathRow
-% @doc Purge all lingering modules from memory
-%% ----------------------------------------------------------------------------
-%% ----------------------------------------------------------------------------
-% @spec purge_module(DeathRow) -> UpdatedDeathRow
-% @doc Purge all lingering modules from memory
-%% ----------------------------------------------------------------------------
-remove({Cache, Garbage}, ModulePath, Module) ->
-	%% Block processes from executing old code
-	case code:delete(Module) of
-		false ->
-			%% Could not delete module, even older code not yet purged
-			error;
-		true ->
-			%% Remove module from cache
-			UpdatedCache = lists:keydelete(ModulePath,1, Cache),
-			
-			%% Purge modules lingering in memory
-			UpdatedGarbage = uninstall_module([Module | Garbage]),
-			
-			{ok, {UpdatedCache, UpdatedGarbage}}
-	end.
-
-%% ----------------------------------------------------------------------------
-% @spec purge_module(DeathRow) -> UpdatedDeathRow
-% @doc Purge all lingering modules from memory
-%% ----------------------------------------------------------------------------
-uninstall_module(NewGarbage) ->
-	uninstall_module(NewGarbage, []).
-
-uninstall_module([Module | Rest], UpdatedGarbage) ->
-	case code:soft_purge(Module) of
-		false ->
-			%% Module still occupied by process
-			code:delete(Module),
-			uninstall_module(Rest, [Module | UpdatedGarbage]);
-		true ->
-			%% Module successfully purged from memory
-			uninstall_module(Rest, UpdatedGarbage)
-	end;
-uninstall_module([], UpdatedGarbage) ->
-	%% Return updated deathrow
-	UpdatedGarbage.
-
-%% ----------------------------------------------------------------------------
-% @spec install_module(ModulePath) -> error | {ok, {Module, Date}}
-% @doc Compile and load module from file into memory
-%% ----------------------------------------------------------------------------
-
-%% ----------------------------------------------------------------------------
-% @spec start() ->
-% @doc Start the web application file cache manager
-%% ----------------------------------------------------------------------------
+%% @doc Start the cache manager
 start_link() ->
 	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
-%% ----------------------------------------------------------------------------
-% @spec get_module(ModulePath) -> error | {ok, Module}
-% @doc Get the cached web application module
-%% ----------------------------------------------------------------------------
+%% @doc Get a cached module
 get_module(ModulePath) ->
 	gen_server:call(?MODULE, {get_module, ModulePath}).
 
@@ -120,26 +61,25 @@ cache_get_module(ModulePath, {Cache, Garbage}) ->
 		false ->
 			add_module_to_cache(ModulePath, {Cache, Garbage});
 		{ModulePath, {Module, Date}} ->
-			check_file_updates(ModulePath, Modules, Module, Date) 
+			check_file_updates(ModulePath, {Cache, Garbage}, {Module, Date})
 	end.
 
 add_module_to_cache(ModulePath, {Cache, Garbage}) ->
 	case install_module(ModulePath) of
 		error ->
+			log_add_module_error(ModulePath),
+			{false, {Cache, Garbage}};
 		{Module, Date} ->
 			UpdatedCache = [{ModulePath, {Module,Date}} | Cache],
 			{Module, {UpdatedCache, Garbage}}
 	end.
 
 
-
-
-
-check_file_updates(ModulePath, {Cache, Garbage}, Module, Date) ->
+check_file_updates(ModulePath, {Cache, Garbage}, {Module, Date}) ->
 	case filelib:last_modified(ModulePath) of
 		0 ->
 			%% Module file has been deleted
-			remove_deleted_module(ModulePath, {Cache, Garbage}, Module),
+			remove_deleted_module(ModulePath, {Cache, Garbage}, Module);
 		Date ->
 			%% Module in cache is up to date
 			{Module, {Cache, Garbage}};
@@ -148,93 +88,32 @@ check_file_updates(ModulePath, {Cache, Garbage}, Module, Date) ->
 			update_cache(ModulePath, {Cache, Garbage}, Module)
 	end.
 
-
-
-
-
-
+remove_deleted_module(ModulePath, {Cache, Garbage}, Module) ->
+	case code:delete(Module) of
+		false ->
+			log_delete_module_error(ModulePath),
+			{false, {Cache, Garbage}};
+		true ->
+			UpdatedCache = lists:keydelete(ModulePath,1, Cache),
+			UpdatedGarbage = uninstall_module([Module | Garbage], []),
+			
+			{false, {UpdatedCache, UpdatedGarbage}}
+	end.
 
 update_cache(ModulePath, {Cache, Garbage}, Module) ->
 	case install_module(ModulePath) of
 		error ->
+			log_update_module_error(ModulePath),
+			{false, {Cache, Garbage}};
 		{NewModule, Date} ->
-			NewEntry = {ModulePath, {NewModule, Data}},
+			NewEntry = {ModulePath, {NewModule, Date}},
 			UpdatedCache = lists:keyreplace(ModulePath, 1, Cache, NewEntry),
 
 			code:delete(Module),
-			UpdatedGarbage = uninstall_module(Module, Garbage),
+			UpdatedGarbage = uninstall_module([Module | Garbage], []),
 
-			{{UpdatedCache, UpdatedGarbage}, NewModule}
+			{NewModule, {UpdatedCache, UpdatedGarbage}}
 	end.
-
-remove_deleted_module(ModuklePath, {Cache, Garbage}, Module) ->
-			case remove(Modules, ModulePath, Module) of
-				error ->
-					%% Cache has not been changed
-					{reply, error, Modules};
-				{ok, UpdatedModules} ->
-					%% Module removed from cache
-					{reply, error, UpdatedModules}
-			end;
-
-add({Cache, Garbage}, ModulePath) ->
-	case install_module(ModulePath) of
-		error ->
-			%% Module could not be compiled
-			error;
-		{Module,Date} ->
-			%% Add module to cache
-			UpdatedCache = [{ModulePath, {Module,Date}} | Cache],
-			{ok, {UpdatedCache, Garbage}, Module}
-	end.
-
-install_module(ModulePath) ->
-
-update({Cache, Garbage}, ModulePath, Module) ->
-	case install_module(ModulePath) of
-		error ->
-			%% Module could not be compiled
-			error;
-		{ok, {NewModule,Date}} ->
-			%% Update cache with new module
-			NewEntry = {ModulePath, {NewModule,Date}},
-			UpdatedCache = lists:keyreplace(ModulePath,1, Cache, NewEntry),
-			
-			%% Purge modules lingering in memory
-			code:delete(Module),
-			UpdatedGarbage = uninstall_module([Module | Garbage]),
-			
-			{ok, {UpdatedCache, UpdatedGarbage}, NewModule}
-	end.
-
-
-	case filelib:last_modified(ModulePath) of
-		0 ->
-			%% Module file does not exist
-			conductor_log:add(ModulePath, "File not found"),
-			error;
-		Date ->
-			%% Compile and load module
-			case conductor_compiler:make(ModulePath) of
-				error ->
-					%% Could not compile module
-					conductor_log:add(ModulePath, "Could not be compiled"),
-					error;
-				{ok, Module, ModuleBinary} ->
-					%% Load compiled module
-					case code:load_binary(Module, Module, ModuleBinary) of
-						{error, Errors} ->
-							%% Module could not be loaded
-							conductor_log:add(ModulePath,
-								"Could not load code"),
-							error;
-						{module, Module} ->
-							%% Module loaded
-							{ok, {Module, Date}}
-					end
-			end
-	end.
-
 
 %% ============================================================================
 %% Helper functions
@@ -269,9 +148,31 @@ load_module_binary(ModulePath, Date, Module, ModuleBinary) ->
 			{Module, Date}
 	end.
 
+%% @doc Unload modules from the virtual machine
+%% @spec 
+uninstall_module([], UpdatedGarbage) ->
+	UpdatedGarbage;
+uninstall_module([Module | Rest], UpdatedGarbage) ->
+	case code:soft_purge(Module) of
+		false ->
+			code:delete(Module),
+			uninstall_module(Rest, [Module | UpdatedGarbage]);
+		true ->
+			uninstall_module(Rest, UpdatedGarbage)
+	end.
+
 %% ============================================================================
 %% Logging functions
 %% ============================================================================
+
+log_add_module_error(ModulePath) ->
+	lager:warning("Could not add ~s to the cache", [ModulePath]).
+
+log_update_module_error(ModulePath) ->
+	lager:warning("Could not update cache for ~s", [ModulePath]).
+
+log_delete_module_error(ModulePath) ->
+	lager:warning("Could not delete ~s from cache", [ModulePath]).
 
 log_file_not_found_error(ModulePath) ->
 	lager:warning("Could not find module file: ~s", [ModulePath]).

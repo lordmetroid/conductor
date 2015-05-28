@@ -192,7 +192,7 @@ get_updated_config_files(Domain, Values, Settings, Path) ->
 	end.
 
 get_domain_values(Domain, UpdatedSettings) ->
-	case search_domain(Domain, NewSettings) of
+	case search_domain(Domain, UpdatedSettings) of
 		false ->
 			false;
 		{_Domains, Values, _FilePath, _Date} ->
