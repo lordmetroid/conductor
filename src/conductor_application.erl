@@ -60,7 +60,7 @@ get_program(Request, Domain, ProgramFile) ->
 	ProgramRoot = conductor_settings:get(Domain, program_root),
 	ProgramPath = filename:join([ProgramRoot, ProgramFile]),
 
-	case conductor_cache:get_module(ProgramPath) of
+	case conductor_cache:get_module(program, ProgramPath) of
 		false ->
 			log_module_not_found_error(ProgramPath),
 			false;
@@ -104,7 +104,7 @@ get_model_module(Request, ModelFile, Function, Arguments) ->
 	ModelRoot = conductor_settings:get(Domain, model_root),
 	ModelPath = filename:join([ModelRoot, ModelFile]),
 	
-	case conductor_cache:get_module(ModelPath) of
+	case conductor_cache:get_module(model, ModelPath) of
 		false ->
 			log_module_not_found_error(ModelPath);
 		Model ->
@@ -137,7 +137,7 @@ get_view_module(Request, ViewFile, Arguments) ->
 	ViewRoot = conductor_settings:get(Domain, view_root),
 	ViewPath = filename:join([ViewRoot, ViewFile]),
 	
-	case conductor_cache:get_module(ViewPath) of
+	case conductor_cache:get_module(view, ViewPath) of
 		false ->
 			log_module_not_found_error(ViewPath);
 		View ->
@@ -190,7 +190,7 @@ get_controller_module(Request, ControllerFile, Function, Arguments) ->
 	ControllerRoot = conductor_settings:get(Domain, controller_root),
 	ControllerPath = filename:join([ControllerRoot, ControllerFile]),
 	
-	case conductor_cache:get_module(ControllerPath) of
+	case conductor_cache:get_module(controller, ControllerPath) of
 		false ->
 			log_module_not_found_error(ControllerPath);
 		Controller ->

@@ -13,7 +13,7 @@
 
 -export([
 	start_link/0,
-	get_module/1
+	get_module/2
 ]).
 
 %% ----------------------------------------------------------------------------
@@ -24,8 +24,8 @@ init(_Arguments) ->
 	%% Initial cache and garbage heap
 	{ok, {[],[]}}.
 
-handle_call({get_module, ModulePath}, _From, Modules) ->
-	 {Module, UpdatedModules} = cache_get_module(ModulePath, Modules),
+handle_call({get_module, Type, ModulePath}, _From, Modules) ->
+	 {Module, UpdatedModules} = cache_get_module(Type, ModulePath, Modules),
 	 {reply, Module, UpdatedModules};
 	
 handle_call(_Event, _From, State) ->
@@ -53,19 +53,21 @@ start_link() ->
 	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 %% @doc Get a cached module
-get_module(ModulePath) ->
-	gen_server:call(?MODULE, {get_module, ModulePath}).
+get_module(Type, ModulePath) ->
+	gen_server:call(?MODULE, {get_module, Type, ModulePath}).
 
-cache_get_module(ModulePath, {Cache, Garbage}) ->
+cache_get_module(Type, ModulePath, Modules) ->
+	{Cache, Garbage} = Modules,
+
 	case lists:keyfind(ModulePath, 1, Cache) of
 		false ->
-			add_module_to_cache(ModulePath, {Cache, Garbage});
+			add_module_to_cache(Type, ModulePath, Modules);
 		{ModulePath, {Module, Date}} ->
-			check_file_updates(ModulePath, {Cache, Garbage}, {Module, Date})
+			check_file_updates(Type, ModulePath, Modules, {Module, Date})
 	end.
 
-add_module_to_cache(ModulePath, {Cache, Garbage}) ->
-	case install_module(ModulePath) of
+add_module_to_cache(Type, ModulePath, {Cache, Garbage}) ->
+	case install_module(Type, ModulePath) of
 		error ->
 			log_add_module_error(ModulePath),
 			{false, {Cache, Garbage}};
@@ -75,7 +77,7 @@ add_module_to_cache(ModulePath, {Cache, Garbage}) ->
 	end.
 
 
-check_file_updates(ModulePath, {Cache, Garbage}, {Module, Date}) ->
+check_file_updates(Type, ModulePath, {Cache, Garbage}, {Module, Date}) ->
 	case filelib:last_modified(ModulePath) of
 		0 ->
 			%% Module file has been deleted
@@ -85,7 +87,7 @@ check_file_updates(ModulePath, {Cache, Garbage}, {Module, Date}) ->
 			{Module, {Cache, Garbage}};
 		_NewDate ->
 			%% Module file has been changed since last cached
-			update_cache(ModulePath, {Cache, Garbage}, Module)
+			update_cache(Type, ModulePath, {Cache, Garbage}, Module)
 	end.
 
 remove_deleted_module(ModulePath, {Cache, Garbage}, Module) ->
@@ -100,8 +102,8 @@ remove_deleted_module(ModulePath, {Cache, Garbage}, Module) ->
 			{false, {UpdatedCache, UpdatedGarbage}}
 	end.
 
-update_cache(ModulePath, {Cache, Garbage}, Module) ->
-	case install_module(ModulePath) of
+update_cache(Type, ModulePath, {Cache, Garbage}, Module) ->
+	case install_module(Type, ModulePath) of
 		error ->
 			log_update_module_error(ModulePath),
 			{false, {Cache, Garbage}};
@@ -121,17 +123,17 @@ update_cache(ModulePath, {Cache, Garbage}, Module) ->
 
 %% @doc Compile and load a module into the virtual machine
 %% @spec
-install_module(ModulePath) ->
+install_module(Type, ModulePath) ->
 	case filelib:last_modified(ModulePath) of
 		0 ->
 			log_file_not_found_error(ModulePath),
 			error;
 		Date ->
-			compile_module(ModulePath, Date)
+			compile_module(Type, ModulePath, Date)
 	end.
 
-compile_module(ModulePath, Date) ->
-	case conductor_compiler:make(ModulePath) of
+compile_module(Type, ModulePath, Date) ->
+	case conductor_cache_compiler:make(Type, ModulePath) of
 		error ->
 			log_compile_error(ModulePath),
 			error;

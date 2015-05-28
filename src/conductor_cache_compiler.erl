@@ -1,113 +1,77 @@
 -module(conductor_cache_compiler).
+-compile({parse_transform, lager_transform}).
 
 -export([
 	make/1
 ]).
 
-%% ----------------------------------------------------------------------------
-% @spec make_module(ModulePath) -> {ok, {ModuleId, date()}, Binary} | error
-% @doc Compile a module from specified file path
-%% ----------------------------------------------------------------------------
-make(ModulePath) ->
-	%% Get module locations
-	ProgramRoot = conductor_settings:get(program_root),
-	ModelRoot = conductor_settings:get(model_root),
-	ViewRoot = conductor_settings:get(view_root),
-	ControllerRoot = conductor_settings:get(controller_root),
+%% ============================================================================
+%% Module functions
+%% ============================================================================
 
-	ModuleTypes = [
-		ModelRoot,
-		ViewRoot,
-		ControllerRoot,
-		ProgramRoot
-	],
+%% @doc Compile a module from file to store in the cache
+make(program, ModulePath) ->
+	ModuleForms = lists:flatten([
+		add_module_attribute(),
+		add_controller_export_attribute(),
+		add_webmachine_lib_attribute(),
+		add_file(ModulePath),
+		add_run_function(),
+		add_data_function(),
+		add_render_function()
+	]),
+	make_module(ModulePath, ModuleForms);
+make(model, ModulePath) ->
+	ModuleForms = lists:flatten([
+		add_module_attribute(),
+		add_webmachine_lib_attribute(),
+		add_file(ModulePath)
+	]),
+	make_module(ModulePath, ModuleForms);
+make(view, ModulePath) ->
+	ModuleForms = lists:flatten([
+		add_module_attribute(),
+		add_view_export_attribute(),
+		add_view(ModulePath)
+	]),
+	make_module(ModulePath, ModuleForms);
+make(controller, ModulePath) ->
+	ModuleForms = lists:flatten([
+		add_module_attribute(),
+		add_controller_export_attribute(),
+		add_webmachine_lib_attribute(),
+		add_file(ModulePath),
+		add_run_function(),
+		add_data_function(),
+		add_render_function()
+	]),
+	make_module(ModulePath, ModuleForms).
 
-	%% Assemble module appropiately based on type
-	case discover_type(ModuleTypes, filename:dirname(ModulePath)) of
-		ProgramRoot ->
-			%% Compile a program
-			ModuleForms = lists:flatten([
-				add_module_attribute(),
-				add_controller_export_attribute(),
-				add_webmachine_lib_attribute(),
-				add_file(ModulePath),
-				add_run_function(),
-				add_data_function(),
-				add_render_function()
-			]),
-			make_module(ModulePath, ModuleForms);
-		ModelRoot ->
-			%% Compile a model
-			ModuleForms = lists:flatten([
-				add_module_attribute(),
-				add_webmachine_lib_attribute(),
-				add_file(ModulePath)
-			]),
-			make_module(ModulePath, ModuleForms);
-		ViewRoot ->
-			%% Compile a view
-			ModuleForms = lists:flatten([
-				add_module_attribute(),
-				add_view_export_attribute(),
-				add_view(ModulePath)
-			]),
-			make_module(ModulePath, ModuleForms);
-		ControllerRoot ->
-			%% Compile a controller
-			ModuleForms = lists:flatten([
-				add_module_attribute(),
-				add_controller_export_attribute(),
-				add_webmachine_lib_attribute(),
-				add_file(ModulePath),
-				add_run_function(),
-				add_data_function(),
-				add_render_function()
-			]),
-			make_module(ModulePath, ModuleForms)
-	end.
+%% ============================================================================
+%% Helper functions
+%% ============================================================================
 
-discover_type([Location | Rest], ModuleRoot) ->
-	%% Find module type based on location
-	case string:rstr(ModuleRoot, Location) of
-		0 ->
-			%% Location was no match
-			discover_type(Rest, ModuleRoot);
-		_Match ->
-			%% Location found
-			Location
-	end.
-
-%% ----------------------------------------------------------------------------
-% @spec make() -> {ok, {ModuleId,date()}, Binary} | error
-% @doc Add an Erlang module attribute to the compilation
-%% ----------------------------------------------------------------------------
+%% @doc Compile module forms to binary
 make_module(ModulePath, ModuleForms) ->
 	case compile:forms(ModuleForms) of
 		error ->
-			%% Report erlang syntax compilation errors
-			conductor_log:add(ModulePath, "Could not compile erlang syntax"),
+			log_compile_error(ModulePath, [],[]),
 			error;
 		{error, Errors, Warnings} ->
-			%% Report erlang syntax compilation errors
-			conductor_log:add(ModulePath, [Errors | Warnings]),
+			log_compile_error(ModulePath, Errors, Warnings),
 			error;
 		{ok, Module, ModuleBinary, Warnings} ->
-			%% Report erlang syntax compilation errors
-			conductor_log:add(ModulePath, Warnings),
-			{ok, Module, ModuleBinary};
+			log_compile_errors(ModulePath, [], Warnings),
+			{Module, ModuleBinary};
 		{ok, Module, ModuleBinary} ->
-			%% Return compiled module 
-			{ok, Module, ModuleBinary}
+			{Module, ModuleBinary}
 	end.
 
-%% ----------------------------------------------------------------------------
-% General module code
-%% ----------------------------------------------------------------------------
-	
-%% ----------------------------------------------------------------------------
-% @spec add_module_attribute() -> syntaxTree()
-% @doc Add an Erlang module attribute to the compilation
-%% ----------------------------------------------------------------------------
+%% ============================================================================
+%% General module code
+%% ============================================================================
+
+%% @doc Add the -module() attribute
 add_module_attribute() ->
 	erl_syntax:revert(
 		%% -module(uuid())
@@ -115,14 +79,12 @@ add_module_attribute() ->
 			erl_syntax:atom(uuid:uuid_to_string(uuid:get_v4()))
 		])
 	).
-%% ----------------------------------------------------------------------------
-% View module code
-%% ----------------------------------------------------------------------------
 
-%% ----------------------------------------------------------------------------
-% @spec add_view_export_attribute() -> syntaxTree()
-% @doc Add the export attribute for rending views
-%% ----------------------------------------------------------------------------
+%% ============================================================================
+% View module code
+%% ============================================================================
+
+% @doc Add the -export() attribute for rending views
 add_view_export_attribute() ->
 	erl_syntax:revert(
 		%% -export([get/0]).
@@ -346,3 +308,17 @@ add_run_function() ->
 			])
 		])
 	).
+
+%% ============================================================================
+%% Logging functions
+%% ============================================================================
+
+log_compile_error(ModulePath, [],[]) ->
+	lager:warning("Could not compile ~s", [ModulePath]);
+log_compile_errors(ModulePath, [Error | Rest], []) ->
+	lager:warning("Compile error: ~p", [Error]),
+	log_compile_error(ModulePath, Rest, []);
+log_compile_error(ModulePath, Errors, [Warning | Rest]) ->
+	lager:warning("Compile warning: ~p", [Warning]),
+	log_compile_error(ModulePath, Errors, Rest).
+
