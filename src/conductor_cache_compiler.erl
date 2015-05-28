@@ -2,7 +2,7 @@
 -compile({parse_transform, lager_transform}).
 
 -export([
-	make/1
+	make/2
 ]).
 
 %% ============================================================================
@@ -61,7 +61,7 @@ make_module(ModulePath, ModuleForms) ->
 			log_compile_error(ModulePath, Errors, Warnings),
 			error;
 		{ok, Module, ModuleBinary, Warnings} ->
-			log_compile_errors(ModulePath, [], Warnings),
+			log_compile_error(ModulePath, [], Warnings),
 			{Module, ModuleBinary};
 		{ok, Module, ModuleBinary} ->
 			{Module, ModuleBinary}
@@ -313,9 +313,9 @@ add_run_function() ->
 %% Logging functions
 %% ============================================================================
 
-log_compile_error(ModulePath, [],[]) ->
+log_compile_error(ModulePath, [], []) ->
 	lager:warning("Could not compile ~s", [ModulePath]);
-log_compile_errors(ModulePath, [Error | Rest], []) ->
+log_compile_error(ModulePath, [Error | Rest], []) ->
 	lager:warning("Compile error: ~p", [Error]),
 	log_compile_error(ModulePath, Rest, []);
 log_compile_error(ModulePath, Errors, [Warning | Rest]) ->
