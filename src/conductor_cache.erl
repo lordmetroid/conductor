@@ -55,23 +55,6 @@ code_change(_OldVersion, State, _Extra) ->
 % @spec purge_module(DeathRow) -> UpdatedDeathRow
 % @doc Purge all lingering modules from memory
 %% ----------------------------------------------------------------------------
-update({Cache, Garbage}, ModulePath, Module) ->
-	case install_module(ModulePath) of
-		error ->
-			%% Module could not be compiled
-			error;
-		{ok, {NewModule,Date}} ->
-			%% Update cache with new module
-			NewEntry = {ModulePath, {NewModule,Date}},
-			UpdatedCache = lists:keyreplace(ModulePath,1, Cache, NewEntry),
-			
-			%% Purge modules lingering in memory
-			code:delete(Module),
-			UpdatedGarbage = uninstall_module([Module | Garbage]),
-			
-			{ok, {UpdatedCache, UpdatedGarbage}, NewModule}
-	end.
-
 %% ----------------------------------------------------------------------------
 % @spec purge_module(DeathRow) -> UpdatedDeathRow
 % @doc Purge all lingering modules from memory
@@ -133,7 +116,7 @@ get_module(ModulePath) ->
 	gen_server:call(?MODULE, {get_module, ModulePath}).
 
 cache_get_module(ModulePath, {Cache, Garbage}) ->
-	case lists:keyfind(ModulePath,1, Cache) of
+	case lists:keyfind(ModulePath, 1, Cache) of
 		false ->
 			add_module_to_cache(ModulePath, {Cache, Garbage});
 		{ModulePath, {Module, Date}} ->
@@ -143,11 +126,13 @@ cache_get_module(ModulePath, {Cache, Garbage}) ->
 add_module_to_cache(ModulePath, {Cache, Garbage}) ->
 	case install_module(ModulePath) of
 		error ->
-			
 		{Module, Date} ->
-			UpdatedCache = [{ModulePath, {Module, Date}} | Cache],
+			UpdatedCache = [{ModulePath, {Module,Date}} | Cache],
 			{Module, {UpdatedCache, Garbage}}
 	end.
+
+
+
 
 
 check_file_updates(ModulePath, {Cache, Garbage}, Module, Date) ->
@@ -162,6 +147,12 @@ check_file_updates(ModulePath, {Cache, Garbage}, Module, Date) ->
 			%% Module file has been changed since last cached
 			update_cache(ModulePath, {Cache, Garbage}, Module)
 	end.
+
+
+
+
+
+
 
 update_cache(ModulePath, {Cache, Garbage}, Module) ->
 	case install_module(ModulePath) of
@@ -198,6 +189,23 @@ add({Cache, Garbage}, ModulePath) ->
 	end.
 
 install_module(ModulePath) ->
+
+update({Cache, Garbage}, ModulePath, Module) ->
+	case install_module(ModulePath) of
+		error ->
+			%% Module could not be compiled
+			error;
+		{ok, {NewModule,Date}} ->
+			%% Update cache with new module
+			NewEntry = {ModulePath, {NewModule,Date}},
+			UpdatedCache = lists:keyreplace(ModulePath,1, Cache, NewEntry),
+			
+			%% Purge modules lingering in memory
+			code:delete(Module),
+			UpdatedGarbage = uninstall_module([Module | Garbage]),
+			
+			{ok, {UpdatedCache, UpdatedGarbage}, NewModule}
+	end.
 
 
 	case filelib:last_modified(ModulePath) of
