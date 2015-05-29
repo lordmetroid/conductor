@@ -98,57 +98,40 @@ add_view_export_attribute() ->
 		])
 	).
 
-%% ----------------------------------------------------------------------------
-% @spec add_view(ModulePath) -> erl_syntax()
-% @doc Add a view file to the compilation
-%% ----------------------------------------------------------------------------
+% @doc Add the view get() function
 add_view(ModulePath) ->
 	case file:read_file(ModulePath) of
-		{error, Errors} ->
-			%% Unable to read file
-			conductor_log:add(ModulePath, "Could not read file"),
-
-			%% Return dummy function
+		{error, Reason} ->
+			log_read_file_error(ModulePath, Reason),
 			add_get_function(error, []);
-		{ok, Binary} ->
-			%% Convert binary to scannable string
-			
-			%% TODO: Detect encoding of file
-			String = unicode:characters_to_list(Binary, utf8),
-			
-			%% Get compiler and the template
-			case lists:split(string:str(String, "\n")-1, String) of
-				{"#!" ++ CompilerName, Template} ->
-					%% Compile template
-					Compiler = list_to_atom(
-						string:to_lower(string:strip(CompilerName))
-					),
-					case Compiler:make(Template) of
-						{error, Errors} ->
-							%% Template could not be compiled
-							conductor_log:add(ModulePath, Errors),
-						
-							%% Return empty function
-							add_get_function(Compiler, []);
-						{ok, ViewAST} ->
-							%% Return template as function
-							add_get_function(Compiler, ViewAST);
-						_ ->
-							%% Make function does not comply to API
-							conductor_log:add(atom_to_list(Compiler),
-								"Invalid value from function make"),
+		{ok, ModuleBinary} ->
+			get_view_comiler(ModulePath, ModuleBinary)
+	end.
 
-							%% Return dummy function
-							add_get_function(Compiler, [])
-					end;
-				_ ->
-					%% No compiler defined in template file
-					conductor_log:add(ModulePath,
-						"No compiler specified in template"),
+get_view_compiler(ModulePath, ModuleBinary) ->
+	%% TODO: Detect encoding of file
+	ModuleContent = unicode:characters_to_list(Binary, utf8),
+	
+	%% Get compiler and the template
+	case lists:split(string:str(ModuleContent, "\n")-1, ModuleContent) of
+		{"#!" ++ CompilerName, Template} ->
+			compile_template(CompilerName, Template);
+		_InvalidResult ->
+			add_get_function(error, [])
+	end.
 
-					%% Return dummy function
-					add_get_function(error, [])
-			end
+compile_template(CompilerName, Template) ->
+	Compiler = list_to_atom(string:to_lower(string:strip(CompilerName))),
+
+	case Compiler:make(Template) of
+		{error, Reason} ->
+			log_compile_error(ModulePath, Reason),
+			add_get_function(Compiler, []);
+		{ok, ViewAST} ->
+			add_get_function(Compiler, ViewAST);
+		_InvalidResult ->
+			log_compiler_api_error(
+			add_get_function(Compiler, [])
 	end.
 
 %% ----------------------------------------------------------------------------
