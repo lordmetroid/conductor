@@ -105,23 +105,23 @@ add_view(ModulePath) ->
 			log_read_file_error(ModulePath, Reason),
 			add_get_function(error, []);
 		{ok, ModuleBinary} ->
-			get_view_comiler(ModulePath, ModuleBinary)
+			get_view_compiler(ModulePath, ModuleBinary)
 	end.
 
 get_view_compiler(ModulePath, ModuleBinary) ->
 	%% TODO: Detect encoding of file
-	ModuleContent = unicode:characters_to_list(Binary, utf8),
+	ModuleContent = unicode:characters_to_list(ModuleBinary, utf8),
 	
 	%% Get compiler and the template
 	case lists:split(string:str(ModuleContent, "\n")-1, ModuleContent) of
 		{"#!" ++ CompilerName, Template} ->
-			compile_template(CompilerName, Template);
+			compile_template(ModulePath, CompilerName, Template);
 		_InvalidResult ->
 			log_template_api_error(ModulePath),
 			add_get_function(error, [])
 	end.
 
-compile_template(CompilerName, Template) ->
+compile_template(ModulePath, CompilerName, Template) ->
 	Compiler = list_to_atom(string:to_lower(string:strip(CompilerName))),
 
 	case Compiler:make(Template) of
@@ -131,7 +131,7 @@ compile_template(CompilerName, Template) ->
 		{ok, ViewAST} ->
 			add_get_function(Compiler, ViewAST);
 		_InvalidResult ->
-			log_compiler_api_error(ModulePath, Compiler),
+			log_compiler_api_error(Compiler),
 			add_get_function(Compiler, [])
 	end.
 
@@ -294,6 +294,9 @@ add_run_function() ->
 %% Logging functions
 %% ============================================================================
 
+log_read_file_error(ModulePath, Reason) ->
+	lager:warning("Could read ~s: ~p", [ModulePath, Reason]).
+
 log_compile_error(ModulePath, [], []) ->
 	lager:warning("Could not compile ~s", [ModulePath]);
 log_compile_error(ModulePath, [Error | Rest], []) ->
@@ -307,7 +310,7 @@ log_template_api_error(ModulePath) ->
 	lager:warning("Template does not specify #! $COMPILER_NAME on first line").
 
 log_compiler_make_error(ModulePath, Compiler, []) ->
-	lager:warning("Compiler ~p could not compiler ~s", [Compiler, ModulePath]).
+	lager:warning("Compiler ~p could not compiler ~s", [Compiler, ModulePath]);
 log_compiler_make_error(ModulePath, Compiler, [Reason | Rest]) ->
 	lager:warning("Compuler ~p: ~s", [ModulePath, Compiler, Reason]),
 	log_compiler_make_error(ModulePath, Compiler, Rest).
