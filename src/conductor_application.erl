@@ -18,8 +18,8 @@
 %% @spec execute(Request::rd()) -> Content::iolist()
 execute(Request) ->
 	Path = wrq:path(Request),
-	DomainTokens = wrq:host_tokens(Request),
-	Domain = create_domain(DomainTokens),
+	HostTokens = wrq:host_tokens(Request),
+	Domain = create_domain(HostTokens),
 
 	case conductor_settings:get(Domain, programs) of
 		undefined ->
@@ -98,8 +98,8 @@ execute_model(ModelFile, Function, Arguments) ->
 	end.
 
 get_model_module(Request, ModelFile, Function, Arguments) ->
-	DomainTokens = wrq:domain_tokens(Request),
-	Domain = create_domain(DomainTokens),
+	HostTokens = wrq:host_tokens(Request),
+	Domain = create_domain(HostTokens),
 
 	ModelRoot = conductor_settings:get(Domain, model_root),
 	ModelPath = filename:join([ModelRoot, ModelFile]),
@@ -131,8 +131,8 @@ execute_view(ViewFile, Arguments) ->
 	end.
 
 get_view_module(Request, ViewFile, Arguments) ->
-	DomainTokens = wrq:domain_tokens(Request),
-	Domain = create_domain(DomainTokens),
+	HostTokens = wrq:host_tokens(Request),
+	Domain = create_domain(HostTokens),
 
 	ViewRoot = conductor_settings:get(Domain, view_root),
 	ViewPath = filename:join([ViewRoot, ViewFile]),
@@ -184,8 +184,8 @@ execute_controller(ControllerFile, Function, Arguments)  ->
 	end.
 
 get_controller_module(Request, ControllerFile, Function, Arguments) ->
-	DomainTokens = wrq:domain_tokens(Request),
-	Domain = create_domain(DomainTokens),
+	HostTokens = wrq:host_tokens(Request),
+	Domain = create_domain(HostTokens),
 
 	ControllerRoot = conductor_settings:get(Domain, controller_root),
 	ControllerPath = filename:join([ControllerRoot, ControllerFile]),

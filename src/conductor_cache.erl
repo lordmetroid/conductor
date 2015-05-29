@@ -52,18 +52,18 @@ code_change(_OldVersion, State, _Extra) ->
 start_link() ->
 	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
+
 %% @doc Get a cached module
+%% @spec get_module(Type, ModulePath) -> {Module, {Cache, Garbage}}
 get_module(Type, ModulePath) ->
 	gen_server:call(?MODULE, {get_module, Type, ModulePath}).
 
-cache_get_module(Type, ModulePath, Modules) ->
-	{Cache, Garbage} = Modules,
-
+cache_get_module(Type, ModulePath, {Cache, Garbage}) ->
 	case lists:keyfind(ModulePath, 1, Cache) of
 		false ->
-			add_module_to_cache(Type, ModulePath, Modules);
+			add_module_to_cache(Type, ModulePath, {Cache, Garbage});
 		{ModulePath, {Module, Date}} ->
-			check_file_updates(Type, ModulePath, Modules, {Module, Date})
+			check_updates(Type, ModulePath, {Cache, Garbage}, {Module, Date})
 	end.
 
 add_module_to_cache(Type, ModulePath, {Cache, Garbage}) ->
@@ -77,7 +77,7 @@ add_module_to_cache(Type, ModulePath, {Cache, Garbage}) ->
 	end.
 
 
-check_file_updates(Type, ModulePath, {Cache, Garbage}, {Module, Date}) ->
+check_updates(Type, ModulePath, {Cache, Garbage}, {Module, Date}) ->
 	case filelib:last_modified(ModulePath) of
 		0 ->
 			%% Module file has been deleted
