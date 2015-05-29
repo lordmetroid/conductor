@@ -98,7 +98,7 @@ add_view_export_attribute() ->
 		])
 	).
 
-% @doc Add the view get() function
+% @doc Compile the view and store it as a module function
 add_view(ModulePath) ->
 	case file:read_file(ModulePath) of
 		{error, Reason} ->
@@ -117,6 +117,7 @@ get_view_compiler(ModulePath, ModuleBinary) ->
 		{"#!" ++ CompilerName, Template} ->
 			compile_template(CompilerName, Template);
 		_InvalidResult ->
+			log_template_api_error(ModulePath),
 			add_get_function(error, [])
 	end.
 
@@ -125,19 +126,16 @@ compile_template(CompilerName, Template) ->
 
 	case Compiler:make(Template) of
 		{error, Reason} ->
-			log_compile_error(ModulePath, Reason),
+			log_compiler_make_error(ModulePath, Compiler, Reason),
 			add_get_function(Compiler, []);
 		{ok, ViewAST} ->
 			add_get_function(Compiler, ViewAST);
 		_InvalidResult ->
-			log_compiler_api_error(
+			log_compiler_api_error(ModulePath, Compiler),
 			add_get_function(Compiler, [])
 	end.
 
-%% ----------------------------------------------------------------------------
-% @spec add_view_get_function(Compiler, Template) -> syntaxTree()
-% @doc Add the Webmachine API library
-%% ----------------------------------------------------------------------------
+% @doc Add the get view 
 add_get_function(Compiler, Template) ->
 	erl_syntax:revert(
 		%% get() ->
@@ -304,4 +302,16 @@ log_compile_error(ModulePath, [Error | Rest], []) ->
 log_compile_error(ModulePath, Errors, [Warning | Rest]) ->
 	lager:warning("Compile warning: ~p", [Warning]),
 	log_compile_error(ModulePath, Errors, Rest).
+
+log_template_api_error(ModulePath) ->
+	lager:warning("Template does not specify #! $COMPILER_NAME on first line").
+
+log_compiler_make_error(ModulePath, Compiler, []) ->
+	lager:warning("Compiler ~p could not compiler ~s", [Compiler, ModulePath]).
+log_compiler_make_error(ModulePath, Compiler, [Reason | Rest]) ->
+	lager:warning("Compuler ~p: ~s", [ModulePath, Compiler, Reason]),
+	log_compiler_make_error(ModulePath, Compiler, Rest).
+
+log_compiler_api_error(Compiler) ->
+	lager:warning("Compiler ~p:make/1 does not return a valid result").
 
