@@ -204,10 +204,8 @@ add_webmachine_lib_attribute() ->
 %% ----------------------------------------------------------------------------
 add_file(ModulePath) ->
 	case file:read_file(ModulePath) of
-		{error, Errors} ->
-			conductor_log:add(ModulePath, "Could not read file"),
-
-			%% Return nothing
+		{error, Reason} ->
+			log_read_file_error(ModulePath, Reason),
 			[];
 		{ok, Binary} ->
 			File = unicode:characters_to_list(Binary, utf8),
