@@ -206,7 +206,7 @@ get_mime_type() ->
 response_get_mime_type(false) ->
 	false;
 response_get_mime_type({_Client, _Request, Content}) ->
-	conductor_response_header:get_mime_type(Content).
+	conductor_response_content:get_mime_type(Content).
 
 
 %% @doc
@@ -217,7 +217,7 @@ add_data(Data) ->
 response_add_data(false, _NewData) ->
 	false;
 response_add_data({_Client, _Request, Content}, NewData) ->
-	conductor_response_body:add_data(Content, NewData).
+	conductor_response_content:add_data(Content, NewData).
 
 
 %% @doc
@@ -228,7 +228,7 @@ get_data() ->
 response_get_data(false) ->
 	false;
 response_get_data({_Client, _Request, Content}) ->
-	conductor_response_body:get_data(Content).
+	conductor_response_content:get_data(Content).
 
 
 %% @doc
@@ -239,7 +239,7 @@ purge_data() ->
 response_purge_data(false) ->
 	false;
 response_purge_data({_Client, _Request, Content}) ->
-	conductor_response_body:purge_data(Content).
+	conductor_response_content:purge_data(Content).
 
 %% ============================================================================
 %% Helper functions

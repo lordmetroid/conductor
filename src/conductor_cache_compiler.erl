@@ -115,14 +115,19 @@ get_view_compiler(ModulePath, ModuleBinary) ->
 	%% Get compiler and the template
 	case lists:split(string:str(ModuleContent, "\n")-1, ModuleContent) of
 		{"#!" ++ CompilerName, Template} ->
-			compile_template(ModulePath, CompilerName, Template);
+			Compiler = list_to_atom(
+				string:to_lower(
+				string:strip(
+				string:strip(CompilerName, both, $\r)
+			))),
+
+			compile_template(ModulePath, Compiler, Template);
 		_InvalidResult ->
 			log_template_api_error(ModulePath),
 			add_get_function(error, [])
 	end.
 
-compile_template(ModulePath, CompilerName, Template) ->
-	Compiler = list_to_atom(string:to_lower(string:strip(CompilerName))),
+compile_template(ModulePath, Compiler, Template) ->
 
 	case Compiler:make(Template) of
 		{error, Reason} ->
@@ -307,7 +312,7 @@ log_compile_error(ModulePath, Errors, [Warning | Rest]) ->
 	log_compile_error(ModulePath, Errors, Rest).
 
 log_template_api_error(ModulePath) ->
-	lager:warning("Template does not specify #! $COMPILER_NAME on first line").
+	lager:warning("Template ~s do specify #! $COMPILER_NAME", [ModulePath]).
 
 log_compiler_make_error(ModulePath, Compiler, []) ->
 	lager:warning("Compiler ~p could not compiler ~s", [Compiler, ModulePath]);
@@ -316,5 +321,5 @@ log_compiler_make_error(ModulePath, Compiler, [Reason | Rest]) ->
 	log_compiler_make_error(ModulePath, Compiler, Rest).
 
 log_compiler_api_error(Compiler) ->
-	lager:warning("Compiler ~p:make/1 does not return a valid result").
+	lager:warning("Compiler ~p:make/1 invalid result returned", [Compiler]).
 
