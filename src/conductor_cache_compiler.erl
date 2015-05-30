@@ -156,13 +156,12 @@ add_get_function(Compiler, Template) ->
 		])
 	).
 
-%% ----------------------------------------------------------------------------
-% Program, Model and Controller module code
-%% ----------------------------------------------------------------------------
+%% ============================================================================
+%% Program, Model and Controller module code
+%% ============================================================================
 
 %% ----------------------------------------------------------------------------
-% @spec add_controller_export_attribute() -> syntaxTree()
-% @doc Add the export attribute for model files
+%% @doc Add the export attribute for model files
 %% ----------------------------------------------------------------------------
 add_controller_export_attribute() ->
 	erl_syntax:revert(
@@ -187,8 +186,7 @@ add_controller_export_attribute() ->
 
 
 %% ----------------------------------------------------------------------------
-% @spec add_webmachine_lib_attribute() -> syntaxTree()
-% @doc Add the Webmachine API library
+%% @doc Add the Webmachine API library
 %% ----------------------------------------------------------------------------
 add_webmachine_lib_attribute() ->
 	erl_syntax:revert(
@@ -199,8 +197,7 @@ add_webmachine_lib_attribute() ->
 	).
 
 %% ----------------------------------------------------------------------------
-% @spec add_file() -> syntaxTree()
-% @doc Add an Erlang File to the compilation
+%% @doc Add an Erlang File to the compilation
 %% ----------------------------------------------------------------------------
 add_file(ModulePath) ->
 	case file:read_file(ModulePath) of
@@ -213,8 +210,7 @@ add_file(ModulePath) ->
 	end.
 
 %% ----------------------------------------------------------------------------
-% @spec add_data_function() -> syntaxTree()
-% @doc Add a data calling function to the compilation
+%% @doc Add a data calling function to the compilation
 %% ----------------------------------------------------------------------------
 add_data_function() ->
 	erl_syntax:revert(
@@ -241,8 +237,7 @@ add_data_function() ->
 	).
 
 %% ----------------------------------------------------------------------------
-% @spec add_render_function() -> syntaxTree()
-% @doc Add a view render function to the compilation
+%% @doc Add a view render function to the compilation
 %% ----------------------------------------------------------------------------
 add_render_function() ->
 	erl_syntax:revert(
@@ -266,8 +261,7 @@ add_render_function() ->
 	).
 
 %% ----------------------------------------------------------------------------
-% @spec add_run_function() -> syntaxTree()
-% @doc Add a run calling function to the compilation
+%% @doc Add a run calling function to the compilation
 %% ----------------------------------------------------------------------------
 add_run_function() ->
 	erl_syntax:revert(
@@ -315,7 +309,7 @@ log_template_api_error(ModulePath) ->
 log_compiler_make_error(ModulePath, Compiler, []) ->
 	lager:warning("Compiler ~p could not compiler ~s", [Compiler, ModulePath]);
 log_compiler_make_error(ModulePath, Compiler, [Reason | Rest]) ->
-	lager:warning("Compuler ~p: ~s", [ModulePath, Compiler, Reason]),
+	lager:warning("Compiler ~p: ~s", [ModulePath, Compiler, Reason]),
 	log_compiler_make_error(ModulePath, Compiler, Rest).
 
 log_compiler_api_error(Compiler) ->

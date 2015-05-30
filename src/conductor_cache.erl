@@ -1,5 +1,5 @@
 -module(conductor_cache).
--compule({parse_transform, lager_transform}).
+-compile({parse_transform, lager_transform}).
 
 -behavior(gen_server).
 -export([

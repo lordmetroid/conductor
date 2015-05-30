@@ -34,7 +34,7 @@ select_response_type(Request, Domain, Path, Programs) ->
 		false ->
 			publish_file(Request, Domain, Path);
 		{Path, ProgramFile} ->
-			get_program(Request, Domain, ProgramFile)
+			get_program_module(Request, Domain, ProgramFile)
 	end.
 
 publish_file(Request, Domain, Path) ->
@@ -56,13 +56,13 @@ create_file_response(Request, FilePath) ->
 			conductor_response:add_data(FilePath)
 	end.
 
-get_program(Request, Domain, ProgramFile) ->
+get_program_module(Request, Domain, ProgramFile) ->
 	ProgramRoot = conductor_settings:get(Domain, program_root),
 	ProgramPath = filename:join([ProgramRoot, ProgramFile]),
 
 	case conductor_cache:get_module(program, ProgramPath) of
 		false ->
-			log_module_not_found_error(ProgramPath),
+			log_module_not_cached_error(ProgramPath),
 			false;
 		Program ->
 			execute_program_module(Request, Program)
@@ -82,7 +82,8 @@ create_program_response(Request, Program) ->
 		error ->
 			false;
 		ok ->
-			Program:execute(Request)
+			Data = Program:execute(Request),
+			conductor_response:add_data(Data)
 	end.
 
 
@@ -92,7 +93,7 @@ create_program_response(Request, Program) ->
 execute_model(ModelFile, Function, Arguments) ->
 	case conductor_response:get_request() of
 		false ->
-			false;
+			error;
 		Request ->
 			get_model_module(Request, ModelFile, Function, Arguments)
 	end.
@@ -106,7 +107,8 @@ get_model_module(Request, ModelFile, Function, Arguments) ->
 	
 	case conductor_cache:get_module(model, ModelPath) of
 		false ->
-			log_module_not_found_error(ModelPath);
+			log_module_not_cached_error(ModelPath),
+			error;
 		Model ->
 			execute_model_module(Request, Model, Function, Arguments)
 	end.
@@ -114,7 +116,8 @@ get_model_module(Request, ModelFile, Function, Arguments) ->
 execute_model_module(Request, Model, Function, Arguments) ->
 	case erlang:function_exported(Model, Function, 2) of
 		false ->
-			log_function_not_exported_error(Function, 2);
+			log_function_not_exported_error(Function, 2),
+			error;
 		true ->
 			Model:Function(Request, Arguments)
 	end.
@@ -125,7 +128,7 @@ execute_model_module(Request, Model, Function, Arguments) ->
 execute_view(ViewFile, Arguments) ->
 	case conductor_response:get_request() of
 		false ->
-			false;
+			[];
 		Request ->
 			get_view_module(Request, ViewFile, Arguments)
 	end.
@@ -139,37 +142,41 @@ get_view_module(Request, ViewFile, Arguments) ->
 	
 	case conductor_cache:get_module(view, ViewPath) of
 		false ->
-			log_module_not_found_error(ViewPath);
+			log_module_not_cached_error(ViewPath),
+			[];
 		View ->
-			get_view_template(View, Arguments)
+			get_view_template(ViewPath, View, Arguments)
 	end.
 
-get_view_template(View, Arguments) ->
+get_view_template(ViewPath, View, Arguments) ->
 	case erlang:function_exported(View, get, 0) of
 		false ->
-			log_function_not_exported_error(get, 0);
+			log_function_not_exported_error(get, 0),
+			[];
 		true ->
 			{Compiler, Template} = View:get(),
-			validate_template(Compiler, Template, Arguments)
+			validate_template(ViewPath, Compiler, Template, Arguments)
 	end.
 
-validate_template(Compiler, Template, Arguments) ->
+validate_template(ViewPath, Compiler, Template, Arguments) ->
 	case erlang:function_exported(Compiler, render, 2) of
 		false ->
-			log_compiler_error(Compiler);
+			log_compiler_error(Compiler),
+			[];
 		true ->
-			render_view_template(Compiler, Template, Arguments)
+			render_view_template(ViewPath, Compiler, Template, Arguments)
 	end.
 
-render_view_template(Compiler, Template, Arguments) ->
+render_view_template(ViewPath, Compiler, Template, Arguments) ->
 	case Compiler:render(Template, Arguments) of
 		{error, Content, Errors} ->
-			log_render_data_error(Errors),
-			conductor_response:add_data(Content);
+			log_render_data_error(ViewPath, Errors),
+			Content;
 		{ok, Content} ->
-			conductor_response:add_data(Content);	
+			Content;
 		_ ->
-			log_render_api_error(Compiler)
+			log_render_api_error(Compiler),
+			[]
 	end.
 
 %% ============================================================================
@@ -178,7 +185,7 @@ render_view_template(Compiler, Template, Arguments) ->
 execute_controller(ControllerFile, Function, Arguments)  ->
 	case conductor_response:get_request() of
 		false ->
-			false;
+			[];
 		Request ->
 			get_controller_module(Request, ControllerFile, Function, Arguments)
 	end.
@@ -192,7 +199,8 @@ get_controller_module(Request, ControllerFile, Function, Arguments) ->
 	
 	case conductor_cache:get_module(controller, ControllerPath) of
 		false ->
-			log_module_not_found_error(ControllerPath);
+			log_module_not_cached_error(ControllerPath),
+			[];
 		Controller ->
 			execute_controller_module(Request, Controller, Function, Arguments)
 	end.
@@ -200,7 +208,8 @@ get_controller_module(Request, ControllerFile, Function, Arguments) ->
 execute_controller_module(Request, Controller, Function, Arguments) ->
 	case erlang:function_exported(Controller, Function, 2) of
 		false ->
-			log_function_not_exported_error(Function, 2);
+			log_function_not_exported_error(Function, 2),
+			[];
 		true ->
 			Controller:Function(Request, Arguments)
 	end.
@@ -222,8 +231,8 @@ create_domain([Token | Rest]) ->
 log_no_programs_error(Domain) ->
 	lager:warning("No programs specified for: ~s", [Domain]).
 
-log_module_not_found_error(Path) ->
-	lager:warning("Could not find ~s", [Path]).
+log_module_not_cached_error(Path) ->
+	lager:warning("Module ~s is not cached", [Path]).
 
 log_function_not_exported_error(Function, Arity) ->
 	lager:warning("Could not find ~s/~B", [Function, Arity]).
@@ -233,8 +242,11 @@ log_compiler_error(error) ->
 log_compiler_error(Compiler) ->
 	lager:warning("Could not find the render function in ~s", [Compiler]).
 
-log_render_data_error(Errors) ->
-	lager:warning("Could not render template ~p", [Errors]).
+log_render_data_error(ViewPath, []) ->
+	lager:warning("Template ~s was not rendered correctly", [ViewPath]);
+log_render_data_error(ViewPath, [Error | Rest]) ->
+	lager:warning("Template rendering error: ~s", [Error]),
+	log_render_data_error(ViewPath, Rest).
 
 log_render_api_error(Compiler) ->
 	lager:warning("Compiler ~s returned invalid value", [Compiler]).
