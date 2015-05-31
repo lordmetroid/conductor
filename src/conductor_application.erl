@@ -18,7 +18,6 @@
 %% @spec execute(Request::rd()) -> Content::iolist()
 execute(Request) ->
 	Path = wrq:path(Request),
-lager:info("~s", [Path]),
 	HostTokens = wrq:host_tokens(Request),
 	Domain = create_domain(HostTokens),
 
@@ -33,18 +32,18 @@ lager:info("~s", [Path]),
 select_response_type(Request, Domain, Path, Programs) ->
 	case lists:keyfind(Path, 1, Programs) of
 		false ->
-			publish_file(Request, Domain, Path);
+			publish_file(Request, Domain);
 		{Path, ProgramFile} ->
 			get_program_module(Request, Domain, ProgramFile)
 	end.
 
-publish_file(Request, Domain, Path) ->
+publish_file(Request, Domain) ->
+	Path = wrq:disp_path(Request),
 	FileRoot = conductor_settings:get(Domain, file_root),
 	FilePath = filename:join([FileRoot, Path]),
-
 	case filelib:is_regular(FilePath) of
 		false ->
-			false; %% 404 Not Found
+			false; %% TODO: 404 Not Found
 		true ->
 			create_file_response(Request, FilePath)
 	end.

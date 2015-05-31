@@ -159,7 +159,8 @@ file_get_mime_type(FilePath) ->
 			log_read_file_error(FilePath, enoent),
 			undefined;
 		true ->
-			mimetypes:filename(FilePath)
+			[MimeType | _Rest] = mimetypes:filename(FilePath),
+			binary_to_list(MimeType)
 	end.
 
 %% @doc Add data to response
