@@ -18,6 +18,7 @@
 %% @spec execute(Request::rd()) -> Content::iolist()
 execute(Request) ->
 	Path = wrq:path(Request),
+lager:info("~s", [Path]),
 	HostTokens = wrq:host_tokens(Request),
 	Domain = create_domain(HostTokens),
 
