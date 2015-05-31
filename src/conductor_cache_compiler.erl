@@ -55,13 +55,13 @@ make(controller, ModulePath) ->
 make_module(ModulePath, ModuleForms) ->
 	case compile:forms(ModuleForms) of
 		error ->
-			log_compile_error(ModulePath, [],[]),
+			log_compilation_error(ModulePath, [],[]),
 			error;
 		{error, Errors, Warnings} ->
-			log_compile_error(ModulePath, Errors, Warnings),
+			log_compilation_error(ModulePath, Errors, Warnings),
 			error;
 		{ok, Module, ModuleBinary, Warnings} ->
-			log_compile_error(ModulePath, [], Warnings),
+			log_compilation_error(ModulePath, [], Warnings),
 			{Module, ModuleBinary};
 		{ok, Module, ModuleBinary} ->
 			{Module, ModuleBinary}
@@ -294,14 +294,14 @@ add_run_function() ->
 log_read_file_error(ModulePath, Reason) ->
 	lager:warning("Could read ~s: ~p", [ModulePath, Reason]).
 
-log_compile_error(ModulePath, [], []) ->
-	lager:warning("Could not compile ~s", [ModulePath]);
-log_compile_error(ModulePath, [Error | Rest], []) ->
-	lager:warning("Compile error: ~p", [Error]),
-	log_compile_error(ModulePath, Rest, []);
-log_compile_error(ModulePath, Errors, [Warning | Rest]) ->
-	lager:warning("Compile warning: ~p", [Warning]),
-	log_compile_error(ModulePath, Errors, Rest).
+log_compilation_error(ModulePath, [], []) ->
+	lager:warning("Problems compiling: ~s", [ModulePath]);
+log_compilation_error(ModulePath, [Error | Rest], []) ->
+	lager:warning("Error: ~p", [Error]),
+	log_compilation_error(ModulePath, Rest, []);
+log_compilation_error(ModulePath, Errors, [Warning | Rest]) ->
+	lager:warning("Warning: ~p", [Warning]),
+	log_compilation_error(ModulePath, Errors, Rest).
 
 log_template_api_error(ModulePath) ->
 	lager:warning("Template ~s do specify #! $COMPILER_NAME", [ModulePath]).
