@@ -120,7 +120,6 @@ get_view_compiler(ModulePath, ModuleBinary) ->
 				string:strip(
 				string:strip(CompilerName, both, $\r)
 			))),
-
 			compile_template(ModulePath, Compiler, Template);
 		_InvalidResult ->
 			log_template_api_error(ModulePath),
@@ -128,7 +127,6 @@ get_view_compiler(ModulePath, ModuleBinary) ->
 	end.
 
 compile_template(ModulePath, Compiler, Template) ->
-
 	case Compiler:make(Template) of
 		{error, Reason} ->
 			log_compiler_make_error(ModulePath, Compiler, Reason),

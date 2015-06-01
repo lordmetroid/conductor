@@ -10,7 +10,8 @@
 		lager,
 		webmachine,
 
-		mimetypes
+		mimetypes,
+		hackney
 	]},
 
 	{modules,[
