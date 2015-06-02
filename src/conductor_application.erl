@@ -41,6 +41,7 @@ publish_file(Request, Domain) ->
 	Path = wrq:disp_path(Request),
 	FileRoot = conductor_settings:get(Domain, file_root),
 	FilePath = filename:join([FileRoot, Path]),
+
 	case filelib:is_regular(FilePath) of
 		false ->
 			false; %% TODO: 404 Not Found
