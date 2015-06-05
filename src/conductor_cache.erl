@@ -129,6 +129,7 @@ install_module(Type, ModulePath) ->
 			log_file_not_found_error(ModulePath),
 			error;
 		Date ->
+			log_compiling_module_info(Type, ModulePath),
 			compile_module(Type, ModulePath, Date)
 	end.
 
@@ -178,6 +179,9 @@ log_delete_module_error(ModulePath) ->
 
 log_file_not_found_error(ModulePath) ->
 	lager:warning("Could not find module file: ~s", [ModulePath]).
+
+log_compiling_module_info(Type, ModulePath) ->
+	lager:info("Compiling ~p module: ~s", [Type, ModulePath]).
 
 log_compile_error(ModulePath) ->
 	lager:warning("Could not compile: ~s", [ModulePath]).
