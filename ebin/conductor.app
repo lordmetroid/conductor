@@ -11,7 +11,7 @@
 		webmachine,
 
 		mimetypes,
-		hackney
+		couchbeam
 	]},
 
 	{modules,[
