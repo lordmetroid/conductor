@@ -1,4 +1,4 @@
--module(conductor_application_interface).
+-module(conductor_router_interface).
 -compile({parse_transform, lager_transform}).
 
 -export([

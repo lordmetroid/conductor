@@ -48,7 +48,7 @@ conductor_interface_configurations() ->
 
 		%% Interfaces
 		{dispatch, [
-			{['*'], conductor_application_interface, []}
+			{['*'], conductor_router_interface, []}
 		]}
 	].
 
