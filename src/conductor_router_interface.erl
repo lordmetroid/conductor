@@ -18,7 +18,7 @@ init(_Arguments) ->
 
 service_available(Request, Context) ->
 	%% Execute the request to create a response
-	conductor_application:execute(Request),
+	conductor_router:execute(Request),
 
 	{true, Request, Context}.
 
@@ -45,13 +45,10 @@ resource_exists(Request,Context) ->
 content_types_provided(Request, Context) ->
 	case conductor_response:get_mime_type() of
 		false ->
-			{[{MimeType, get_error}], Request, Context};
+			{[{"text/html", get_error}], Request, Context};
 		MimeType ->
 			{[{MimeType, get_resource}], Request, Context}
 	end.
-
-get_error(Request, Context) ->
-		
 
 get_resource(Request, Context) ->
 	Data = conductor_response:get_data(),

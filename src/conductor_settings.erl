@@ -152,8 +152,10 @@ settings_get(Domain, Argument, Settings) ->
 get_domain_configurations(Domain, Settings) ->
 	case search_domain(Domain, Settings) of
 		false ->
-			update_configurations(Domain, Settings, false);
+			%% Check if config has been added
+			get_updated_config_files(Domain, [], Settings, false);
 		Setting ->
+			%% Check if file has been updated
 			check_file_updates(Setting, Settings)
 	end.
 
@@ -164,7 +166,7 @@ check_file_updates({Domain, Values, FilePath, Date}, Settings) ->
 			%% File has been deleted
 			update_configurations(Domain, Values, Settings);
 		Date ->
-			%% File has previously been read
+			%% File is up to date
 			{Settings, Values};
 		_NewDate ->
 			%% File has been edited
