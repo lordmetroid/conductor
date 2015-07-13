@@ -11,7 +11,8 @@
 		webmachine,
 
 		mimetypes,
-		couchbeam
+		hackney,
+		pgapp
 	]},
 
 	{modules,[
