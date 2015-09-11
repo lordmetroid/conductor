@@ -9,6 +9,7 @@ _rel/
 *.dump
 
 # Configuration files
+conf/
 *.conf
 .rebar/
 
