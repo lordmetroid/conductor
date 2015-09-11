@@ -84,6 +84,10 @@ create_program_response(Request, Program) ->
 		error ->
 			false;
 		ok ->
+			%% Log visitors
+			conductor_statistics:log(Request),
+
+			%% Execute program
 			Data = Program:execute(Request),
 			conductor_response:add_data(Data)
 	end.

@@ -273,7 +273,7 @@ log_no_configuration_files_error(Path) ->
 	lager:warning("Found no valid configuration files in ~s", [Path]).
 
 log_directory_error(Path, Reason) ->
-	lager:waning("Could not access ~s: ~s", [Path, Reason]).
+	lager:warning("Could not access ~s: ~s", [Path, Reason]).
 
 log_file_not_found_error(FilePath) ->
 	lager:warning("Could not find configuration file: ~s", [FilePath]).
