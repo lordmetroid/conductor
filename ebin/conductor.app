@@ -1,7 +1,7 @@
 %% -*- mode: erlang; -*-
 {application, conductor, [
 	{description,"Conductor web application platform"},
-	{vsn,"1"},
+	{vsn,"2"},
 
 	{applications, [
 		kernel,
