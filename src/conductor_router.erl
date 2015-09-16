@@ -25,9 +25,9 @@ execute(Request) ->
 	%% Log visitors
 	conductor_statistics:log(Request, Domain, Path),
 
-	case select_response_type(Domain, Path, DispPath) of
+	case select_response_type(Request, Domain, Path, DispPath) of
 		false ->
-			false %% TODO: 404 Not Found
+			false; %% TODO: 404 Not Found
 		conductor ->
 			create_conductor_response(Request);
 		{file, FilePath} ->
@@ -36,53 +36,58 @@ execute(Request) ->
 			create_program_response(Request, Domain, ProgramFile)
 	end.
 
-select_response_type(_Domain, "/conductor", _DispPath) ->
+select_response_type(_Request, _Domain, "/conductor", _DispPath) ->
 	conductor;
-select_response_type(_Domain, "/conductor/", _DispPath) ->
+select_response_type(_Request, _Domain, "/conductor/", _DispPath) ->
 	conductor;
-select_response_type(Domain, Path, false) ->
-	find_program(Domain, Path);
-select_response_type(Domain, Path, DispPath) ->
-	find_file(Domain, Path, DispPath).
+select_response_type(Request, Domain, Path, false) ->
+	find_program(Request, Domain, Path);
+select_response_type(Request, Domain, Path, DispPath) ->
+	find_file(Request, Domain, Path, DispPath).
 
-find_program(Domain, Path) ->
+find_program(Request, Domain, Path) ->
 	case conductor_settings:get(Domain, programs) of
 		undefined ->
 			log_no_programs_error(Domain),
 			false;
 		Programs ->
-			find_program_file(Path, Programs)
+			find_program_file(Request, Path, Programs)
 	end.
 
-find_program_file(Path, []) ->
+find_program_file(_Request, _Path, []) ->
 	false;
-find_program_file(Path, [{[Program, "*"], ProgramFile} | Rest]) ->
+find_program_file(Request, Path, [{[Program, "*"], ProgramFile} | Rest]) ->
 	case lists:split(string:str(Path, Program), Path) of
 		{Program, NewDispPath} ->
 			wrq:set_disp_path(NewDispPath, Request),
 			{program, ProgramFile};
 		_NoMatch ->
-			find_program_file(Path, Rest)
+			find_program_file(Request, Path, Rest)
 	end;
-find_program_file(Path, [{Program, ProgramFile} | Rest]) ->
+find_program_file(Request, Path, [{Program, ProgramFile} | Rest]) ->
 	case Path of
 		Program ->
-			(program, ProgramFile};
+			{program, ProgramFile};
 		_NoMatch ->
-			find_program_file(Path, Rest)
+			find_program_file(Request, Path, Rest)
 	end.
 
 
-find_file(Domain, Path, DispPath) ->
+find_file(Request, Domain, Path, DispPath) ->
 	FileRoot = conductor_settings:get(Domain, file_root),
 	FilePath = filename:join([FileRoot, DispPath]),
 
 	case filelib:is_regular(FilePath) of
 		false ->
-			select_response_type(Domain, Path, false);
+			select_response_type(Request, Domain, Path, false);
 		true ->
 			{file, FilePath}	
 	end.
+
+
+create_conductor_response(_Request) ->
+	%% TODO: Conductor control panel
+	false.
 
 
 create_file_response(Request, FilePath) ->
@@ -99,7 +104,7 @@ create_program_response(Request, Domain, ProgramFile) ->
 		error ->
 			false;
 		ok ->
-			get_program_module(Request, Domain, ProgramFile
+			get_program_module(Request, Domain, ProgramFile)
 	end.
 
 get_program_module(Request, Domain, ProgramFile) ->
