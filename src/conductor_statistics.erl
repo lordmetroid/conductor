@@ -2,7 +2,7 @@
 -compile({parse_transform, lager_transform}).
 
 -export([
-	log/1
+	log/3
 ]).
 
 -include_lib("webmachine/include/webmachine.hrl").
@@ -10,6 +10,5 @@
 %% ============================================================================
 %% Module functions
 %% ============================================================================
-log(Request) ->
-	wrq
-
+log(Request, Domain, Path) ->
+	ok.

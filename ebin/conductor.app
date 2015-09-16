@@ -28,7 +28,8 @@
 
 		conductor_interface_supervisor,
 		conductor_router_interface,
-		conductor_router
+		conductor_router,
+		conductor_statistics
 	]},
 	{registered, [
 		conductor_supervisor,

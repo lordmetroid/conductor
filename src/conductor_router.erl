@@ -17,38 +17,73 @@
 %% @doc Execute a client request
 %% @spec execute(Request::rd()) -> Content::iolist()
 execute(Request) ->
-	Path = wrq:path(Request),
-%	lager:info("Handling request: ~s", [Path]),
 	HostTokens = wrq:host_tokens(Request),
 	Domain = create_domain(HostTokens),
+	Path = wrq:path(Request),
+	DispPath = wrq:disp_path(Request),
 
+	%% Log visitors
+	conductor_statistics:log(Request, Domain, Path),
+
+	case select_response_type(Domain, Path, DispPath) of
+		false ->
+			false %% TODO: 404 Not Found
+		conductor ->
+			create_conductor_response(Request);
+		{file, FilePath} ->
+			create_file_response(Request, FilePath);
+		{program, ProgramFile} ->
+			create_program_response(Request, Domain, ProgramFile)
+	end.
+
+select_response_type(_Domain, "/conductor", _DispPath) ->
+	conductor;
+select_response_type(_Domain, "/conductor/", _DispPath) ->
+	conductor;
+select_response_type(Domain, Path, false) ->
+	find_program(Domain, Path);
+select_response_type(Domain, Path, DispPath) ->
+	find_file(Domain, Path, DispPath).
+
+find_program(Domain, Path) ->
 	case conductor_settings:get(Domain, programs) of
 		undefined ->
 			log_no_programs_error(Domain),
 			false;
 		Programs ->
-			select_response_type(Request, Domain, Path, Programs)
-	end.
-			
-select_response_type(Request, Domain, Path, Programs) ->
-	case lists:keyfind(Path, 1, Programs) of
-		false ->
-			publish_file(Request, Domain);
-		{Path, ProgramFile} ->
-			get_program_module(Request, Domain, ProgramFile)
+			find_program_file(Path, Programs)
 	end.
 
-publish_file(Request, Domain) ->
-	Path = wrq:disp_path(Request),
+find_program_file(Path, []) ->
+	false;
+find_program_file(Path, [{[Program, "*"], ProgramFile} | Rest]) ->
+	case lists:split(string:str(Path, Program), Path) of
+		{Program, NewDispPath} ->
+			wrq:set_disp_path(NewDispPath, Request),
+			{program, ProgramFile};
+		_NoMatch ->
+			find_program_file(Path, Rest)
+	end;
+find_program_file(Path, [{Program, ProgramFile} | Rest]) ->
+	case Path of
+		Program ->
+			(program, ProgramFile};
+		_NoMatch ->
+			find_program_file(Path, Rest)
+	end.
+
+
+find_file(Domain, Path, DispPath) ->
 	FileRoot = conductor_settings:get(Domain, file_root),
-	FilePath = filename:join([FileRoot, Path]),
+	FilePath = filename:join([FileRoot, DispPath]),
 
 	case filelib:is_regular(FilePath) of
 		false ->
-			false; %% TODO: 404 Not Found
+			select_response_type(Domain, Path, false);
 		true ->
-			create_file_response(Request, FilePath)
+			{file, FilePath}	
 	end.
+
 
 create_file_response(Request, FilePath) ->
 	case conductor_response:create_file(Request) of
@@ -56,6 +91,15 @@ create_file_response(Request, FilePath) ->
 			false;
 		ok ->
 			conductor_response:add_data(FilePath)
+	end.
+
+
+create_program_response(Request, Domain, ProgramFile) ->
+	case conductor_response:create_program(Request) of
+		error ->
+			false;
+		ok ->
+			get_program_module(Request, Domain, ProgramFile
 	end.
 
 get_program_module(Request, Domain, ProgramFile) ->
@@ -76,21 +120,10 @@ execute_program_module(Request, Program) ->
 			log_function_not_exported_error(execute, 1),
 			false;
 		true ->
-			create_program_response(Request, Program)
-	end.
-
-create_program_response(Request, Program) ->
-	case conductor_response:create_program(Request) of
-		error ->
-			false;
-		ok ->
-			%% Log visitors
-			conductor_statistics:log(Request),
-
-			%% Execute program
 			Data = Program:execute(Request),
 			conductor_response:add_data(Data)
 	end.
+
 
 
 %% ============================================================================
