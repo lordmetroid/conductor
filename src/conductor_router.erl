@@ -57,8 +57,9 @@ find_program(Request, Domain, Path) ->
 find_program_file(_Request, _Path, []) ->
 	false;
 find_program_file(Request, Path, [{[Program, "*"], ProgramFile} | Rest]) ->
-	case lists:split(string:str(Path, Program), Path) of
-		{Program, NewDispPath} ->
+	case string:str(Path, Program) of
+		1 ->
+			{Program, NewDispPath} = lists:split(string:len(Program), Path),
 			wrq:set_disp_path(NewDispPath, Request),
 			{program, ProgramFile};
 		_NoMatch ->
