@@ -32,8 +32,8 @@ execute(Request) ->
 			create_conductor_response(Request);
 		{file, FilePath} ->
 			create_file_response(Request, FilePath);
-		{program, ProgramFile} ->
-			create_program_response(Request, Domain, ProgramFile)
+		{program, NewRequest, ProgramFile} ->
+			create_program_response(NewRequest, Domain, ProgramFile)
 	end.
 
 select_response_type(_Request, _Domain, "/conductor", _DispPath) ->
@@ -60,15 +60,15 @@ find_program_file(Request, Path, [{[Program, "*"], ProgramFile} | Rest]) ->
 	case string:str(Path, Program) of
 		1 ->
 			{Program, NewDispPath} = lists:split(string:len(Program), Path),
-			wrq:set_disp_path(NewDispPath, Request),
-			{program, ProgramFile};
+			NewRequest = wrq:set_disp_path(NewDispPath, Request),
+			{program, NewRequest, ProgramFile};
 		_NoMatch ->
 			find_program_file(Request, Path, Rest)
 	end;
 find_program_file(Request, Path, [{Program, ProgramFile} | Rest]) ->
 	case Path of
 		Program ->
-			{program, ProgramFile};
+			{program, Request, ProgramFile};
 		_NoMatch ->
 			find_program_file(Request, Path, Rest)
 	end.
